@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Mi App{% endblock %}</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='/css/styles.css') }}"
+    />
+    <link
+      rel="icon"
+      href="{{ url_for('static', path='/favicon.ico') }}"
+      type="image/x-icon"
+      sizes="any"
+    />
+
+    {% block head %}{% endblock %}
+
+    <style>
+      /* Fondo básico (opcional) */
+      body {
+        min-height: 100dvh;
+        background: radial-gradient(
+          125% 125% at 50% 100%,
+          #ffffff 40%,
+          #e9d26a 100%
+        );
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body class="noto-sans">
+    <div class="layout is-collapsed" id="layout">
+      <!-- SIDEBAR -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <span class="brand">ApexVendor</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="/chat">Chat</a>
+          <a href="/profile">Profile</a>
+          {% block sidebar %}{% endblock %}
+        </nav>
+      </aside>
+
+      <!-- CONTENIDO (derecha) -->
+      <div class="content">
+        <header class="topbar">
+          <button
+            id="toggleSidebar"
+            class="sidebar-toggle"
+            aria-controls="sidebar"
+            aria-expanded="false"
+          >
+            ☰
+          </button>
+          <h1 class="app-title">{{ title }}</h1>
+        </header>
+
+        <main class="page-main">{% block content %}{% endblock %}</main>
+
+        <footer class="page-footer">
+          <p>© 2025 ApexVendor</p>
+        </footer>
+      </div>
+    </div>
+
+    <script>
+      // Toggle sidebar
+      (function () {
+        const layout = document.getElementById("layout");
+        const btn = document.getElementById("toggleSidebar");
+        btn?.addEventListener("click", () => {
+          const collapsed = layout.classList.toggle("is-collapsed");
+          btn.setAttribute("aria-expanded", String(!collapsed));
+        });
+      })();
+    </script>
+
+    <script src="{{ url_for('static', path='/js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

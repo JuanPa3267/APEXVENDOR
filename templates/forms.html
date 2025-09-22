@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Mi App{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', path='/favicon.ico') }}" type="image/x-icon" sizes="any">
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='/css/styles.css') }}"
+    />
+    {% block head %}{% endblock %}
+    <style>
+      /* reset mínimo + fondo */
+      body {
+        min-height: 100dvh; /* mejor en móviles */
+        background: radial-gradient(
+          125% 125% at 50% 100%,
+          #ffffff 40%,
+          #e9d26a 100%
+        );
+      }
+      main {
+        position: relative;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body class="noto-sans">
+    <header>
+      <h1></h1>
+    </header>
+
+    <main>{% block content %}{% endblock %}</main>
+
+    <footer>
+      <p>© 2025 ApexVendor</p>
+    </footer>
+
+    <script src="{{ url_for('static', path='/js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

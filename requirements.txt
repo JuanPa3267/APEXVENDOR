@@ -1,0 +1,10 @@
+anyio
+fastapi
+uvicorn[standard]
+jinja2
+python-dotenv
+google-generativeai
+markdown
+PyPDF2
+python-multipart
+bcrypt

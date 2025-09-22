@@ -1,0 +1,156 @@
+{% extends "base.html" %} {% block title %}{{ title }}{% endblock %} {% block
+content %}
+<section class="chat-layout">
+  <!-- MENSAJES (scrollable) -->
+  <ul class="messages" id="chat">
+    {% for msg in messages %} {% if msg.role == 'user' %}
+    <li class="message user"><div class="bubble">{{ msg.text }}</div></li>
+    {% else %}
+    <li class="message assistant">
+      <div class="bubble prose">{{ msg.text | md | safe }}</div>
+    </li>
+    {% endif %} {% endfor %}
+  </ul>
+
+  <!-- COMPOSER (fijo abajo) -->
+  <div class="composer">
+    <!-- Fila 1: input -->
+    <form id="promptForm" class="prompt-row" action="/generate" method="post">
+      <input
+        id="promptInput"
+        type="text"
+        name="prompt"
+        placeholder="Escribe tu mensaje…"
+        autocomplete="off"
+        required
+      />
+    </form>
+
+    <!-- Fila 2: botones -->
+    <div class="btns-row">
+      <button type="button" id="attachPdfBtn">Adjuntar proyecto en PDF</button>
+      <input type="file" id="pdfInput" accept="application/pdf" hidden />
+      <button id="sendBtn" form="promptForm" type="submit">Enviar</button>
+      <form class="reset" action="/reset-chat" method="post">
+        <button type="submit">Borrar chat</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  const chatUl = document.getElementById("chat");
+  const form = document.getElementById("promptForm");
+  const input = document.getElementById("promptInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+  function scrollToBottom() {
+    chatUl.scrollTop = chatUl.scrollHeight; // scrollea SOLO el chat
+  }
+  scrollToBottom();
+
+  // Enter = enviar, Shift+Enter = salto de línea (si luego usas <textarea>)
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+
+    // 1) pinta al instante el mensaje del usuario
+    const userLi = document.createElement("li");
+    userLi.className = "message user";
+    userLi.innerHTML = `<div class="bubble"></div>`;
+    userLi.querySelector(".bubble").textContent = text;
+    chatUl.appendChild(userLi);
+
+    // 2) placeholder IA
+    const aiLi = document.createElement("li");
+    aiLi.className = "message assistant";
+    aiLi.innerHTML = `<div class="bubble prose"><em>Pensando…</em></div>`;
+    chatUl.appendChild(aiLi);
+
+    input.value = "";
+    input.focus();
+    sendBtn.disabled = true;
+    scrollToBottom();
+
+    // 3) llamada sin recargar
+    try {
+      const fd = new FormData();
+      fd.append("prompt", text);
+      const res = await fetch("/generate-json", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+
+      // 4) reemplaza placeholder con la respuesta (MD -> HTML)
+      aiLi.querySelector(".bubble").innerHTML = marked.parse(data.answer || "");
+    } catch (err) {
+      aiLi.querySelector(".bubble").textContent = "Error al generar respuesta.";
+      console.error(err);
+    } finally {
+      sendBtn.disabled = false;
+      scrollToBottom();
+    }
+  });
+  const attachBtn = document.getElementById("attachPdfBtn");
+  const pdfInput = document.getElementById("pdfInput");
+
+  attachBtn.addEventListener("click", () => pdfInput.click());
+
+  pdfInput.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validación rápida en cliente
+    if (
+      file.type !== "application/pdf" &&
+      !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+      alert("Solo se aceptan archivos PDF.");
+      pdfInput.value = "";
+      return;
+    }
+
+    // Burbuja del usuario (optimista)
+    const userLi = document.createElement("li");
+    userLi.className = "message user";
+    userLi.innerHTML = `<div class="bubble"></div>`;
+    userLi.querySelector(".bubble").textContent = `📎 ${file.name}`;
+    chatUl.appendChild(userLi);
+    scrollToBottom();
+
+    // Subir al servidor
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/upload-pdf", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+
+      // Burbuja del asistente con link (Markdown → HTML)
+      const aiLi = document.createElement("li");
+      aiLi.className = "message assistant";
+      aiLi.innerHTML = `<div class="bubble prose">${marked.parse(
+        data.message || "**PDF recibido.**"
+      )}</div>`;
+      chatUl.appendChild(aiLi);
+      scrollToBottom();
+    } catch (err) {
+      const errLi = document.createElement("li");
+      errLi.className = "message assistant";
+      errLi.innerHTML = `<div class="bubble">Error al subir el PDF.</div>`;
+      chatUl.appendChild(errLi);
+      console.error(err);
+    } finally {
+      pdfInput.value = ""; // limpia selección
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "forms.html" %} {% block title %}{{ title }}{% endblock %} {% block
+content %}
+
+<div class="form_div">
+  <h2>{{ title | default("Login")}}</h2>
+  <form action="/login" method="post">
+    <input type="text" name="username" placeholder="Usuario" />
+    <input type="password" name="password" placeholder="Contraseña" />
+    <button type="submit">Iniciar sesión</button>
+  </form>
+  <a href="/register">Registrarse</a>
+</div>
+
+
+{% endblock %}
