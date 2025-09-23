@@ -1,1 +1,11 @@
+# Entornos
 .env
+
+# Archivos de configuración
+*.pyc
+__pycache__/
+.vscode/
+.idea/
+
+# Archivos sensibles o locales
+uploads/
