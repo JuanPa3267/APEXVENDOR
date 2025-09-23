@@ -19,16 +19,16 @@
     {% block head %}{% endblock %}
 
     <style>
-      /* Fondo básico (opcional) */
-      body {
-        min-height: 100dvh;
-        background: radial-gradient(
-          125% 125% at 50% 100%,
-          #ffffff 40%,
-          #e9d26a 100%
-        );
-        margin: 0;
-      }
+            /* Fondo básico (opcional) */
+            body {
+              min-height: 100dvh;
+              background: radial-gradient(
+                125% 125% at 50% 10%,
+                #ffffff 30%,
+                #e9d26a 100%
+              );
+              margin: 0;
+            }
     </style>
   </head>
 
@@ -62,10 +62,6 @@
         </header>
 
         <main class="page-main">{% block content %}{% endblock %}</main>
-
-        <footer class="page-footer">
-          <p>© 2025 ApexVendor</p>
-        </footer>
       </div>
     </div>
 

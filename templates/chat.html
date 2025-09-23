@@ -1,8 +1,8 @@
 {% extends "base.html" %} {% block title %}{{ title }}{% endblock %} {% block
 content %}
-<section class="chat-layout">
+<section class="chat-layout no-scrollbar">
   <!-- MENSAJES (scrollable) -->
-  <ul class="messages" id="chat">
+  <ul class="messages no-scrollbar" id="chat">
     {% for msg in messages %} {% if msg.role == 'user' %}
     <li class="message user"><div class="bubble">{{ msg.text }}</div></li>
     {% else %}
@@ -22,6 +22,7 @@ content %}
         name="prompt"
         placeholder="Escribe tu mensaje…"
         autocomplete="off"
+        class="styled-input"
         required
       />
     </form>
