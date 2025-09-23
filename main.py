@@ -5,7 +5,7 @@ and a minimal in-memory chat history keyed by user id.
 """
 
 import os
-from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
+from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -17,22 +17,96 @@ from pathlib import Path
 from uuid import uuid4
 import profile_info
 import registerstuff
+import re
 
 
-def md_filter(text: str) -> str:
-    """Render a Markdown string to HTML, tolerating empty inputs.
-
-    Args:
-        text: Raw Markdown text.
-
-    Returns:
-        HTML string produced by Markdown renderer.
+def _unwrap_markdown_fence(text: str) -> str:
+    """
+    Si el texto viene envuelto en un fence externo ```markdown o ```md,
+    devuelve solo el contenido interno para que el parser no lo trate como código literal.
     """
     if not text:
         return ""
+    t = text.strip()
+    if t.startswith("```") and t.endswith("```"):
+        # primera línea: ```markdown, ```md o ``` (vacío)
+        first_nl = t.find("\n")
+        if first_nl != -1:
+            lang = t[3:first_nl].strip().lower()
+            if lang in ("", "md", "markdown"):
+                return t[first_nl + 1:-3].lstrip("\n")
+    return text
+
+
+def md_filter(text: str) -> str:
+    """Renderiza Markdown a HTML, tolerando entradas vacías o con fence externo.
+
+    Args:
+        text: Texto Markdown crudo (posiblemente envuelto en ```markdown).
+
+    Returns:
+        HTML producido por el renderer de Python-Markdown.
+    """
+    if not text or not text.strip():
+        return ""
+
+    text = _unwrap_markdown_fence(text)
+
+    # Extensiones base de Python-Markdown
+    extensions = [
+        "fenced_code",
+        "codehilite",
+        "tables",
+        "sane_lists",
+        "abbr",
+        "attr_list",
+        "def_list",
+        "footnotes",
+        "toc",
+        "nl2br",
+        "md_in_html",
+    ]
+
+    extension_configs = {
+        "codehilite": {
+            "linenums": False,
+            "guess_lang": False,
+            "noclasses": False,  # usa clases CSS -> recuerda incluir CSS de Pygments
+        },
+        "toc": {
+            "permalink": True,   # añade ancla clickable en los encabezados
+        },
+    }
+
+    # Si pymdown-extensions está disponible, añadimos mejoras (opcional)
+    try:
+        import pymdownx  # noqa: F401
+        extensions += [
+            "pymdownx.superfences",  # fences anidados/mixtos más robustos
+            "pymdownx.highlight",    # mejor integración con Pygments
+            "pymdownx.tasklist",     # [ ] y [x] en listas
+            "pymdownx.tilde",        # ~~tachado~~
+            "pymdownx.magiclink",    # autolink de URLs y @user/#123
+        ]
+        extension_configs.update({
+            "pymdownx.highlight": {
+                "linenums": False,
+                "guess_lang": False,
+                "anchor_linenums": False,
+            },
+            "pymdownx.tasklist": {
+                "custom_checkbox": True
+            }
+        })
+    except Exception:
+        # Si no está instalado, seguimos con lo base sin fallar.
+        pass
+
     return markdown.markdown(
         text,
-        extensions=['fenced_code', 'codehilite', 'tables', 'sane_lists']
+        extensions=extensions,
+        extension_configs=extension_configs,
+        output_format="html5",
     )
 
 
@@ -134,12 +208,15 @@ async def chat(request: Request):
 
 @app.post("/generate-json")
 async def generate_json(request: Request, prompt: str = Form(...)):
-    """Generate a model response and return it as JSON while updating history."""
     uid = request.cookies.get("uid", "anon")
     history = CHAT_HISTORY.get(uid, [])
     answer, history = ask_gpt_chat(prompt, history)
     CHAT_HISTORY[uid] = history
-    return JSONResponse({"answer": answer})
+
+    # <<< render en servidor (desfencea + extensiones)
+    html = md_filter(answer)
+    return JSONResponse({"answer": answer, "html": html})
+
 
 @app.post("/generate", response_class=HTMLResponse)
 async def generate(request: Request, prompt: str = Form(...)):
@@ -157,9 +234,30 @@ async def generate(request: Request, prompt: str = Form(...)):
 
 @app.post("/reset-chat")
 async def reset_chat(request: Request):
-    """Redirect to chat; reserved for future history reset logic."""
+    """Limpia el historial del usuario y redirige al chat (GET) de forma segura."""
     uid = request.cookies.get("uid", "anon")
-    return RedirectResponse(url="/chat", status_code=303)
+    # Limpia el historial (en vez de no-hacer-nada)
+    CHAT_HISTORY.pop(uid, None)
+
+    # Construye la URL con url_for (evita problemas de prefijo/root_path)
+    url = request.url_for("chat")
+
+    # 303 = See Other -> obliga a hacer GET a la nueva URL (ideal tras POST)
+    resp = RedirectResponse(url=url, status_code=303)
+
+    # Si también quieres "cerrar sesión", descomenta:
+    # resp.delete_cookie("uid")
+
+    # Evita cachear el redirect
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+# (Opcional) soporta también GET por si usas enlaces en vez de formularios
+
+
+@app.get("/reset-chat")
+async def reset_chat_get(request: Request):
+    return await reset_chat(request)
 
 
 @app.post("/upload-pdf")
@@ -181,17 +279,21 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
     uid = request.cookies.get("uid", "anon")
     history = CHAT_HISTORY.get(uid, [])
     md_msg = f"**PDF recibido:** [{original_name}]({url})\n\n**Contexto breve:**\n{context}"
+    # Guarda markdown en el historial (plantilla server lo renderiza)
     history += [
         {"role": "user",  "parts": [f"📎 PDF subido: {original_name}"]},
         {"role": "model", "parts": [md_msg]},
     ]
     CHAT_HISTORY[uid] = history
 
+    # También envía HTML directo para el flujo asíncrono
+    html_msg = md_filter(md_msg)
     return JSONResponse({
         "ok": True,
         "name": original_name,
         "url": url,
-        "message": md_msg
+        "message": md_msg,
+        "html": html_msg
     })
 
 
@@ -200,4 +302,3 @@ async def profile(request: Request):
     """Serve the profile page with static demo user information."""
     name, email, phone, role, score, country, city, social_media, website, linkedin, github = profile_info.get_profile()
     return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "phone": phone, "role": role, "score": score, "country": country, "city": city, "social_media": social_media, "website": website, "linkedin": linkedin, "github": github})
-

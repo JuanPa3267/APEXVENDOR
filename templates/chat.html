@@ -1,15 +1,22 @@
-{% extends "base.html" %} {% block title %}{{ title }}{% endblock %} {% block
-content %}
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
 <section class="chat-layout no-scrollbar">
   <!-- MENSAJES (scrollable) -->
   <ul class="messages no-scrollbar" id="chat">
-    {% for msg in messages %} {% if msg.role == 'user' %}
-    <li class="message user"><div class="bubble">{{ msg.text }}</div></li>
-    {% else %}
-    <li class="message assistant">
-      <div class="bubble prose">{{ msg.text | md | safe }}</div>
-    </li>
-    {% endif %} {% endfor %}
+    {% for msg in messages %}
+      {% if msg.role == 'user' %}
+        <li class="message user">
+          <div class="bubble">{{ msg.text }}</div>
+        </li>
+      {% else %}
+        <li class="message assistant">
+          <!-- Render en SERVIDOR con python-markdown -->
+          <div class="bubble prose">{{ msg.text | md | safe }}</div>
+        </li>
+      {% endif %}
+    {% endfor %}
   </ul>
 
   <!-- COMPOSER (fijo abajo) -->
@@ -39,15 +46,16 @@ content %}
   </div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-  const chatUl = document.getElementById("chat");
-  const form = document.getElementById("promptForm");
-  const input = document.getElementById("promptInput");
-  const sendBtn = document.getElementById("sendBtn");
+  const chatUl   = document.getElementById("chat");
+  const form     = document.getElementById("promptForm");
+  const input    = document.getElementById("promptInput");
+  const sendBtn  = document.getElementById("sendBtn");
+  const attachBtn = document.getElementById("attachPdfBtn");
+  const pdfInput  = document.getElementById("pdfInput");
 
   function scrollToBottom() {
-    chatUl.scrollTop = chatUl.scrollHeight; // scrollea SOLO el chat
+    chatUl.scrollTop = chatUl.scrollHeight;
   }
   scrollToBottom();
 
@@ -82,7 +90,7 @@ content %}
     sendBtn.disabled = true;
     scrollToBottom();
 
-    // 3) llamada sin recargar
+    // 3) llamada sin recargar: el servidor devuelve HTML ya renderizado
     try {
       const fd = new FormData();
       fd.append("prompt", text);
@@ -90,8 +98,8 @@ content %}
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
 
-      // 4) reemplaza placeholder con la respuesta (MD -> HTML)
-      aiLi.querySelector(".bubble").innerHTML = marked.parse(data.answer || "");
+      // 4) reemplaza placeholder con el HTML ya seguro del servidor
+      aiLi.querySelector(".bubble").innerHTML = data.html || "";
     } catch (err) {
       aiLi.querySelector(".bubble").textContent = "Error al generar respuesta.";
       console.error(err);
@@ -100,20 +108,15 @@ content %}
       scrollToBottom();
     }
   });
-  const attachBtn = document.getElementById("attachPdfBtn");
-  const pdfInput = document.getElementById("pdfInput");
 
+  // ---- PDF ----
   attachBtn.addEventListener("click", () => pdfInput.click());
 
   pdfInput.addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validación rápida en cliente
-    if (
-      file.type !== "application/pdf" &&
-      !file.name.toLowerCase().endsWith(".pdf")
-    ) {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       alert("Solo se aceptan archivos PDF.");
       pdfInput.value = "";
       return;
@@ -135,12 +138,10 @@ content %}
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
 
-      // Burbuja del asistente con link (Markdown → HTML)
+      // Burbuja del asistente con HTML ya renderizado en el servidor
       const aiLi = document.createElement("li");
       aiLi.className = "message assistant";
-      aiLi.innerHTML = `<div class="bubble prose">${marked.parse(
-        data.message || "**PDF recibido.**"
-      )}</div>`;
+      aiLi.innerHTML = `<div class="bubble prose">${data.html || "<strong>PDF recibido.</strong>"}</div>`;
       chatUl.appendChild(aiLi);
       scrollToBottom();
     } catch (err) {
