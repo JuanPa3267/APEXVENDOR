@@ -1,3 +1,9 @@
+"""FastAPI application entrypoint.
+
+This module wires the web UI, chat endpoints, PDF upload/summarization,
+and a minimal in-memory chat history keyed by user id.
+"""
+
 import os
 from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, JSONResponse
@@ -14,6 +20,14 @@ import registerstuff
 
 
 def md_filter(text: str) -> str:
+    """Render a Markdown string to HTML, tolerating empty inputs.
+
+    Args:
+        text: Raw Markdown text.
+
+    Returns:
+        HTML string produced by Markdown renderer.
+    """
     if not text:
         return ""
     return markdown.markdown(
@@ -23,6 +37,14 @@ def md_filter(text: str) -> str:
 
 
 def _render_messages(history: List[Dict]) -> List[Dict]:
+    """Transform Gemini chat history dicts into a minimal UI-friendly shape.
+
+    Args:
+        history: List of messages as returned by the Gemini chat API.
+
+    Returns:
+        List of dicts with only role and flattened text for templating.
+    """
     msgs = []
     for m in history:
         text = (m.get("parts") or [""])[0]
@@ -38,19 +60,18 @@ UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
-# Memoria en RAM por usuario
 CHAT_HISTORY: dict[str, list[dict]] = {}
-
-# genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
+    """Serve login page."""
     return templates.TemplateResponse("login.html", {"request": request, "title": "Iniciar sesión"})
 
 
 @app.get("/register", response_class=HTMLResponse)
 async def read_register(request: Request):
+    """Serve registration page."""
     return templates.TemplateResponse("register.html", {"request": request, "title": "Registrarse"})
 
 
@@ -64,12 +85,7 @@ async def register(
     country: str = Form(...),
     city: str = Form(...)
 ):
-    print(f"Name: {name}")
-    print(f"Password: {password}")
-    print(f"Email: {email}")
-    print(f"Phone: {phone}")
-    print(f"Country: {country}")
-    print(f"City: {city}")
+    """Handle registration form submission and send confirmation email."""
 
     formatted_name = name.lower().split(" ")[0]
 
@@ -78,7 +94,6 @@ async def register(
 
     username = registerstuff.username_gen(name=formatted_name)
 
-    # Mapear valores a la plantilla
     context = {
         "name": name,
         "email": email,
@@ -98,17 +113,16 @@ async def register(
 
 @app.post("/login", response_class=HTMLResponse)
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    # ... valida si quieres ...
+    """Log the user in (no validation here) and set a simple uid cookie."""
     response = templates.TemplateResponse(
         "chat.html", {"request": request, "title": "Chat"})
-    # Identificador simple por cookie (aquí uso username directamente)
     response.set_cookie("uid", username, httponly=True, samesite="lax")
     return response
 
 
-# Chat page
 @app.get("/chat", response_class=HTMLResponse)
 async def chat(request: Request):
+    """Serve the chat page with the current user's message history."""
     uid = request.cookies.get("uid", "anon")
     history = CHAT_HISTORY.get(uid, [])
     messages = _render_messages(history)
@@ -120,18 +134,16 @@ async def chat(request: Request):
 
 @app.post("/generate-json")
 async def generate_json(request: Request, prompt: str = Form(...)):
+    """Generate a model response and return it as JSON while updating history."""
     uid = request.cookies.get("uid", "anon")
     history = CHAT_HISTORY.get(uid, [])
-    # agrega user+model al historial
     answer, history = ask_gpt_chat(prompt, history)
     CHAT_HISTORY[uid] = history
     return JSONResponse({"answer": answer})
 
-# Generate content
-
-
 @app.post("/generate", response_class=HTMLResponse)
 async def generate(request: Request, prompt: str = Form(...)):
+    """Generate a model response and re-render the chat template."""
     uid = request.cookies.get("uid", "anon")
     history = CHAT_HISTORY.get(uid, [])
     answer, history = ask_gpt_chat(prompt, history)
@@ -145,13 +157,14 @@ async def generate(request: Request, prompt: str = Form(...)):
 
 @app.post("/reset-chat")
 async def reset_chat(request: Request):
+    """Redirect to chat; reserved for future history reset logic."""
     uid = request.cookies.get("uid", "anon")
-    # print(profile.get_profile(CHAT_HISTORY, uid))
     return RedirectResponse(url="/chat", status_code=303)
 
 
 @app.post("/upload-pdf")
 async def upload_pdf(request: Request, file: UploadFile = File(...)):
+    """Accept a PDF, extract and summarize text, and append to chat history."""
     if file.content_type != "application/pdf" and not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=415, detail="Solo se aceptan archivos PDF.")
@@ -162,13 +175,9 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
     dest.write_bytes(await file.read())
     url = f"/uploads/{fname}"
 
-    # 1) Extraer y resumir
     raw_text = get_pdf_text(str(dest))
-    # print(f"Raw text: {raw_text}")
     context = summarize_pdf_text(original_name, raw_text)
-    # print(f"Context: {context}")
 
-    # 2) Reflejar en historial (persistente al recargar)
     uid = request.cookies.get("uid", "anon")
     history = CHAT_HISTORY.get(uid, [])
     md_msg = f"**PDF recibido:** [{original_name}]({url})\n\n**Contexto breve:**\n{context}"
@@ -178,7 +187,6 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
     ]
     CHAT_HISTORY[uid] = history
 
-    # 3) Respuesta para la UI optimista
     return JSONResponse({
         "ok": True,
         "name": original_name,
@@ -189,10 +197,7 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
 
 @app.get("/profile")
 async def profile(request: Request):
-    # uid = request.cookies.get("uid", "anon")
+    """Serve the profile page with static demo user information."""
     name, email, phone, role, score, country, city, social_media, website, linkedin, github = profile_info.get_profile()
     return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "phone": phone, "role": role, "score": score, "country": country, "city": city, "social_media": social_media, "website": website, "linkedin": linkedin, "github": github})
 
-# if __name__ == "__main__":
-#     port = int(os.getenv("PORT", 6969))
-#     uvicorn.run("main:app", host="0.0.0.0", port=port)

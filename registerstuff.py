@@ -1,3 +1,5 @@
+"""Registration helpers: username generator and HTML email sender."""
+
 from string import Template
 import smtplib
 from email.mime.text import MIMEText
@@ -15,25 +17,22 @@ SMTP_PORT = 587
 
 
 def username_gen(name: str = "user", base: str = "p", length: int = 8) -> str:
+    """Generate a pseudo-unique username token.
+
+    The format is: "{base}-{name}-{hashprefix}".
+    """
     random_str = ''.join(random.choices(
         string.ascii_lowercase + string.digits, k=16))
     hash_str = hashlib.sha256(random_str.encode()).hexdigest()
-    return base + '-' + name + '-' + hash_str[:length]
-
-# def password_cipher(password: str = "password", length: int = 8) -> str:
-#     random_str = ''.join(random.choices(
-#         string.ascii_lowercase + string.digits, k=16))
-#     hash_str = hashlib.sha256(random_str.encode()).hexdigest()
-#     return base + '-' + password + '-' + hash_str[:length]
-
+    return f"{base}-{name}-{hash_str[:length]}"
 
 def send_html_email(to, subject, template_path, context):
+    """Send an HTML email using a template and context values."""
     SMTP_USERNAME = os.getenv('SMTP_USERNAME')
     SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
     with open(template_path, 'r', encoding='utf-8') as f:
         html_template = Template(f.read())
 
-    # Rellenar el HTML con los datos
     html_content = html_template.safe_substitute(context)
 
     msg = MIMEMultipart('alternative')

@@ -1,4 +1,11 @@
+"""Static demo profile provider.
+
+This module returns a fixed profile tuple for rendering in templates.
+"""
+
+
 def get_profile(username: str = None):
+    """Return a static profile tuple; ignores username for now."""
     if username is None:
         name = "Cristian Gomez"
         email = "cristianz20nw@gmail.com"
