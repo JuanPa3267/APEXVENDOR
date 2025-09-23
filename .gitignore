@@ -9,3 +9,6 @@ __pycache__/
 
 # Archivos sensibles o locales
 uploads/
+
+# gitignore
+.gitignore
