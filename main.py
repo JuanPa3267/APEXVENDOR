@@ -197,7 +197,7 @@ async def login(request: Request, username: str = Form(...), password: str = For
         return templates.TemplateResponse(
             "login.html",
             {"request": request, "title": "Login",
-                "error": "Error interno durante la autenticación, inténtalo más tarde."},
+                "error": "Usuario no encontrado."},
             status_code=500
         )
     if not is_valid:
@@ -327,8 +327,37 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
 async def profile(request: Request):
     """Serve the profile page with static demo user information."""
     username, name, email, phone, role, score, country, city, social_media, website, linkedin, github = profile_info.get_profile()
-    print(username)
+    print(linkedin)
     pfp = connector.get_img(username, f"static/img/{username}_pfp.png")
     print(pfp)
 
     return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "phone": phone, "role": role, "score": score, "country": country, "city": city, "social_media": social_media, "website": website, "linkedin": linkedin, "github": github, "pfp": pfp})
+
+@app.post("/update-profile-field")
+async def update_profile_field(request: Request, field: str = Form(...), value: str = Form(...)):
+    """Endpoint to update a single profile field (e.g., social links)."""
+    uid = request.cookies.get("uid", "anon")
+    # For email and phone, also update SMTP_USERNAME or other flows if needed
+    success = False
+    if field in ("email", "phone", "instagram", "website", "linkedin", "github"):
+        success = connector.update_profile_field(uid, field, value)
+    if not success:
+        return JSONResponse({"ok": False}, status_code=500)
+    return JSONResponse({"ok": True})
+
+@app.post("/upload-pfp")
+async def upload_pfp(request: Request, file: UploadFile = File(...)):
+    """Handle profile picture upload, store via Supabase and regenerate local file."""
+    uid = request.cookies.get("uid", "anon")
+    # Save the uploaded file temporarily
+    ext = Path(file.filename).suffix
+    temp_path = UPLOAD_DIR / f"pfp_{uid}_{uuid4().hex}{ext}"
+    contents = await file.read()
+    temp_path.write_bytes(contents)
+    # Store image in Supabase
+    connector.set_img(uid, str(temp_path))
+    # Regenerate local image file
+    output_path = f"static/img/{uid}_pfp.png"
+    connector.get_img(uid, output_path)
+    # Redirect back to profile page
+    return RedirectResponse(url=request.url_for("profile"), status_code=303)

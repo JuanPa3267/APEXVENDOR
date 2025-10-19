@@ -24,12 +24,13 @@ def set_profile(username: str):
     score = data.get("score", 0)
     country = data.get("country", "")
     city = data.get("city", "")
-    social_media = data.get("social_media", "")
-    website = data.get("website", "")
-    linkedin = data.get("linkedin", "")
-    github = data.get("github", "")
+    social_media = data.get("instagram") or ""
+    website = data.get("website") or ""
+    linkedin = data.get("linkedin") or ""
+    github = data.get("github") or ""
 
 
 def get_profile():
+    set_profile(usernameX)
     roleX = "Proveedor" if role == 0 else "Cliente"
     return usernameX, name, email, phone, roleX, score, country, city, social_media, website, linkedin, github

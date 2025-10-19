@@ -1,16 +1,15 @@
 {% extends "forms.html" %} {% block title %}{{ title }}{% endblock %} {% block
 content %}
-{% if error %}
-  <div class="error">
-    {{ error }}
-  </div>
-{% endif %}
-
 <div class="form_div">
+  {% if error %}
+    <div class="error" role="alert">
+      {{ error }}
+    </div>
+  {% endif %}
   <h2>{{ title | default("Login")}}</h2>
   <form action="/login" method="post">
-    <input type="text" name="username" placeholder="Usuario" />
-    <input type="password" name="password" placeholder="Contraseña" />
+    <input type="text" name="username" placeholder="Usuario" required/>
+    <input type="password" name="password" placeholder="Contraseña" required/>
     <button type="submit">Iniciar sesión</button>
   </form>
   <a href="/register">Registrarse</a>

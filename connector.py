@@ -121,10 +121,15 @@ def set_img(username: str, img_path: str):
 
     img_base64 = base64.b64encode(img_bytes).decode("utf-8")
 
-    # UPSERT: replaces if username exists
-    supabase.table("pfps") \
-        .upsert({"username": username, "image_base64": img_base64}) \
-        .execute()
+    if supabase.table("pfps").select("*").eq("username", username).execute().data:
+        supabase.table("pfps") \
+            .update({"image_base64": img_base64}) \
+            .eq("username", username) \
+            .execute()
+    else:
+        supabase.table("pfps") \
+            .insert({"username": username, "image_base64": img_base64}) \
+            .execute()
 
 
 def get_img(username: str, output_path: str):
@@ -156,3 +161,47 @@ def get_img(username: str, output_path: str):
     with open(output_path, "wb") as f:
         f.write(img_bytes)
     return output_path
+
+
+def update_social_media(username: str, social_media: str, website: str, linkedin: str, github: str):
+    """
+    Update a user's social media data in Supabase.
+
+    Args:
+        username: The username to associate with the social media.
+        social_media: The social media of the user.
+        website: The website of the user.
+        linkedin: The linkedin of the user.
+        github: The github of the user.
+    """
+    if not supabase:
+        print("Supabase client not configured, update_social_media skipped.")
+        return
+    supabase.table("profiles") \
+        .update({"social_media": social_media, "website": website, "linkedin": linkedin, "github": github}) \
+        .eq("username", username) \
+        .execute()
+    return True
+
+
+def update_profile_field(username: str, field: str, value: str) -> bool:
+    """
+    Update a single profile field in Supabase for the given user.
+
+    Args:
+        username: The username whose profile to update.
+        field: The profile field name to update (e.g., social_media, website).
+        value: The new value for the field.
+
+    Returns:
+        True if update succeeded, False otherwise.
+    """
+    if not supabase:
+        print("Supabase client not configured, update_profile_field skipped.")
+        return False
+    try:
+        supabase.table("profiles").update({field: value}).eq("username", username).execute()
+        return True
+    except Exception as e:
+        print(f"Supabase update_profile_field error: {e}")
+        return False

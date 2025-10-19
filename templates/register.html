@@ -2,13 +2,13 @@
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
 
-{% if success %}
-  <div class="success">
-    {{ success }}
-  </div>
-{% endif %}
-
 <div class="form_div two-col-container">
+  {% if success %}
+    <div class="success" role="alert">
+      {{ success }}
+    </div>
+  {% endif %}
+
   <h2>{{ title | default("Register") }}</h2>
 
   <form action="/register" method="post" class="two-columns">
