@@ -7,7 +7,7 @@ google-generativeai
 markdown
 PyPDF2
 python-multipart
-bcrypt
 markdown pygments
 pymdown-extensions
 supabase
+bcrypt
