@@ -8,14 +8,15 @@ import connector
 # profile_info.py
 
 # Initialize global variables with default empty values
-name = email = phone = role = country = city = linkedin = github = website = social_media = ""
+usernameX = name = email = phone = role = country = city = linkedin = github = website = social_media = ""
 score = 0
 
 
 def set_profile(username: str):
     data = connector.get_profile(username)
 
-    global name, email, phone, role, score, country, city, social_media, website, linkedin, github
+    global usernameX, name, email, phone, role, score, country, city, social_media, website, linkedin, github
+    usernameX = username
     name = data.get("name", "")
     email = data.get("email", "")
     phone = data.get("phone", "")
@@ -31,4 +32,4 @@ def set_profile(username: str):
 
 def get_profile():
     roleX = "Proveedor" if role == 0 else "Cliente"
-    return name, email, phone, roleX, score, country, city, social_media, website, linkedin, github
+    return usernameX, name, email, phone, roleX, score, country, city, social_media, website, linkedin, github

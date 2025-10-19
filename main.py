@@ -193,20 +193,23 @@ async def login(request: Request, username: str = Form(...), password: str = For
     try:
         is_valid = connector.login(username, password)
     except Exception:
-        raise HTTPException(status_code=500, detail="Internal error during authentication.")
+        raise HTTPException(
+            status_code=500, detail="Internal error during authentication.")
     if not is_valid:
         return templates.TemplateResponse(
             "login.html", {"request": request, "title": "Login", "error": "Usuario o contraseña incorrectos"}, status_code=401)
 
     # Generate response and set session cookie
-    response = templates.TemplateResponse("chat.html", {"request": request, "title": "Chat"})
+    response = templates.TemplateResponse(
+        "chat.html", {"request": request, "title": "Chat"})
     response.set_cookie("uid", username, httponly=True, samesite="lax")
 
     # Load user profile with error handling
     try:
         profile_info.set_profile(username)
     except Exception:
-        raise HTTPException(status_code=500, detail="Error loading user profile.")
+        raise HTTPException(
+            status_code=500, detail="Error loading user profile.")
     return response
 
 
@@ -316,5 +319,9 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
 @app.get("/profile")
 async def profile(request: Request):
     """Serve the profile page with static demo user information."""
-    name, email, phone, role, score, country, city, social_media, website, linkedin, github = profile_info.get_profile()
-    return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "phone": phone, "role": role, "score": score, "country": country, "city": city, "social_media": social_media, "website": website, "linkedin": linkedin, "github": github})
+    username, name, email, phone, role, score, country, city, social_media, website, linkedin, github = profile_info.get_profile()
+    print(username)
+    pfp = connector.get_img(username, f"static/img/{username}_pfp.png")
+    print(pfp)
+
+    return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "phone": phone, "role": role, "score": score, "country": country, "city": city, "social_media": social_media, "website": website, "linkedin": linkedin, "github": github, "pfp": pfp})
