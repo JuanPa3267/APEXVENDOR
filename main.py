@@ -178,7 +178,7 @@ async def register(
         "username": username
     }
 
-    connector.register(username, password)
+    connector.register(username, password, name, email, phone, country, city)
     registerstuff.send_html_email(email, "Registro exitoso",
                                   "templates/register_mail.html", context)
 
@@ -189,13 +189,25 @@ async def register(
 @app.post("/login", response_class=HTMLResponse)
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
     """Log the user in (no validation here) and set a simple uid cookie."""
-    if connector.login(username, password):
-        response = templates.TemplateResponse(
-            "chat.html", {"request": request, "title": "Chat"})
-        response.set_cookie("uid", username, httponly=True, samesite="lax")
-        return response
-    return templates.TemplateResponse(
-        "login.html", {"request": request, "title": "Login", "error": "Usuario o contraseña incorrectos"}, status_code=401)
+    # Authenticate user with error handling
+    try:
+        is_valid = connector.login(username, password)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal error during authentication.")
+    if not is_valid:
+        return templates.TemplateResponse(
+            "login.html", {"request": request, "title": "Login", "error": "Usuario o contraseña incorrectos"}, status_code=401)
+
+    # Generate response and set session cookie
+    response = templates.TemplateResponse("chat.html", {"request": request, "title": "Chat"})
+    response.set_cookie("uid", username, httponly=True, samesite="lax")
+
+    # Load user profile with error handling
+    try:
+        profile_info.set_profile(username)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error loading user profile.")
+    return response
 
 
 @app.get("/chat", response_class=HTMLResponse)

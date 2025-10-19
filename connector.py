@@ -24,11 +24,22 @@ def login(username: str, password: str) -> bool:
         .execute()
     return verify_password(password, resp.data[0]["password"])
 
-def register(username: str, password: str) -> bool:
+
+def register(username: str, password: str, name: str, email: str, phone: str, country: str, city: str) -> bool:
     supabase.table("users") \
         .insert({"username": username, "password": hash_password(password)}) \
         .execute()
+
+    role = 0 if username.split("-")[0] == "p" else 1
+
+    supabase.table("profiles") \
+        .insert({"role": role, "score": 0, "email": email, "phone": phone, "name": name, "country": country, "city": city, "username": username}) \
+        .execute()
     return True
-
-
-print(login("test", "test"))
+  
+def get_profile(username: str):
+    resp = supabase.table("profiles") \
+        .select("*") \
+        .eq("username", username) \
+        .execute()
+    return resp.data[0]

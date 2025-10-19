@@ -1,5 +1,10 @@
 {% extends "forms.html" %} {% block title %}{{ title }}{% endblock %} {% block
 content %}
+{% if error %}
+  <div class="error">
+    {{ error }}
+  </div>
+{% endif %}
 
 <div class="form_div">
   <h2>{{ title | default("Login")}}</h2>

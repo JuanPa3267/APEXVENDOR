@@ -3,19 +3,32 @@
 This module returns a fixed profile tuple for rendering in templates.
 """
 
+import connector
 
-def get_profile(username: str = None):
-    """Return a static profile tuple; ignores username for now."""
-    if username is None:
-        name = "Cristian Gomez"
-        email = "cristianz20nw@gmail.com"
-        phone = "+57 302-491-0408"
-        role = "admin"
-        score = 4.5
-        country = "Colombia"
-        city = "Bogotá"
-        social_media = "https://www.instagram.com/cr15t14ng_/"
-        website = "https://gomezgomez.website/"
-        linkedin = "https://www.linkedin.com/in/cristian-g%C3%B3mez-971261338/"
-        github = "https://github.com/cristianznw"
-    return name, email, phone, role, score, country, city, social_media, website, linkedin, github
+# profile_info.py
+
+# Initialize global variables with default empty values
+name = email = phone = role = country = city = linkedin = github = website = social_media = ""
+score = 0
+
+
+def set_profile(username: str):
+    data = connector.get_profile(username)
+
+    global name, email, phone, role, score, country, city, social_media, website, linkedin, github
+    name = data.get("name", "")
+    email = data.get("email", "")
+    phone = data.get("phone", "")
+    role = data.get("role", "")
+    score = data.get("score", 0)
+    country = data.get("country", "")
+    city = data.get("city", "")
+    social_media = data.get("social_media", "")
+    website = data.get("website", "")
+    linkedin = data.get("linkedin", "")
+    github = data.get("github", "")
+
+
+def get_profile():
+    roleX = "Proveedor" if role == 0 else "Cliente"
+    return name, email, phone, roleX, score, country, city, social_media, website, linkedin, github
