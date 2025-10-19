@@ -193,8 +193,13 @@ async def login(request: Request, username: str = Form(...), password: str = For
     try:
         is_valid = connector.login(username, password)
     except Exception:
-        raise HTTPException(
-            status_code=500, detail="Internal error during authentication.")
+        # Internal error during authentication, show login page without crashing
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "title": "Login",
+                "error": "Error interno durante la autenticación, inténtalo más tarde."},
+            status_code=500
+        )
     if not is_valid:
         return templates.TemplateResponse(
             "login.html", {"request": request, "title": "Login", "error": "Usuario o contraseña incorrectos"}, status_code=401)
@@ -207,9 +212,11 @@ async def login(request: Request, username: str = Form(...), password: str = For
     # Load user profile with error handling
     try:
         profile_info.set_profile(username)
-    except Exception:
-        raise HTTPException(
-            status_code=500, detail="Error loading user profile.")
+    except Exception as e:
+        # Error loading profile, log and proceed with defaults
+        print(f"Error loading user profile: {e}")
+        # continue to chat with default profile data
+        pass
     return response
 
 
