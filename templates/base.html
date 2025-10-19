@@ -22,12 +22,32 @@
             /* Fondo básico (opcional) */
             body {
               min-height: 100dvh;
-              background: radial-gradient(
-                125% 125% at 50% 10%,
-                #ffffff 30%,
-                #e9d26a 100%
-              );
+              background: #FEFCF4;
               margin: 0;
+            }
+            .topbar {
+              margin-top: 1rem;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 0 1rem;
+            }
+            .profile-link {
+              display: inline-flex;
+              align-items: center;
+              margin-left: 0.5rem;
+            }
+            .user-profile {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.25rem;
+              vertical-align: middle;
+            }
+            .profile-icon {
+              width: 1.5rem;
+              height: 1.5rem;
+              fill: currentColor;
+              cursor: pointer;
             }
     </style>
   </head>
@@ -42,7 +62,6 @@
 
         <nav class="sidebar-nav">
           <a href="/chat">Chat</a>
-          <a href="/profile">Profile</a>
           {% block sidebar %}{% endblock %}
         </nav>
       </aside>
@@ -59,6 +78,20 @@
             ☰
           </button>
           <h1 class="app-title">{{ title }}</h1>
+          {% set raw_uid = request.cookies.get('uid') %}
+          {% if raw_uid and '-' in raw_uid %}
+            {% set display_name = raw_uid.split('-')[1] %}
+          {% else %}
+            {% set display_name = raw_uid or 'Invitado' %}
+          {% endif %}
+          <div class="user-profile">
+            <span class="user-name">Hola, {{ display_name|capitalize }}</span>
+            <a href="/profile" class="profile-link" title="Perfil">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="profile-icon" aria-hidden="true">
+                <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/>
+              </svg>
+            </a>
+          </div>
         </header>
 
         <main class="page-main">{% block content %}{% endblock %}</main>
