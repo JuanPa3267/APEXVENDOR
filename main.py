@@ -19,6 +19,8 @@ import profile_info
 import registerstuff
 import re
 
+import connector
+
 
 def _unwrap_markdown_fence(text: str) -> str:
     """
@@ -188,10 +190,13 @@ async def register(
 @app.post("/login", response_class=HTMLResponse)
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
     """Log the user in (no validation here) and set a simple uid cookie."""
-    response = templates.TemplateResponse(
-        "chat.html", {"request": request, "title": "Chat"})
-    response.set_cookie("uid", username, httponly=True, samesite="lax")
-    return response
+    if connector.login(username, password):
+        response = templates.TemplateResponse(
+            "chat.html", {"request": request, "title": "Chat"})
+        response.set_cookie("uid", username, httponly=True, samesite="lax")
+        return response
+    return templates.TemplateResponse(
+        "login.html", {"request": request, "title": "Login", "error": "Usuario o contraseña incorrectos"}, status_code=401)
 
 
 @app.get("/chat", response_class=HTMLResponse)
