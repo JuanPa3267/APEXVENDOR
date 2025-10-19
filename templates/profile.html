@@ -4,11 +4,16 @@ content %}
 <div class="profile_div">
   <h2>{{ name }}</h2>
 
-  <img
-    src="{{ url_for('static', path='/img/profile.png') }}"
-    alt="Profile"
-    class="profile_img"
-  />
+  <form id="pfpForm" action="/upload-pfp" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" id="pfpInput" accept="image/*" style="display:none" onchange="document.getElementById('pfpForm').submit()" />
+    <img
+      src="{{ pfp }}"
+      alt="Profile"
+      class="profile_img"
+      onclick="document.getElementById('pfpInput').click()"
+    />
+  </form>
+  <p class="profile_hint">Click en la imagen para cambiar tu foto de perfil</p>
 
   <div class="profile_parent">
     <div class="profile_basic_info">
@@ -41,15 +46,15 @@ content %}
 
     <div class="profile_contact_info">
       <h3>Contacto</h3>
-      <p><strong>Email:</strong> <a href="mailto:{{ email }}">{{ email }}</a></p>
-      <p><strong>Teléfono:</strong> {{ phone }}</p>
+      <p><strong>Email:</strong> <a href="mailto:{{ email }}" data-field="email" title="Click to open link; Alt+click to edit">{{ email }}</a></p>
+      <p><strong>Teléfono:</strong> <a href="tel:{{ phone }}" data-field="phone" title="Click to open link; Alt+click to edit">{{ phone }}</a></p>
     </div>
 
     <div class="profile_social_info">
       <h3>Redes sociales</h3>
       <ul class="social">
         <li>
-          <a href="{{ social_media }}" target="_blank">
+          <a href="{{ social_media }}" data-field="instagram" target="_blank" title="Click to open link; Alt+click to edit">
             <svg
               aria-label="Instagram"
               width="24"
@@ -76,7 +81,7 @@ content %}
           </a>
         </li>
         <li>
-          <a href="{{ website }}" target="_blank">
+          <a href="{{ website }}" data-field="website" target="_blank">
             <!-- Globe / Website -->
             <svg
               aria-label="Website"
@@ -97,7 +102,7 @@ content %}
           </a>
         </li>
         <li>
-          <a href="{{ linkedin }}" target="_blank">
+          <a href="{{ linkedin }}" data-field="linkedin" target="_blank">
             <svg
               aria-label="LinkedIn"
               width="24"
@@ -125,7 +130,7 @@ content %}
           </a>
         </li>
         <li>
-          <a href="{{ github }}" target="_blank">
+          <a href="{{ github }}" data-field="github" target="_blank">
             <!-- GitHub mark -->
             <svg
               aria-label="GitHub"
@@ -149,8 +154,49 @@ content %}
           </a>
         </li>
       </ul>
+
     </div>
   </div>
+        <p class="profile_hint">Alt+clic para editar los enlaces de tus redes sociales o contacto, clic normal para abrirlos</p>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bind Alt+click edit behavior to social, email and phone links
+document.querySelectorAll('a[data-field]').forEach(elem => {
+  elem.style.cursor = 'pointer';
+  elem.addEventListener('click', async e => {
+    // Alt+Click to edit, normal click opens link
+    if (!e.altKey) {
+      return; // allow default navigation
+    }
+    e.preventDefault();
+    const field = elem.dataset.field;
+    let current;
+    if (field === 'email' || field === 'phone') {
+      current = elem.textContent.trim();
+    } else {
+      current = elem.href;
+    }
+    const promptText = field === 'phone' ? 'Enter new ' + field + ':' : 'Enter new ' + field.replace('_', ' ') + ' URL:';
+    const newVal = prompt(promptText, current);
+    if (newVal) {
+        // Normalize URLs for social fields
+        let normalized = newVal;
+        if (field !== 'email' && field !== 'phone') {
+          if (!/^https?:\/\//i.test(normalized)) {
+            normalized = 'https://' + normalized;
+          }
+        }
+        const formData = new FormData();
+        formData.append('field', field);
+        formData.append('value', normalized);
+      const res = await fetch('/update-profile-field', { method: 'POST', body: formData });
+      if (res.ok) location.reload(); else alert('Error updating ' + field);
+    }
+  });
+});
+</script>
 {% endblock %}
