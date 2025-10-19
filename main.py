@@ -161,7 +161,6 @@ async def register(
     country: str = Form(...),
     city: str = Form(...)
 ):
-    """Handle registration form submission and send confirmation email."""
 
     formatted_name = name.lower().split(" ")[0]
 
@@ -179,12 +178,12 @@ async def register(
         "username": username
     }
 
+    connector.register(username, password)
     registerstuff.send_html_email(email, "Registro exitoso",
                                   "templates/register_mail.html", context)
 
     return templates.TemplateResponse(
-        "register.html", {"request": request, "title": "Registrarse"}
-    )
+        "register.html", {"request": request, "title": "Registrarse", "success": "Usuario registrado exitosamente"})
 
 
 @app.post("/login", response_class=HTMLResponse)

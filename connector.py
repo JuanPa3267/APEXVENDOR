@@ -24,5 +24,11 @@ def login(username: str, password: str) -> bool:
         .execute()
     return verify_password(password, resp.data[0]["password"])
 
+def register(username: str, password: str) -> bool:
+    supabase.table("users") \
+        .insert({"username": username, "password": hash_password(password)}) \
+        .execute()
+    return True
+
 
 print(login("test", "test"))
