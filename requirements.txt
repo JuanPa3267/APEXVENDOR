@@ -10,3 +10,4 @@ python-multipart
 bcrypt
 markdown pygments
 pymdown-extensions
+supabase
