@@ -9,3 +9,4 @@ __pycache__/
 
 # Archivos sensibles o locales
 uploads/
+static/img/
