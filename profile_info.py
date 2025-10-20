@@ -1,26 +1,25 @@
-"""Static demo profile provider.
-
-This module returns a fixed profile tuple for rendering in templates.
-"""
+"""profile_info.py — Adaptado a ApexVendor"""
 
 import connector
 
-# profile_info.py
-
-# Initialize global variables with default empty values
+# Valores por defecto globales
 usernameX = name = email = phone = role = country = city = linkedin = github = website = social_media = ""
 score = 0
 
 
 def set_profile(username: str):
     data = connector.get_profile(username)
+    if not data:
+        # limpia si no hay datos
+        _assign_defaults(username)
+        return
 
     global usernameX, name, email, phone, role, score, country, city, social_media, website, linkedin, github
-    usernameX = username
-    name = data.get("name", "")
-    email = data.get("email", "")
+    usernameX = data.get("username", "")
+    name = data.get("username", "").split("-")[1].capitalize()
+    email = data.get("correo", "")
     phone = data.get("phone", "")
-    role = data.get("role", "")
+    role = data.get("role", "Sin rol")
     score = data.get("score", 0)
     country = data.get("country", "")
     city = data.get("city", "")
@@ -32,5 +31,13 @@ def set_profile(username: str):
 
 def get_profile():
     set_profile(usernameX)
-    roleX = "Proveedor" if role == 0 else "Cliente"
+    roleX = role
     return usernameX, name, email, phone, roleX, score, country, city, social_media, website, linkedin, github
+
+
+def _assign_defaults(username: str):
+    global usernameX, name, email, phone, role, score, country, city, social_media, website, linkedin, github
+    usernameX = username
+    name = email = phone = country = city = social_media = website = linkedin = github = ""
+    role = "Sin rol"
+    score = 0

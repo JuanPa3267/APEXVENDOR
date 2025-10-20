@@ -1,0 +1,134 @@
+{% extends "forms.html" %} {% block title %}{{ title }}{% endblock %} {% block
+content %}
+
+<div class="form_div two-col-container">
+  {% if success %}
+  <div class="success" role="alert">{{ success }}</div>
+  {% endif %} {% if error %}
+  <div class="error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <h2>{{ title | default("Registrarse como proveedor") }}</h2>
+
+  <form action="/register_p" method="post" class="two-columns">
+    <!-- Nombre Legal -->
+    <div class="form-field">
+      <label for="nombre_legal">Nombre Legal</label>
+      <input
+        id="nombre_legal"
+        type="text"
+        name="nombre_legal"
+        placeholder="Nombre Legal"
+        required
+        autocomplete="nombre_legal"
+      />
+    </div>
+
+    <!-- Email -->
+    <div class="form-field">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        name="email"
+        placeholder="Email"
+        required
+        autocomplete="email"
+      />
+    </div>
+
+    <!-- Teléfono -->
+    <div class="form-field">
+      <label for="phone">Teléfono</label>
+      <input
+        id="phone"
+        type="tel"
+        name="phone"
+        placeholder="Teléfono"
+        required
+        autocomplete="tel"
+      />
+    </div>
+
+    <!-- País -->
+    <div class="form-field">
+      <label for="country">País</label>
+      <input
+        id="country"
+        type="text"
+        name="country"
+        placeholder="País"
+        required
+        autocomplete="country-name"
+      />
+    </div>
+
+    <!-- Ciudad -->
+    <div class="form-field">
+      <label for="city">Ciudad</label>
+      <input
+        id="city"
+        type="text"
+        name="city"
+        placeholder="Ciudad"
+        required
+        autocomplete="address-level2"
+      />
+    </div>
+
+    <!-- Identificación / NIT -->
+    <div class="form-field">
+      <label for="identificacion_nit">Identificación / NIT</label>
+      <input
+        id="identificacion_nit"
+        type="text"
+        name="identificacion_nit"
+        placeholder="Ej: 123456789-0"
+        required
+      />
+    </div>
+
+    <!-- Tipo de proveedor -->
+    <div class="form-field">
+      <label for="tipo_proveedor">Tipo de proveedor</label>
+      <select id="tipo_proveedor" name="tipo_proveedor" required>
+        <option value="Persona">Persona</option>
+        <option value="Empresa">Empresa</option>
+      </select>
+    </div>
+
+    <!-- Contraseña -->
+    <div class="form-field">
+      <label for="password">Contraseña</label>
+      <input
+        id="password"
+        type="password"
+        name="password"
+        placeholder="Contraseña"
+        required
+        autocomplete="new-password"
+      />
+    </div>
+
+    <!-- Marcar como administrador -->
+    <div class="form-field" style="grid-column: 1 / -1">
+      <label
+        for="is_admin"
+        style="display: flex; align-items: center; gap: 0.5rem"
+      >
+        <input id="is_admin" type="checkbox" name="is_admin" value="true" />
+        Registrar como administrador (opcional)
+      </label>
+      <small
+        >Si se marca, se registrará como administrador en lugar de
+        proveedor.</small
+      >
+    </div>
+
+    <button type="submit">Registrarse</button>
+  </form>
+
+  <a href="/">Iniciar sesión</a>
+</div>
+
+{% endblock %}

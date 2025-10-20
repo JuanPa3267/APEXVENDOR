@@ -416,6 +416,7 @@ a {
 
 .prompt-row {
   margin: 0;
+  /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
 }
 
 /* fila de botones */
@@ -488,7 +489,7 @@ a {
   z-index: 10;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08); /* Added for a smoother top edge */
+  /* box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08); */
 
   /* centra el contenido y limita ancho */
   display: grid;
@@ -497,6 +498,21 @@ a {
   row-gap: 0.75rem;
   padding: 0.5rem 0; /* padding vertical */
   /* width: fit-content; */
+  margin-bottom: 1rem;
+}
+
+/* Animate composer position */
+.composer {
+  transition: top 1s ease, bottom 1s ease, transform 1s ease;
+  /* Slowed down animation */
+}
+
+/* Center composer when no messages */
+.chat-layout.no-messages .composer {
+  position: absolute;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
 }
 
 /* En desktop, cuando la sidebar está abierta,
@@ -741,6 +757,8 @@ a {
 .styled-input {
   padding: 0.75rem 1rem;
   border: 1px solid rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
   border-radius: 0.5rem;
   font-size: 1rem;
   background-color: rgba(255, 255, 255, 0.7); /* Semitransparent white */
@@ -820,4 +838,93 @@ a {
   color: var(--Color6);
   margin-top: 0.5rem;
   grid-column: 1 / -1;
+}
+
+/* ----- Input con acciones internas ----- */
+.input-shell {
+  position: relative;
+  width: 100%;
+  border-radius: 0.75rem;      /* mismo borde redondeado */
+  box-shadow: 0px 15px 22px 4px rgba(0,0,0,0.2);
+  overflow: hidden;            /* recorta sombra interna si es necesario */
+}
+
+
+.input-actions {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+/* Aumentamos el padding-right del input para que no tape el texto */
+.styled-input {
+  border: none;               /* quitamos borde para que no se duplique */
+  border-radius: 0.75rem;     /* igual que el contenedor */
+  width: 100%;
+  padding: 0.75rem 1rem;
+  box-sizing: border-box;
+}
+
+.styled-prompt-input {
+  border: none;               /* quitamos borde para que no se duplique */
+  border-radius: 0.75rem;     /* igual que el contenedor */
+  width: 100%;
+  padding: 0.75rem 1rem;
+  box-sizing: border-box;
+  background: #FDFCF8;
+  color: var(--Color8);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+
+/* Botones “icono” dentro del input */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.1rem;
+  min-width: 2.1rem;
+  padding: 0 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.9);
+  color: #0d1a36;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+}
+
+.icon-btn:hover {
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+}
+
+.icon-btn.primary {
+  background: var(--Color2);
+  color: var(--Color8);
+  border-color: rgba(0,0,0,0.1);
+}
+.icon-btn.primary:hover {
+  background: var(--Color3);
+}
+
+/* Responsive: si el ancho es muy justo, reducimos padding reservado */
+@media (max-width: 480px) {
+  .styled-input { padding-right: 7rem; }
+  .icon-btn { height: 2rem; min-width: 2rem; }
+}
+
+/* Adding styles for sidebar-toggle SVG icons */
+.sidebar-toggle svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: currentColor;
+  display: block;
 }

@@ -1,9 +1,5 @@
-"""
-connector.py
+# connector.py — básico para esquema ApexVendor
 
-Handles Supabase client initialization and provides user authentication,
-registration, profile retrieval, and image storage/retrieval functions.
-"""
 from supabase import create_client, Client
 from supabase.client import ClientOptions
 from dotenv import load_dotenv
@@ -12,196 +8,227 @@ from passX import verify_password, hash_password
 import base64
 
 load_dotenv()
-url = os.getenv("SUPABASE_URL")
-key = os.getenv("SUPABASE_KEY")
-schema = os.getenv("SUPABASE_SCHEMA", "public")
-if url and key:
-    supabase: Client = create_client(
-        url,
-        key,
-        options=ClientOptions(schema=schema)
-    )
+
+SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY: str = os.getenv(
+    "SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY", "")
+SUPABASE_SCHEMA: str = os.getenv("SUPABASE_SCHEMA", "ApexVendor")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print("Warning: missing SUPABASE_URL or SUPABASE_KEY. Supabase disabled.")
+    supabase: Client | None = None
 else:
-    print("Warning: SUPABASE_URL or SUPABASE_KEY not set. Supabase features disabled.")
-    supabase = None
+    supabase: Client = create_client(
+        SUPABASE_URL,
+        SUPABASE_KEY,
+        options=ClientOptions(schema=SUPABASE_SCHEMA)  # ← usa ApexVendor
+    )
+
+# ------------------------
+# Auth (ApexVendor.usuario)
+# ------------------------
 
 
 def login(username: str, password: str) -> bool:
     """
-    Authenticate a user by verifying their password against the stored hash.
-
-    Args:
-        username: The username of the user attempting to log in.
-        password: The plaintext password provided by the user.
-
-    Returns:
-        True if authentication succeeds, False otherwise.
+    Autentica con ApexVendor.usuario usando 'contraseña_hash'.
     """
     if not supabase:
-        print("Supabase client not configured, login skipped.")
         return False
     try:
-        resp = supabase.table("users")\
-            .select("password")\
-            .eq("username", username)\
+        resp = (
+            supabase.table("usuario")
+            .select("contraseña_hash")
+            .eq("username", username)
             .execute()
+        )
+        if not resp.data:
+            return False
+        stored_hash = resp.data[0]["contraseña_hash"]
+        return verify_password(password, stored_hash)
     except Exception as e:
-        print(f"Supabase login error: {e}")
+        print(f"login error: {e}")
         return False
-    return verify_password(password, resp.data[0]["password"])
+
+# ------------------------
+# Perfil (usuario + perfil_proveedor / perfil_admin)
+# ------------------------
 
 
-def register(username: str, password: str, name: str, email: str, phone: str, country: str, city: str) -> bool:
+def get_profile(username: str) -> dict:
     """
-    Register a new user and create their profile record in Supabase.
-
-    Args:
-        username: Generated username prefixed with 'p-' or 'c-'.
-        password: Plaintext password to hash and store.
-        name: Full name of the user.
-        email: Email address.
-        phone: Contact phone number.
-        country: Country of residence.
-        city: City of residence.
-
-    Returns:
-        True if registration succeeded, False if Supabase is unavailable.
+    Devuelve un diccionario normalizado para tu UI a partir de:
+      - ApexVendor.usuario (username, correo, redes)
+      - ApexVendor.perfil_proveedor o ApexVendor.perfil_admin
+    Siempre retorna claves esperadas por la UI, con defaults si faltan.
     """
     if not supabase:
-        print("Supabase client not configured, register skipped.")
-        return False
-    supabase.table("users")\
-        .insert({"username": username, "password": hash_password(password)})\
-        .execute()
-
-    role = 0 if username.split("-")[0] == "p" else 1
-
-    supabase.table("profiles") \
-        .insert({"role": role, "score": 0, "email": email, "phone": phone, "name": name, "country": country, "city": city, "username": username}) \
-        .execute()
-    return True
-
-
-def get_profile(username: str):
-    """
-    Retrieve a user's profile data from Supabase.
-
-    Args:
-        username: The username whose profile to fetch.
-
-    Returns:
-        A dict of profile fields (role, score, name, etc.), or empty dict if unavailable.
-    """
-    if not supabase:
-        print("Supabase client not configured, get_profile skipped.")
         return {}
-    resp = supabase.table("profiles") \
+
+    resp = supabase.table("usuario") \
         .select("*") \
         .eq("username", username) \
+        .single() \
         .execute()
-    return resp.data[0]
+
+    return {
+        "username": username,
+        "name": resp.data["nombre"],
+        "email": resp.data["correo"],
+        "phone": resp.data["telefono"],
+        "role": resp.data["rol"],
+        "score": 0,
+        "country": resp.data["pais"],
+        "city": resp.data["ciudad"],
+        "instagram": resp.data["instagram"],
+        "website": resp.data["website"],
+        "linkedin": resp.data["linkedin"],
+        "github": resp.data["github"],
+    }
 
 
-def set_img(username: str, img_path: str):
+# ------------------------
+# Imagen de perfil (ApexVendor.pfps)
+# ------------------------
+
+
+def set_img(username: str, img_path: str) -> None:
     """
-    Upload or update a user's profile image in Supabase.
-
-    Args:
-        username: The username to associate with the image.
-        img_path: Local filesystem path to the image file.
-
-    Returns:
-        None
+    Sube/actualiza imagen base64 en ApexVendor.pfps (username FK a usuario.username).
     """
     if not supabase:
-        print("Supabase client not configured, set_img skipped.")
         return
-    with open(img_path, "rb") as f:
-        img_bytes = f.read()
+    try:
+        with open(img_path, "rb") as f:
+            img_bytes = f.read()
+        img_base64 = base64.b64encode(img_bytes).decode("utf-8")
 
-    img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+        # intenta upsert; si cliente no soporta, usa update/insert
+        try:
+            supabase.table("pfps").upsert(
+                {"username": username, "image_base64": img_base64}
+            ).execute()
+        except Exception:
+            upd = (
+                supabase.table("pfps")
+                .update({"image_base64": img_base64})
+                .eq("username", username)
+                .execute()
+            )
+            if not upd.data:
+                supabase.table("pfps").insert(
+                    {"username": username, "image_base64": img_base64}
+                ).execute()
+    except Exception as e:
+        print(f"set_img error: {e}")
 
-    if supabase.table("pfps").select("*").eq("username", username).execute().data:
-        supabase.table("pfps") \
-            .update({"image_base64": img_base64}) \
-            .eq("username", username) \
-            .execute()
-    else:
-        supabase.table("pfps") \
-            .insert({"username": username, "image_base64": img_base64}) \
-            .execute()
 
-
-def get_img(username: str, output_path: str):
+def get_img(username: str, output_path: str) -> str:
     """
-    Download and decode a user's profile image from Supabase to a local file.
-
-    Args:
-        username: The username whose image to fetch.
-        output_path: Local path where the image will be saved.
-
-    Returns:
-        Path to the saved image, or default placeholder if not found.
+    Descarga la imagen de ApexVendor.pfps → guarda en output_path.
     """
     if not supabase:
-        print("Supabase client not configured, get_img skipped.")
         return "static/img/profile.png"
-    resp = supabase.table("pfps") \
-        .select("image_base64") \
-        .eq("username", username) \
-        .execute()  # REMOVE .single()
+    try:
+        try:
+            resp = (
+                supabase.table("pfps")
+                .select("image_base64")
+                .eq("username", username)
+                .single()
+                .execute()
+            )
+        except Exception:
+            resp = (
+                supabase.table("pfps")
+                .select("image_base64")
+                .eq("username", username)
+                .execute()
+            )
+            if resp.data:
+                resp.data = resp.data[0]
 
-    if not resp.data:
-        print("No profile image found")
+        if not resp.data or not resp.data.get("image_base64"):
+            return "static/img/profile.png"
+
+        img_bytes = base64.b64decode(resp.data["image_base64"].strip())
+        with open(output_path, "wb") as f:
+            f.write(img_bytes)
+        return output_path
+    except Exception as e:
+        print(f"get_img error: {e}")
         return "static/img/profile.png"
 
-    img_base64 = resp.data[0]["image_base64"].strip()
-    img_bytes = base64.b64decode(img_base64)
-
-    with open(output_path, "wb") as f:
-        f.write(img_bytes)
-    return output_path
+# ------------------------
+# Registro (ApexVendor.usuario + perfil_proveedor / perfil_admin)
+# ------------------------
 
 
-def update_social_media(username: str, social_media: str, website: str, linkedin: str, github: str):
+def register(
+    username: str,
+    password: str,
+    name: str,
+    email: str,
+    phone: str,
+    country: str,
+    city: str,
+    *,
+    tipo_proveedor: str = "Persona",        # "Persona" | "Empresa"
+    identificacion_nit: str | None = None,  # requerido si es proveedor
+    is_admin: bool = False                  # True → crea perfil_admin
+) -> bool:
     """
-    Update a user's social media data in Supabase.
-
-    Args:
-        username: The username to associate with the social media.
-        social_media: The social media of the user.
-        website: The website of the user.
-        linkedin: The linkedin of the user.
-        github: The github of the user.
-    """
-    if not supabase:
-        print("Supabase client not configured, update_social_media skipped.")
-        return
-    supabase.table("profiles") \
-        .update({"social_media": social_media, "website": website, "linkedin": linkedin, "github": github}) \
-        .eq("username", username) \
-        .execute()
-    return True
-
-
-def update_profile_field(username: str, field: str, value: str) -> bool:
-    """
-    Update a single profile field in Supabase for the given user.
-
-    Args:
-        username: The username whose profile to update.
-        field: The profile field name to update (e.g., social_media, website).
-        value: The new value for the field.
-
-    Returns:
-        True if update succeeded, False otherwise.
+    Crea usuario en ApexVendor.usuario y su perfil:
+    - Si is_admin=True → perfil_admin
+    - Si no → perfil_proveedor (requiere identificacion_nit; si falta, usa TEMP-<id>)
     """
     if not supabase:
-        print("Supabase client not configured, update_profile_field skipped.")
         return False
     try:
-        supabase.table("profiles").update({field: value}).eq("username", username).execute()
+        # 1) usuario
+        supabase.table("usuario").insert({
+            "username": username,
+            "contraseña_hash": hash_password(password),
+            "correo": email,
+            "github": "",      # NOT NULL en tu schema → cadena vacía por defecto
+            "instagram": None,
+            "linkedin": None,
+            "website": None,
+        }).execute()
+
+        # recuperar id_usuario
+        u = (
+            supabase.table("usuario")
+            .select("id_usuario")
+            .eq("username", username)
+            .execute()
+        )
+        if not u.data:
+            print("register: no id_usuario luego del insert")
+            return False
+        id_usuario = u.data[0]["id_usuario"]
+
+        # 2) perfil
+        if is_admin:
+            supabase.table("perfil_admin").insert({
+                "id_admin": id_usuario,
+                "nombre": name or username,
+            }).execute()
+        else:
+            nit = identificacion_nit or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
+            supabase.table("perfil_proveedor").insert({
+                "id_proveedor": id_usuario,
+                "tipo_proveedor": tipo_proveedor,
+                "identificacion_nit": nit,
+                "nombres_apellidos": name,
+                "telefono": phone or None,
+                "ciudad": city or None,
+                "direccion": None,
+                "portafolio_resumen": None,
+                "nombre_legal": None,
+            }).execute()
+
         return True
     except Exception as e:
-        print(f"Supabase update_profile_field error: {e}")
+        print(f"register error: {e}")
         return False

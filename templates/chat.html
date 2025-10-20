@@ -1,158 +1,293 @@
-{% extends "base.html" %}
-{% block title %}{{ title }}{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}{{ title }}{% endblock %} {% block
+content %}
 <section class="chat-layout no-scrollbar">
   <!-- MENSAJES (scrollable) -->
   <ul class="messages no-scrollbar" id="chat">
-    {% for msg in messages %}
-      {% if msg.role == 'user' %}
-        <li class="message user">
-          <div class="bubble">{{ msg.text }}</div>
-        </li>
-      {% else %}
-        <li class="message assistant">
-          <!-- Render en SERVIDOR con python-markdown -->
-          <div class="bubble prose">{{ msg.text | md | safe }}</div>
-        </li>
-      {% endif %}
-    {% endfor %}
+    {% for msg in messages %} {% if msg.role == 'user' %}
+    <li class="message user">
+      <div class="bubble">{{ msg.text }}</div>
+    </li>
+    {% else %}
+    <li class="message assistant">
+      <!-- Render en SERVIDOR con python-markdown -->
+      <div class="bubble prose">{{ msg.text | md | safe }}</div>
+    </li>
+    {% endif %} {% endfor %}
   </ul>
 
   <!-- COMPOSER (fijo abajo) -->
   <div class="composer">
-    <!-- Fila 1: input -->
-    <form id="promptForm" class="prompt-row" action="/generate" method="post">
-      <input
-        id="promptInput"
-        type="text"
-        name="prompt"
-        placeholder="Escribe tu mensaje…"
-        autocomplete="off"
-        class="styled-input"
-        required
-      />
+    <form
+      id="promptForm"
+      class="prompt-row"
+      action="/generate"
+      method="post"
+      autocomplete="off"
+    >
+      <div class="input-shell">
+        <input
+          id="promptInput"
+          type="text"
+          name="prompt"
+          placeholder="¿Qué te gustaría preguntarme?"
+          class="styled-prompt-input"
+          required
+        />
+        <div class="input-actions">
+          <button
+            type="button"
+            id="attachPdfBtn"
+            class="icon-btn"
+            title="Adjuntar Documento"
+            aria-label="Adjuntar Documento"
+          >
+            <!-- Attach SVG icon -->
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <path
+                  d="M19 9C19 7.14348 18.2625 5.36299 16.9498 4.05023C15.637 2.73748 13.8565 2 12 2C10.1435 2 8.36305 2.73748 7.05029 4.05023C5.73754 5.36299 5 7.14348 5 9V15C5 16.8565 5.73754 18.637 7.05029 19.9498C8.36305 21.2625 10.1435 22 12 22"
+                  stroke="#000000"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+                <path
+                  d="M19 9V14.66C19 15.7208 18.5786 16.7383 17.8284 17.4884C17.0783 18.2385 16.0609 18.66 15 18.66C13.9391 18.66 12.9218 18.2385 12.1716 17.4884C11.4215 16.7383 11 15.7208 11 14.66V8"
+                  stroke="#000000"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+              </g>
+            </svg>
+          </button>
+          <input type="file" id="pdfInput" accept="application/pdf" hidden />
+          <button
+            type="button"
+            id="resetChatBtn"
+            class="icon-btn"
+            title="Borrar Chat"
+            aria-label="Borrar Chat"
+          >
+            <!-- Reset SVG icon -->
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <path
+                  d="M4 7H20"
+                  stroke="#000000"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+                <path
+                  d="M6 10L7.70141 19.3578C7.87432 20.3088 8.70258 21 9.66915 21H14.3308C15.2974 21 16.1257 20.3087 16.2986 19.3578L18 10"
+                  stroke="#000000"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+                <path
+                  d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z"
+                  stroke="#000000"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+              </g>
+            </svg>
+          </button>
+          <button
+            id="sendBtn"
+            type="submit"
+            class="icon-btn primary"
+            title="Enviar Mensaje"
+            aria-label="Enviar Mensaje"
+          >
+            <!-- Send SVG icon -->
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <path
+                  d="M18.0693 8.50867L9.50929 4.22867C3.75929 1.34867 1.39929 3.70867 4.27929 9.45867L5.14929 11.1987C5.39929 11.7087 5.39929 12.2987 5.14929 12.8087L4.27929 14.5387C1.39929 20.2887 3.74929 22.6487 9.50929 19.7687L18.0693 15.4887C21.9093 13.5687 21.9093 10.4287 18.0693 8.50867ZM14.8393 12.7487H9.43929C9.02929 12.7487 8.68929 12.4087 8.68929 11.9987C8.68929 11.5887 9.02929 11.2487 9.43929 11.2487H14.8393C15.2493 11.2487 15.5893 11.5887 15.5893 11.9987C15.5893 12.4087 15.2493 12.7487 14.8393 12.7487Z"
+                  fill="#1f2229"
+                ></path>
+              </g>
+            </svg>
+          </button>
+        </div>
+      </div>
     </form>
-
-    <!-- Fila 2: botones -->
-    <div class="btns-row">
-      <button type="button" id="attachPdfBtn">Adjuntar proyecto en PDF</button>
-      <input type="file" id="pdfInput" accept="application/pdf" hidden />
-      <button id="sendBtn" form="promptForm" type="submit">Enviar</button>
-      <form class="reset" action="/reset-chat" method="post">
-        <button type="submit">Borrar chat</button>
-      </form>
-    </div>
   </div>
-</section>
 
-<script>
-  const chatUl   = document.getElementById("chat");
-  const form     = document.getElementById("promptForm");
-  const input    = document.getElementById("promptInput");
-  const sendBtn  = document.getElementById("sendBtn");
-  const attachBtn = document.getElementById("attachPdfBtn");
-  const pdfInput  = document.getElementById("pdfInput");
+  <script>
+    const chatUl = document.getElementById("chat");
+    const layout = document.querySelector(".chat-layout");
+    // Initial centering if no messages
+    if (chatUl.childElementCount === 0) {
+      layout.classList.add("no-messages");
+    }
+    const form = document.getElementById("promptForm");
+    const input = document.getElementById("promptInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const attachBtn = document.getElementById("attachPdfBtn");
+    const pdfInput = document.getElementById("pdfInput");
+    const resetBtn = document.getElementById("resetChatBtn");
 
-  function scrollToBottom() {
-    chatUl.scrollTop = chatUl.scrollHeight;
-  }
-  scrollToBottom();
+    function scrollToBottom() {
+      chatUl.scrollTop = chatUl.scrollHeight;
+    }
+    scrollToBottom();
 
-  // Enter = enviar, Shift+Enter = salto de línea (si luego usas <textarea>)
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // Enter = enviar, Shift+Enter = salto de línea (si luego usas <textarea>)
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      form.requestSubmit();
-    }
-  });
+      // Slide composer down
+      layout.classList.remove("no-messages");
+      const text = input.value.trim();
+      if (!text) return;
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const text = input.value.trim();
-    if (!text) return;
+      // 1) pinta al instante el mensaje del usuario
+      const userLi = document.createElement("li");
+      userLi.className = "message user";
+      userLi.innerHTML = `<div class="bubble"></div>`;
+      userLi.querySelector(".bubble").textContent = text;
+      chatUl.appendChild(userLi);
 
-    // 1) pinta al instante el mensaje del usuario
-    const userLi = document.createElement("li");
-    userLi.className = "message user";
-    userLi.innerHTML = `<div class="bubble"></div>`;
-    userLi.querySelector(".bubble").textContent = text;
-    chatUl.appendChild(userLi);
-
-    // 2) placeholder IA
-    const aiLi = document.createElement("li");
-    aiLi.className = "message assistant";
-    aiLi.innerHTML = `<div class="bubble prose"><em>Pensando…</em></div>`;
-    chatUl.appendChild(aiLi);
-
-    input.value = "";
-    input.focus();
-    sendBtn.disabled = true;
-    scrollToBottom();
-
-    // 3) llamada sin recargar: el servidor devuelve HTML ya renderizado
-    try {
-      const fd = new FormData();
-      fd.append("prompt", text);
-      const res = await fetch("/generate-json", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-
-      // 4) reemplaza placeholder con el HTML ya seguro del servidor
-      aiLi.querySelector(".bubble").innerHTML = data.html || "";
-    } catch (err) {
-      aiLi.querySelector(".bubble").textContent = "Error al generar respuesta.";
-      console.error(err);
-    } finally {
-      sendBtn.disabled = false;
-      scrollToBottom();
-    }
-  });
-
-  // ---- PDF ----
-  attachBtn.addEventListener("click", () => pdfInput.click());
-
-  pdfInput.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      alert("Solo se aceptan archivos PDF.");
-      pdfInput.value = "";
-      return;
-    }
-
-    // Burbuja del usuario (optimista)
-    const userLi = document.createElement("li");
-    userLi.className = "message user";
-    userLi.innerHTML = `<div class="bubble"></div>`;
-    userLi.querySelector(".bubble").textContent = `📎 ${file.name}`;
-    chatUl.appendChild(userLi);
-    scrollToBottom();
-
-    // Subir al servidor
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/upload-pdf", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-
-      // Burbuja del asistente con HTML ya renderizado en el servidor
+      // 2) placeholder IA
       const aiLi = document.createElement("li");
       aiLi.className = "message assistant";
-      aiLi.innerHTML = `<div class="bubble prose">${data.html || "<strong>PDF recibido.</strong>"}</div>`;
+      aiLi.innerHTML = `<div class="bubble prose"><em>Pensando…</em></div>`;
+      chatUl.appendChild(aiLi);
+
+      input.value = "";
+      input.focus();
+      sendBtn.disabled = true;
+      scrollToBottom();
+
+      // 3) llamada sin recargar: el servidor devuelve HTML ya renderizado
+      try {
+        const fd = new FormData();
+        fd.append("prompt", text);
+        const res = await fetch("/generate-json", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        // 4) reemplaza placeholder con el HTML ya seguro del servidor
+        aiLi.querySelector(".bubble").innerHTML = data.html || "";
+      } catch (err) {
+        aiLi.querySelector(".bubble").textContent =
+          "Error al generar respuesta.";
+        console.error(err);
+      } finally {
+        sendBtn.disabled = false;
+        scrollToBottom();
+      }
+    });
+    // Borrar chat: POST a /reset-chat y recarga la vista
+    resetBtn.addEventListener("click", async () => {
+      try {
+        await fetch("/reset-chat", { method: "POST" });
+      } catch (err) {
+        console.error(err);
+        alert("No se pudo borrar el chat.");
+        return;
+      }
+      // Clear messages first
+      chatUl.innerHTML = "";
+      // Then slide composer up once no messages remain
+      layout.classList.add("no-messages");
+    });
+
+    // ---- PDF ----
+    attachBtn.addEventListener("click", () => pdfInput.click());
+
+    pdfInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      // Slide composer down when uploading PDF
+      layout.classList.remove("no-messages");
+      if (
+        file.type !== "application/pdf" &&
+        !file.name.toLowerCase().endsWith(".pdf")
+      ) {
+        alert("Solo se aceptan archivos PDF.");
+        pdfInput.value = "";
+        return;
+      }
+
+      // Burbuja del usuario (optimista)
+      const userLi = document.createElement("li");
+      userLi.className = "message user";
+      userLi.innerHTML = `<div class="bubble"></div>`;
+      userLi.querySelector(
+        ".bubble"
+      ).innerHTML = `<strong>Archivo a analizar</strong>: ${file.name}`;
+      chatUl.appendChild(userLi);
+      scrollToBottom();
+      // Placeholder for AI while uploading PDF
+      const aiLi = document.createElement("li");
+      aiLi.className = "message assistant";
+      aiLi.innerHTML = `<div class="bubble prose"><em>Revisando el documento...</em></div>`;
       chatUl.appendChild(aiLi);
       scrollToBottom();
-    } catch (err) {
-      const errLi = document.createElement("li");
-      errLi.className = "message assistant";
-      errLi.innerHTML = `<div class="bubble">Error al subir el PDF.</div>`;
-      chatUl.appendChild(errLi);
-      console.error(err);
-    } finally {
-      pdfInput.value = ""; // limpia selección
-    }
-  });
-</script>
-{% endblock %}
+
+      // Subir al servidor
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/upload-pdf", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        // Update placeholder with server-rendered HTML
+        aiLi.querySelector(".bubble").innerHTML =
+          data.html || "<strong>PDF recibido.</strong>";
+        scrollToBottom();
+      } catch (err) {
+        console.error(err);
+        // Show error in placeholder bubble
+        aiLi.querySelector(".bubble").textContent = "Error al subir el PDF.";
+        scrollToBottom();
+      } finally {
+        pdfInput.value = ""; // limpia selección
+      }
+    });
+  </script>
+  {% endblock %}
+</section>
