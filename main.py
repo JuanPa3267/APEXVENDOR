@@ -413,12 +413,128 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
 @app.get("/profile")
 async def profile(request: Request):
     """Serve the profile page with static demo user information."""
-    username, name, email, phone, role, score, country, city, social_media, website, linkedin, github = profile_info.get_profile()
-    print(linkedin)
-    pfp = connector.get_img(username, f"static/img/{username}_pfp.png")
-    print(pfp)
+    uid = request.cookies.get("uid")
+    if uid:
+        try:
+            profile_info.set_profile(uid)
+        except Exception as exc:
+            print(f"Error refreshing profile for {uid}: {exc}")
 
-    return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "phone": phone, "role": role, "score": score, "country": country, "city": city, "social_media": social_media, "website": website, "linkedin": linkedin, "github": github, "pfp": pfp})
+    username, name, email, phone, role, score, country, city, social_media, website, linkedin, github = profile_info.get_profile()
+    pfp = connector.get_img(username, f"static/img/{username}_pfp.png")
+
+    return templates.TemplateResponse(
+        "profile.html",
+        {
+            "request": request,
+            "title": "Profile",
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "role": role,
+            "score": score,
+            "country": country,
+            "city": city,
+            "social_media": social_media,
+            "website": website,
+            "linkedin": linkedin,
+            "github": github,
+            "pfp": pfp,
+        },
+    )
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    """Display a lightweight dashboard with the administrator's key information."""
+    uid = request.cookies.get("uid")
+    if uid:
+        try:
+            profile_info.set_profile(uid)
+        except Exception as exc:
+            print(f"Error refreshing profile for {uid}: {exc}")
+
+    username, name, email, phone, role, _score, country, city, _social, _website, _linkedin, _github = profile_info.get_profile()
+
+    return templates.TemplateResponse(
+        "admin.html",
+        {
+            "request": request,
+            "title": "Administración",
+            "username": username,
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "role": role,
+            "country": country,
+            "city": city,
+        },
+    )
+
+
+@app.get("/admin/nuevo", response_class=HTMLResponse)
+async def admin_new_form(request: Request):
+    """Render the form that allows an existing admin to register another administrator."""
+    return templates.TemplateResponse(
+        "admin_create.html",
+        {
+            "request": request,
+            "title": "Registrar administrador",
+            "form_values": {},
+            "success_message": None,
+            "error_message": None,
+        },
+    )
+
+
+@app.post("/admin/nuevo", response_class=HTMLResponse)
+async def admin_new_submit(
+    request: Request,
+    nombre: str = Form(...),
+    correo: str = Form(...),
+    telefono: str = Form(""),
+    pais: str = Form(""),
+    ciudad: str = Form(""),
+    password: str = Form(...),
+):
+    """Process the creation of a new administrator profile."""
+    base_name = nombre.split()[0].lower() if nombre else "admin"
+    username = registerstuff.username_gen(name=base_name, base="a")
+
+    success = connector.register(
+        username=username,
+        password=password,
+        name=nombre,
+        email=correo,
+        phone=telefono,
+        country=pais,
+        city=ciudad,
+        is_admin=True,
+    )
+
+    form_values = {
+        "nombre": nombre,
+        "correo": correo,
+        "telefono": telefono,
+        "pais": pais,
+        "ciudad": ciudad,
+    }
+
+    context = {
+        "request": request,
+        "title": "Registrar administrador",
+        "form_values": form_values,
+        "success_message": None,
+        "error_message": None,
+    }
+
+    if success:
+        context["success_message"] = f"Administrador creado correctamente. Usuario asignado: {username}."
+        context["form_values"] = {}
+    else:
+        context["error_message"] = "No fue posible registrar al administrador. Inténtalo nuevamente."
+
+    return templates.TemplateResponse("admin_create.html", context)
 
 
 @app.post("/update-profile-field")
