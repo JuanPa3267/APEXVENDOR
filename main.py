@@ -256,7 +256,7 @@ async def register_p(
     if not ok:
         return templates.TemplateResponse(
             "register_p.html",
-            {"request": request, "title": "Registrarse como proveedor",
+            {"request": request, "title": "Registrarse como Proveedor",
              "error": "No se pudo registrar el usuario. Verifica los datos e inténtalo de nuevo."},
             status_code=500
         )
