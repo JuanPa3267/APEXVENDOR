@@ -3,7 +3,7 @@
 import connector
 
 # Valores por defecto globales
-usernameX = name = email = phone = role = country = city = linkedin = github = website = social_media = ""
+usernameX = name = email = status = instagram = linkedin = website = github = nombres_apellidos = id_nit = telefono = direccion = ciudad = portafolio_resumen = ""
 score = 0
 
 
@@ -14,30 +14,25 @@ def set_profile(username: str):
         _assign_defaults(username)
         return
 
-    global usernameX, name, email, phone, role, score, country, city, social_media, website, linkedin, github
-    usernameX = data.get("username", "")
-    name = data.get("username", "").split("-")[1].capitalize()
-    email = data.get("correo", "")
-    phone = data.get("phone", "")
-    role = data.get("role", "Sin rol")
-    score = data.get("score", 0)
-    country = data.get("country", "")
-    city = data.get("city", "")
-    social_media = data.get("instagram") or ""
-    website = data.get("website") or ""
-    linkedin = data.get("linkedin") or ""
-    github = data.get("github") or ""
+    global usernameX, name, email, status, instagram, linkedin, website, github, nombres_apellidos, id_nit, telefono, direccion, ciudad, portafolio_resumen, score
+    
+    usernameX = data[0]
+    name = data[0].split("-")[1].capitalize()
+    email = data[1]
+    status = data[2]
+    instagram = data[3] or ""
+    linkedin = data[4] or ""
+    website = data[5] or ""
+    github = data[6] or ""
+    nombres_apellidos = data[7]
+    id_nit = data[8]
+    telefono = data[9]
+    direccion = data[10]
+    ciudad = data[11]
+    portafolio_resumen = data[12]
+    score = data[13]
 
 
 def get_profile():
     set_profile(usernameX)
-    roleX = role
-    return usernameX, name, email, phone, roleX, score, country, city, social_media, website, linkedin, github
-
-
-def _assign_defaults(username: str):
-    global usernameX, name, email, phone, role, score, country, city, social_media, website, linkedin, github
-    usernameX = username
-    name = email = phone = country = city = social_media = website = linkedin = github = ""
-    role = "Sin rol"
-    score = 0
+    return usernameX, name, email, status, instagram, linkedin, website, github, nombres_apellidos, id_nit, telefono, direccion, ciudad, portafolio_resumen, score

@@ -413,12 +413,11 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
 @app.get("/profile")
 async def profile(request: Request):
     """Serve the profile page with static demo user information."""
-    username, name, email, phone, role, score, country, city, social_media, website, linkedin, github = profile_info.get_profile()
-    print(linkedin)
-    pfp = connector.get_img(username, f"static/img/{username}_pfp.png")
-    print(pfp)
+    usernameX, name, email, status, instagram, linkedin, website, github, nombres_apellidos, id_nit, telefono, direccion, ciudad, portafolio_resumen, score = profile_info.get_profile()
 
-    return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "phone": phone, "role": role, "score": score, "country": country, "city": city, "social_media": social_media, "website": website, "linkedin": linkedin, "github": github, "pfp": pfp})
+    pfp = connector.get_img(usernameX, f"static/img/{usernameX}_pfp.png")
+
+    return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "status": status, "instagram": instagram, "linkedin": linkedin, "website": website, "github": github, "nombres_apellidos": nombres_apellidos, "id_nit": id_nit, "telefono": telefono, "direccion": direccion, "ciudad": ciudad, "portafolio_resumen": portafolio_resumen, "score": score, "pfp": pfp})
 
 
 @app.post("/update-profile-field")

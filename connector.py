@@ -55,36 +55,37 @@ def login(username: str, password: str) -> bool:
 # ------------------------
 
 
-def get_profile(username: str) -> dict:
-    """
-    Devuelve un diccionario normalizado para tu UI a partir de:
-      - ApexVendor.usuario (username, correo, redes)
-      - ApexVendor.perfil_proveedor o ApexVendor.perfil_admin
-    Siempre retorna claves esperadas por la UI, con defaults si faltan.
-    """
-    if not supabase:
-        return {}
+def get_profile(username: str):
 
-    resp = supabase.table("usuario") \
-        .select("*") \
+    data_usuario = supabase.table("usuario") \
+        .select("id_usuario, correo, estado_cuenta, instagram, linkedin, website, github") \
         .eq("username", username) \
         .single() \
         .execute()
 
-    return {
-        "username": username,
-        "name": resp.data["nombre"],
-        "email": resp.data["correo"],
-        "phone": resp.data["telefono"],
-        "role": resp.data["rol"],
-        "score": 0,
-        "country": resp.data["pais"],
-        "city": resp.data["ciudad"],
-        "instagram": resp.data["instagram"],
-        "website": resp.data["website"],
-        "linkedin": resp.data["linkedin"],
-        "github": resp.data["github"],
-    }
+    id_usuario = data_usuario.data["id_usuario"]
+    correo = data_usuario.data["correo"]
+    estado_cuenta = data_usuario.data["estado_cuenta"]
+    instagram = data_usuario.data["instagram"]
+    linkedin = data_usuario.data["linkedin"]
+    website = data_usuario.data["website"]
+    github = data_usuario.data["github"]
+
+    resp = supabase.table("perfil_proveedor") \
+        .select("*") \
+        .eq("id_proveedor", id_usuario) \
+        .single() \
+        .execute()
+
+    nombres_apellidos = resp.data["nombres_apellidos"]
+    id_nit = resp.data["identificacion_nit"]
+    telefono = resp.data["telefono"]
+    direccion = resp.data["direccion"]
+    ciudad = resp.data["ciudad"]
+    portafolio_resumen = resp.data["portafolio_resumen"]
+    score = resp.data["score"]
+
+    return username, correo, estado_cuenta, instagram, linkedin, website, github, nombres_apellidos, id_nit, telefono, direccion, ciudad, portafolio_resumen, score
 
 
 # ------------------------
@@ -105,9 +106,10 @@ def set_img(username: str, img_path: str) -> None:
 
         # intenta upsert; si cliente no soporta, usa update/insert
         try:
-            supabase.table("pfps").upsert(
-                {"username": username, "image_base64": img_base64}
-            ).execute()
+            supabase.table("pfps") \
+                .update({"image_base64": img_base64}) \
+                .eq("username", username) \
+                .execute()
         except Exception:
             upd = (
                 supabase.table("pfps")
@@ -163,6 +165,7 @@ def get_img(username: str, output_path: str) -> str:
 # Registro (ApexVendor.usuario + perfil_proveedor / perfil_admin)
 # ------------------------
 
+
 def register_p(
     username: str,
     password: str,
@@ -215,18 +218,18 @@ def register_p(
             "portafolio_resumen": portafolio_resumen,
             "ciudad": ciudad,
         }).execute()
-        
-        w = (supabase.table("rol") \
-            .select("*") \
-            .eq("nombre", "Proveedor") \
-            .single() \
-            .execute()
-        )
+
+        w = (supabase.table("rol")
+             .select("*")
+             .eq("nombre", "Proveedor")
+             .single()
+             .execute()
+             )
         if not w.data:
             print("register_p: no rol luego del insert")
             return False
         id_rol = w.data["id_rol"]
-        
+
         # 3) usuario_rol
         supabase.table("usuario_rol").insert({
             "id_usuario": id_usuario,
@@ -237,6 +240,7 @@ def register_p(
     except Exception as e:
         print(f"register_p error: {e}")
         return False
+
 
 def register(
     username: str,
@@ -305,4 +309,33 @@ def register(
         return True
     except Exception as e:
         print(f"register error: {e}")
+        return False
+
+
+def update_profile_field(username: str, field: str, value: str) -> bool:
+    if not supabase:
+        return False
+    try:
+        # recuperar id_usuario
+        u = (
+            supabase.table("usuario")
+            .select("id_usuario")
+            .eq("username", username)
+            .single()
+            .execute()
+        )
+        if not u.data:
+            print("update_profile_field: no id_usuario luego del select")
+            return False
+        id_usuario = u.data["id_usuario"]
+
+        if field == "correo" or field == "instagram" or field == "linkedin" or field == "website" or field == "github":
+            supabase.table("usuario").update({field: value}).eq(
+                "username", username).execute()
+        else:
+            supabase.table("perfil_proveedor").update({field: value}).eq(
+                "id_proveedor", id_usuario).execute()
+        return True
+    except Exception as e:
+        print(f"update_profile_field error: {e}")
         return False
