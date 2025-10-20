@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Panel del administrador{% endblock %}
+
+{% block sidebar %}
+  {{ super() }}
+  <a href="{{ url_for('profile') }}">Perfil</a>
+  <a href="{{ url_for('admin_dashboard') }}" aria-current="page">Administración</a>
+{% endblock %}
+
+{% block content %}
+<div class="profile_div admin-dashboard">
+  <div class="admin-header">
+    <h2>Administración de ApexVendor</h2>
+    <p>Consulta tu información básica como administrador y gestiona a tu equipo.</p>
+  </div>
+
+  <section class="admin-summary">
+    <h3>Datos básicos</h3>
+    <div class="admin-summary-grid">
+      <div class="admin-summary-item">
+        <span class="admin-summary-label">Nombre</span>
+        <span class="admin-summary-value">{{ name or "No disponible" }}</span>
+      </div>
+      <div class="admin-summary-item">
+        <span class="admin-summary-label">Correo</span>
+        <a class="admin-summary-link" href="mailto:{{ email }}">{{ email or "No disponible" }}</a>
+      </div>
+      <div class="admin-summary-item">
+        <span class="admin-summary-label">Usuario</span>
+        <span class="admin-summary-value">{{ username or "No asignado" }}</span>
+      </div>
+      <div class="admin-summary-item">
+        <span class="admin-summary-label">Rol</span>
+        <span class="admin-summary-value">{{ role or "Administrador" }}</span>
+      </div>
+      <div class="admin-summary-item">
+        <span class="admin-summary-label">Teléfono</span>
+        {% if phone %}
+          <a class="admin-summary-link" href="tel:{{ phone }}">{{ phone }}</a>
+        {% else %}
+          <span class="admin-summary-value">No disponible</span>
+        {% endif %}
+      </div>
+      <div class="admin-summary-item">
+        <span class="admin-summary-label">Ubicación</span>
+        <span class="admin-summary-value">
+          {% if country or city %}
+            {{ city }}{% if city and country %}, {% endif %}{{ country }}
+          {% else %}
+            No registrada
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="admin-actions">
+    <h3>Acciones rápidas</h3>
+    <p>Invita a otro miembro del equipo a administrar ApexVendor.</p>
+    <a class="button-link" href="{{ url_for('admin_new_form') }}">
+      <span>➕</span>
+      <span>Agregar nuevo administrador</span>
+    </a>
+  </section>
+</div>
+{% endblock %}

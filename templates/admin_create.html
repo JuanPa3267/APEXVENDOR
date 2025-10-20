@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Registrar administrador{% endblock %}
+
+{% block sidebar %}
+  {{ super() }}
+  <a href="{{ url_for('profile') }}">Perfil</a>
+  <a href="{{ url_for('admin_dashboard') }}">Administración</a>
+{% endblock %}
+
+{% block content %}
+<div class="profile_div admin-form-card">
+  <h2>Registrar nuevo administrador</h2>
+  <p class="admin-form-subtitle">Completa los datos para habilitar a otro administrador en la plataforma.</p>
+
+  {% if success_message %}
+    <div class="form-feedback form-feedback-success">{{ success_message }}</div>
+  {% elif error_message %}
+    <div class="form-feedback form-feedback-error">{{ error_message }}</div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('admin_new_submit') }}">
+    <div class="two-columns">
+      <div class="form-field">
+        <label for="nombre">Nombre completo</label>
+        <input
+          id="nombre"
+          name="nombre"
+          type="text"
+          class="styled-input"
+          placeholder="Ej. Ana Pérez"
+          value="{{ form_values.nombre or '' }}"
+          required
+        />
+      </div>
+
+      <div class="form-field">
+        <label for="correo">Correo electrónico</label>
+        <input
+          id="correo"
+          name="correo"
+          type="email"
+          class="styled-input"
+          placeholder="ana@apexvendor.com"
+          value="{{ form_values.correo or '' }}"
+          required
+        />
+      </div>
+
+      <div class="form-field">
+        <label for="telefono">Teléfono</label>
+        <input
+          id="telefono"
+          name="telefono"
+          type="tel"
+          class="styled-input"
+          placeholder="Ej. +57 300 123 4567"
+          value="{{ form_values.telefono or '' }}"
+        />
+      </div>
+
+      <div class="form-field">
+        <label for="pais">País</label>
+        <input
+          id="pais"
+          name="pais"
+          type="text"
+          class="styled-input"
+          placeholder="Ej. Colombia"
+          value="{{ form_values.pais or '' }}"
+        />
+      </div>
+
+      <div class="form-field">
+        <label for="ciudad">Ciudad</label>
+        <input
+          id="ciudad"
+          name="ciudad"
+          type="text"
+          class="styled-input"
+          placeholder="Ej. Medellín"
+          value="{{ form_values.ciudad or '' }}"
+        />
+      </div>
+
+      <div class="form-field">
+        <label for="password">Contraseña temporal</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          class="styled-input"
+          placeholder="Ingresa una contraseña segura"
+          required
+        />
+      </div>
+    </div>
+
+    <div class="admin-form-actions">
+      <a class="button-secondary" href="{{ url_for('admin_dashboard') }}">Cancelar</a>
+      <button type="submit">Crear administrador</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
