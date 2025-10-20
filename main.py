@@ -159,15 +159,19 @@ async def register(
     email: str = Form(...),
     phone: str = Form(...),
     country: str = Form(...),
-    city: str = Form(...)
+    city: str = Form(...),
+    identificacion_nit: str = Form(...),        # NUEVO (requerido)
+    tipo_proveedor: str = Form("Persona"),      # NUEVO: "Persona" | "Empresa"
+    is_admin: bool = Form(False),               # NUEVO: forzar perfil admin
 ):
-
+    # Username base según rol
     formatted_name = name.lower().split(" ")[0]
-
     if formatted_name == "fabian":
         formatted_name = "favian"
 
-    username = registerstuff.username_gen(name=formatted_name)
+    base_prefix = "a" if is_admin else "p"  # "a-" admin, "p-" proveedor
+    username = registerstuff.username_gen(
+        name=formatted_name, base=base_prefix)
 
     context = {
         "name": name,
@@ -178,12 +182,93 @@ async def register(
         "username": username
     }
 
-    connector.register(username, password, name, email, phone, country, city)
-    registerstuff.send_html_email(email, "Registro exitoso",
-                                  "templates/register_mail.html", context)
+    ok = connector.register(
+        username, password, name, email, phone, country, city,
+        tipo_proveedor=tipo_proveedor,
+        identificacion_nit=identificacion_nit,
+        is_admin=is_admin
+    )
+    if not ok:
+        return templates.TemplateResponse(
+            "register.html",
+            {"request": request, "title": "Registrarse",
+             "error": "No se pudo registrar el usuario. Verifica los datos e inténtalo de nuevo."},
+            status_code=500
+        )
+
+    registerstuff.send_html_email(
+        email, "Registro exitoso",
+        "templates/register_mail.html", context
+    )
 
     return templates.TemplateResponse(
-        "register.html", {"request": request, "title": "Registrarse", "success": "Usuario registrado exitosamente"})
+        "register.html",
+        {"request": request, "title": "Registrarse",
+         "success": "Usuario registrado exitosamente"}
+    )
+
+
+@app.get("/register_p", response_class=HTMLResponse)
+async def read_register(request: Request):
+    """Serve registration page."""
+    return templates.TemplateResponse("register_p.html", {"request": request, "title": "Registrarse como proveedor"})
+
+
+@app.post("/register_p", response_class=HTMLResponse)
+async def register(
+    request: Request,
+    name: str = Form(...),
+    password: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(...),
+    country: str = Form(...),
+    city: str = Form(...),
+    identificacion_nit: str = Form(...),        # NUEVO (requerido)
+    tipo_proveedor: str = Form("Persona"),      # NUEVO: "Persona" | "Empresa"
+    is_admin: bool = Form(False),               # NUEVO: forzar perfil admin
+):
+    # Username base según rol
+    formatted_name = name.lower().split(" ")[0]
+    if formatted_name == "fabian":
+        formatted_name = "favian"
+
+    base_prefix = "a" if is_admin else "p"  # "a-" admin, "p-" proveedor
+    username = registerstuff.username_gen(
+        name=formatted_name, base=base_prefix)
+
+    context = {
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "country": country,
+        "city": city,
+        "username": username
+    }
+
+    ok = connector.register(
+        username, password, name, email, phone, country, city,
+        tipo_proveedor=tipo_proveedor,
+        identificacion_nit=identificacion_nit,
+        is_admin=is_admin
+    )
+    if not ok:
+        return templates.TemplateResponse(
+            "register_p.html",
+            {"request": request, "title": "Registrarse como proveedor",
+             "error": "No se pudo registrar el usuario. Verifica los datos e inténtalo de nuevo."},
+            status_code=500
+        )
+
+    registerstuff.send_html_email(
+        email, "Registro exitoso",
+        "templates/register_mail.html", context
+    )
+
+    return templates.TemplateResponse(
+        "register_p.html",
+        {"request": request, "title": "Registrarse como proveedor",
+         "success": "Usuario registrado exitosamente"}
+    )
 
 
 @app.post("/login", response_class=HTMLResponse)
