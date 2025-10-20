@@ -240,7 +240,8 @@ content %}
     pdfInput.addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
-
+      // Slide composer down when uploading PDF
+      layout.classList.remove("no-messages");
       if (
         file.type !== "application/pdf" &&
         !file.name.toLowerCase().endsWith(".pdf")
@@ -254,8 +255,16 @@ content %}
       const userLi = document.createElement("li");
       userLi.className = "message user";
       userLi.innerHTML = `<div class="bubble"></div>`;
-      userLi.querySelector(".bubble").textContent = `📎 ${file.name}`;
+      userLi.querySelector(
+        ".bubble"
+      ).innerHTML = `<strong>Archivo a analizar</strong>: ${file.name}`;
       chatUl.appendChild(userLi);
+      scrollToBottom();
+      // Placeholder for AI while uploading PDF
+      const aiLi = document.createElement("li");
+      aiLi.className = "message assistant";
+      aiLi.innerHTML = `<div class="bubble prose"><em>Revisando el documento...</em></div>`;
+      chatUl.appendChild(aiLi);
       scrollToBottom();
 
       // Subir al servidor
@@ -266,20 +275,15 @@ content %}
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
 
-        // Burbuja del asistente con HTML ya renderizado en el servidor
-        const aiLi = document.createElement("li");
-        aiLi.className = "message assistant";
-        aiLi.innerHTML = `<div class="bubble prose">${
-          data.html || "<strong>PDF recibido.</strong>"
-        }</div>`;
-        chatUl.appendChild(aiLi);
+        // Update placeholder with server-rendered HTML
+        aiLi.querySelector(".bubble").innerHTML =
+          data.html || "<strong>PDF recibido.</strong>";
         scrollToBottom();
       } catch (err) {
-        const errLi = document.createElement("li");
-        errLi.className = "message assistant";
-        errLi.innerHTML = `<div class="bubble">Error al subir el PDF.</div>`;
-        chatUl.appendChild(errLi);
         console.error(err);
+        // Show error in placeholder bubble
+        aiLi.querySelector(".bubble").textContent = "Error al subir el PDF.";
+        scrollToBottom();
       } finally {
         pdfInput.value = ""; // limpia selección
       }
