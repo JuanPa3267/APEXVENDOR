@@ -333,6 +333,7 @@ async def profile(request: Request):
 
     return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "phone": phone, "role": role, "score": score, "country": country, "city": city, "social_media": social_media, "website": website, "linkedin": linkedin, "github": github, "pfp": pfp})
 
+
 @app.post("/update-profile-field")
 async def update_profile_field(request: Request, field: str = Form(...), value: str = Form(...)):
     """Endpoint to update a single profile field (e.g., social links)."""
@@ -344,6 +345,7 @@ async def update_profile_field(request: Request, field: str = Form(...), value: 
     if not success:
         return JSONResponse({"ok": False}, status_code=500)
     return JSONResponse({"ok": True})
+
 
 @app.post("/upload-pfp")
 async def upload_pfp(request: Request, file: UploadFile = File(...)):
