@@ -8,7 +8,7 @@ content %}
   <div class="error" role="alert">{{ error }}</div>
   {% endif %}
 
-  <h2>{{ title | default("Registrarse como proveedor") }}</h2>
+  <h2>{{ title | default("Registrarse") }}</h2>
 
   <form action="/register_p" method="post" class="two-columns">
     <!-- Nombre Legal -->
@@ -24,55 +24,29 @@ content %}
       />
     </div>
 
-    <!-- Email -->
+    <!-- Nombre Completo   -->
     <div class="form-field">
-      <label for="email">Email</label>
+      <label for="nombres_apellidos">Nombre Completo</label>
       <input
-        id="email"
+        id="nombres_apellidos"
+        type="text"
+        name="nombres_apellidos"
+        placeholder="Nombres y Apellidos"
+        required
+        autocomplete="nombres_apellidos"
+      />
+    </div>
+
+    <!-- Correo -->
+    <div class="form-field">
+      <label for="correo">Correo</label>
+      <input
+        id="correo"
         type="email"
-        name="email"
-        placeholder="Email"
+        name="correo"
+        placeholder="Correo"
         required
-        autocomplete="email"
-      />
-    </div>
-
-    <!-- Teléfono -->
-    <div class="form-field">
-      <label for="phone">Teléfono</label>
-      <input
-        id="phone"
-        type="tel"
-        name="phone"
-        placeholder="Teléfono"
-        required
-        autocomplete="tel"
-      />
-    </div>
-
-    <!-- País -->
-    <div class="form-field">
-      <label for="country">País</label>
-      <input
-        id="country"
-        type="text"
-        name="country"
-        placeholder="País"
-        required
-        autocomplete="country-name"
-      />
-    </div>
-
-    <!-- Ciudad -->
-    <div class="form-field">
-      <label for="city">Ciudad</label>
-      <input
-        id="city"
-        type="text"
-        name="city"
-        placeholder="Ciudad"
-        required
-        autocomplete="address-level2"
+        autocomplete="correo"
       />
     </div>
 
@@ -83,7 +57,59 @@ content %}
         id="identificacion_nit"
         type="text"
         name="identificacion_nit"
-        placeholder="Ej: 123456789-0"
+        placeholder="Identificación / NIT"
+        required
+        autocomplete="identificacion_nit"
+      />
+    </div>
+
+    <!-- Teléfono -->
+    <div class="form-field">
+      <label for="telefono">Teléfono</label>
+      <input
+        id="telefono"
+        type="text"
+        name="telefono"
+        placeholder="Teléfono"
+        required
+        autocomplete="telefono"
+      />
+    </div>
+
+    <!-- Dirección -->
+    <div class="form-field">
+      <label for="direccion">Dirección</label>
+      <input
+        id="direccion"
+        type="text"
+        name="direccion"
+        placeholder="Dirección"
+        required
+        autocomplete="direccion"
+      />
+    </div>
+
+    <!-- Ciudad -->
+    <div class="form-field">
+      <label for="ciudad">Ciudad</label>
+      <input
+        id="ciudad"
+        type="text"
+        name="ciudad"
+        placeholder="Ciudad"
+        required
+        autocomplete="ciudad"
+      />
+    </div>
+
+    <!-- Portafolio Resumen -->
+    <div class="form-field">
+      <label for="portafolio_resumen">Portafolio Resumen</label>
+      <input
+        id="portafolio_resumen"
+        type="text"
+        name="portafolio_resumen"
+        placeholder="Portafolio Resumen"
         required
       />
     </div>
@@ -110,22 +136,7 @@ content %}
       />
     </div>
 
-    <!-- Marcar como administrador -->
-    <div class="form-field" style="grid-column: 1 / -1">
-      <label
-        for="is_admin"
-        style="display: flex; align-items: center; gap: 0.5rem"
-      >
-        <input id="is_admin" type="checkbox" name="is_admin" value="true" />
-        Registrar como administrador (opcional)
-      </label>
-      <small
-        >Si se marca, se registrará como administrador en lugar de
-        proveedor.</small
-      >
-    </div>
-
-    <button type="submit">Registrarse</button>
+    <button type="submit">Registrarse como proveedor</button>
   </form>
 
   <a href="/">Iniciar sesión</a>

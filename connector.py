@@ -163,6 +163,80 @@ def get_img(username: str, output_path: str) -> str:
 # Registro (ApexVendor.usuario + perfil_proveedor / perfil_admin)
 # ------------------------
 
+def register_p(
+    username: str,
+    password: str,
+    nombre_legal: str,
+    nombres_apellidos: str,
+    correo: str,
+    identificacion_nit: str,
+    telefono: str,
+    direccion: str,
+    ciudad: str,
+    portafolio_resumen: str,
+    tipo_proveedor: str,
+):
+    pass
+    if not supabase:
+        return False
+    try:
+        # 1) usuario
+        supabase.table("usuario").insert({
+            "correo": correo,
+            "contraseña_hash": hash_password(password),
+            "username": username,
+            "github": None,
+            "instagram": None,
+            "linkedin": None,
+            "website": None,
+        }).execute()
+
+        # recuperar id_usuario
+        u = (
+            supabase.table("usuario")
+            .select("id_usuario")
+            .eq("username", username)
+            .execute()
+        )
+        if not u.data:
+            print("register: no id_usuario luego del insert")
+            return False
+        id_usuario = u.data[0]["id_usuario"]
+
+        # 2) perfil
+        supabase.table("perfil_proveedor").insert({
+            "id_proveedor": id_usuario,
+            "tipo_proveedor": tipo_proveedor,
+            "identificacion_nit": identificacion_nit,
+            "nombre_legal": nombre_legal,
+            "nombres_apellidos": nombres_apellidos,
+            "telefono": telefono,
+            "direccion": direccion,
+            "portafolio_resumen": portafolio_resumen,
+            "ciudad": ciudad,
+        }).execute()
+        
+        w = (supabase.table("rol") \
+            .select("*") \
+            .eq("nombre", "Proveedor") \
+            .single() \
+            .execute()
+        )
+        if not w.data:
+            print("register_p: no rol luego del insert")
+            return False
+        id_rol = w.data["id_rol"]
+        
+        # 3) usuario_rol
+        supabase.table("usuario_rol").insert({
+            "id_usuario": id_usuario,
+            "id_rol": id_rol,
+        }).execute()
+
+        return True
+    except Exception as e:
+        print(f"register_p error: {e}")
+        return False
 
 def register(
     username: str,

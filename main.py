@@ -215,41 +215,43 @@ async def read_register(request: Request):
 
 
 @app.post("/register_p", response_class=HTMLResponse)
-async def register(
+async def register_p(
     request: Request,
-    name: str = Form(...),
+    nombre_legal: str = Form(...),
+    nombres_apellidos: str = Form(...),
     password: str = Form(...),
-    email: str = Form(...),
-    phone: str = Form(...),
-    country: str = Form(...),
-    city: str = Form(...),
-    identificacion_nit: str = Form(...),        # NUEVO (requerido)
-    tipo_proveedor: str = Form("Persona"),      # NUEVO: "Persona" | "Empresa"
-    is_admin: bool = Form(False),               # NUEVO: forzar perfil admin
+    correo: str = Form(...),
+    identificacion_nit: str = Form(...),
+    telefono: str = Form(...),
+    direccion: str = Form(...),
+    ciudad: str = Form(...),
+    portafolio_resumen: str = Form(...),
+    tipo_proveedor: str = Form("Persona"),
+    is_admin: bool = Form(False),
 ):
     # Username base según rol
-    formatted_name = name.lower().split(" ")[0]
+    formatted_name = nombres_apellidos.lower().split(" ")[0]
     if formatted_name == "fabian":
         formatted_name = "favian"
 
-    base_prefix = "a" if is_admin else "p"  # "a-" admin, "p-" proveedor
+    base_prefix = "p"  # "a-" admin, "p-" proveedor
     username = registerstuff.username_gen(
         name=formatted_name, base=base_prefix)
 
     context = {
-        "name": name,
-        "email": email,
-        "phone": phone,
-        "country": country,
-        "city": city,
+        "nombre_legal": nombre_legal,
+        "nombres_apellidos": nombres_apellidos,
+        "email": correo,
+        "identificacion_nit": identificacion_nit,
+        "telefono": telefono,
+        "direccion": direccion,
+        "ciudad": ciudad,
+        "portafolio_resumen": portafolio_resumen,
         "username": username
     }
 
-    ok = connector.register(
-        username, password, name, email, phone, country, city,
-        tipo_proveedor=tipo_proveedor,
-        identificacion_nit=identificacion_nit,
-        is_admin=is_admin
+    ok = connector.register_p(
+        username, password, nombre_legal, nombres_apellidos, correo, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, tipo_proveedor
     )
     if not ok:
         return templates.TemplateResponse(
@@ -260,7 +262,7 @@ async def register(
         )
 
     registerstuff.send_html_email(
-        email, "Registro exitoso",
+        correo, "Registro exitoso",
         "templates/register_mail.html", context
     )
 
