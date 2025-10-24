@@ -4,7 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Mi App{% endblock %}</title>
-    <link rel="icon" href="{{ url_for('static', path='/favicon.ico') }}" type="image/x-icon" sizes="any">
+    <link
+      rel="icon"
+      href="{{ url_for('static', path='/favicon.ico') }}"
+      type="image/x-icon"
+      sizes="any"
+    />
 
     <link
       rel="stylesheet"
@@ -14,12 +19,9 @@
     <style>
       /* reset mínimo + fondo */
       body {
-        min-height: 100dvh; /* mejor en móviles */
-        background: radial-gradient(
-          125% 125% at 50% 100%,
-          #ffffff 40%,
-          #e9d26a 100%
-        );
+        min-height: 100dvh;
+        background: #fefcf4;
+        margin: 0;
       }
       main {
         position: relative;

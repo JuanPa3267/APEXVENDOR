@@ -30,6 +30,8 @@ def send_html_email(to, subject, template_path, context):
     """Send an HTML email using a template and context values."""
     SMTP_USERNAME = os.getenv('SMTP_USERNAME')
     SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
+    print(context)
+    
     with open(template_path, 'r', encoding='utf-8') as f:
         html_template = Template(f.read())
 
