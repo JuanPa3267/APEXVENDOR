@@ -110,7 +110,7 @@ def md_filter(text: str) -> str:
         text,
         extensions=extensions,
         extension_configs=extension_configs,
-        output_format="html5",
+        output_format="html",
     )
 
 
@@ -211,7 +211,7 @@ async def register(
 
 
 @app.get("/register_p", response_class=HTMLResponse)
-async def read_register(request: Request):
+async def read_register_p(request: Request):
     """Serve registration page."""
     return templates.TemplateResponse("register_p.html", {"request": request, "title": "Registrarse como proveedor"})
 
