@@ -1,0 +1,61 @@
+{% extends "forms.html" %}
+{% block title %}Panel de Administrador{% endblock %}
+{% block content %}
+
+<div class="form_div two-col-container">
+  {% if success %}
+  <div class="success" role="alert">{{ success }}</div>
+  {% endif %}
+  {% if error %}
+  <div class="error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <h2>Panel de Administrador</h2>
+
+  <!-- Encabezado con foto de perfil -->
+  <div class="profile-header" style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+    <div style="width:100px; height:100px; border-radius:50%; overflow:hidden; box-shadow:0 0 8px rgba(0,0,0,.15);">
+      <img
+        src="{{ admin_pfp or pfp or '/static/img/profile.png' }}"
+        alt="Foto de perfil"
+        style="width:100%; height:100%; object-fit:cover;"
+      />
+    </div>
+    <div>
+      <h3 style="margin:0;">
+        {{ admin_name or nombres_apellidos or name }}
+      </h3>
+      <p style="margin:0; color:#666;">Administrador</p>
+    </div>
+  </div>
+
+  <!-- Datos esenciales -->
+  <section class="two-columns" aria-label="Información esencial del administrador" style="gap:1rem;">
+    <!-- ID -->
+    <div class="form-field">
+      <label>ID</label>
+      <div class="readonly-field">
+        {{ admin_id or id or id_usuario }}
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="form-field">
+      <label>Status</label>
+      <div class="readonly-field">
+        <span class="badge {{ 'ok' if (admin_status or status) == 'Activo' else 'warn' }}">
+          {{ admin_status or status }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Acción: Registrar nuevo administrador (mismo estilo que el botón de "Registrarse") -->
+  <form action="/register_admin" method="get" style="grid-column:1/-1; margin-top:1.5rem;">
+    <button type="submit">Registrar nuevo administrador</button>
+  </form>
+
+  <a href="/profile">Volver</a>
+</div>
+
+{% endblock %}

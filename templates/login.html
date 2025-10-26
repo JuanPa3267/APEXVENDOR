@@ -7,11 +7,33 @@ content %}
     </div>
   {% endif %}
   <h2>{{ title | default("Login")}}</h2>
-  <form action="/login" method="post">
-    <input type="text" name="username" placeholder="Usuario" required/>
-    <input type="password" name="password" placeholder="Contraseña" required/>
-    <button type="submit">Iniciar sesión</button>
-  </form>
+  <form action="/login" method="post" class="two-columns">
+  <div class="form-field" style="grid-column: 1 / -1;">
+    <label for="email">Correo electrónico</label>
+    <input
+      id="email"
+      type="email"
+      name="email"
+      placeholder="ejemplo@correo.com"
+      required
+      autocomplete="email"
+    />
+  </div>
+
+  <div class="form-field" style="grid-column: 1 / -1;">
+    <label for="password">Contraseña</label>
+    <input
+      id="password"
+      type="password"
+      name="password"
+      placeholder="********"
+      required
+      autocomplete="current-password"
+    />
+  </div>
+
+  <button type="submit">Iniciar sesión</button>
+</form>
   <a href="/register">Registrarse</a>
 </div>
 

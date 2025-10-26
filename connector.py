@@ -25,6 +25,64 @@ else:
     )
 
 # ------------------------
+# Obtener roles (ApexVendor.rol)
+# ------------------------
+def get_user_by_username(username: str):
+    if not supabase:
+        return None
+    res = (
+        supabase.table("usuario")
+        .select("id_usuario, username, correo, contraseña_hash, estado_cuenta")
+        .eq("username", username)
+        .single()
+        .execute()
+    )
+    return res.data if res and res.data else None
+
+def get_user_roles(id_usuario: str):
+    """
+    Devuelve una lista de nombres de rol para el usuario.
+    Tablas esperadas:
+      - usuario_rol(id_usuario, id_rol)
+      - rol(id_rol, nombre)
+    """
+    if not supabase or not id_usuario:
+        return []
+
+    # 1) relaciones usuario_rol
+    ur = (
+        supabase.table("usuario_rol")
+        .select("id_rol")
+        .eq("id_usuario", id_usuario)
+        .execute()
+    )
+    rol_ids = [row["id_rol"] for row in (ur.data or [])]
+
+    if not rol_ids:
+        return []
+
+    # 2) nombres de rol
+    roles = []
+    for rid in rol_ids:
+        r = (
+            supabase.table("rol")
+            .select("nombre")
+            .eq("id_rol", rid)
+            .single()
+            .execute()
+        )
+        if r and r.data and r.data.get("nombre"):
+            roles.append(r.data["nombre"])
+    return roles
+
+def user_is_admin(id_usuario: str) -> bool:
+    print(id_usuario)
+    roles = get_user_roles(id_usuario)
+    # normaliza por si hay mayúsculas/espacios
+    roles_norm = { (r or "").strip().lower() for r in roles }
+    return "admin" in roles_norm or "administrator" in roles_norm or "administrador" in roles_norm
+
+# ------------------------
 # Auth (ApexVendor.usuario)
 # ------------------------
 
@@ -54,38 +112,114 @@ def login(username: str, password: str) -> bool:
 # Perfil (usuario + perfil_proveedor / perfil_admin)
 # ------------------------
 
+def get_user_by_email(email: str):
+    if not supabase or not email:
+        return None
+    res = (
+        supabase.table("usuario")
+        .select("id_usuario, username, correo, contraseña_hash, estado_cuenta")
+        .eq("correo", email)
+        .single()
+        .execute()
+    )
+    return res.data if res and res.data else None
+
+def login_with_email(email: str, password: str) -> bool:
+    """Auth por correo usando el hash almacenado."""
+    u = get_user_by_email(email)
+    if not u:
+        return False
+    hash_bytes = (u.get("contraseña_hash") or "").encode("utf-8")
+    try:
+        import bcrypt
+        return bool(hash_bytes) and bcrypt.checkpw(password.encode("utf-8"), hash_bytes)
+    except Exception:
+        return False   
+
+# ------------------------
+# Perfil (usuario + perfil_proveedor / perfil_admin)
+# ------------------------
+
 
 def get_profile(username: str):
+    """
+    Devuelve una lista con:
+    [username, correo, estado_cuenta, instagram, linkedin, website, github,
+     nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score]
 
-    data_usuario = supabase.table("usuario") \
-        .select("id_usuario, correo, estado_cuenta, instagram, linkedin, website, github") \
-        .eq("username", username) \
-        .single() \
+    Busca primero perfil_proveedor; si no existe, intenta perfil_admin.
+    Si ninguno existe, retorna valores vacíos por defecto.
+    """
+    if not supabase or not username:
+        return None
+
+    # 1) usuario (usar maybe_single para evitar excepción si no hay filas)
+    res_u = (
+        supabase.table("usuario")
+        .select("id_usuario, correo, estado_cuenta, instagram, linkedin, website, github, username")
+        .eq("username", username)
+        .maybe_single()
         .execute()
+    )
+    data_usuario = res_u.data
+    if not data_usuario:
+        return None
 
-    id_usuario = data_usuario.data["id_usuario"]
-    correo = data_usuario.data["correo"]
-    estado_cuenta = data_usuario.data["estado_cuenta"]
-    instagram = data_usuario.data["instagram"]
-    linkedin = data_usuario.data["linkedin"]
-    website = data_usuario.data["website"]
-    github = data_usuario.data["github"]
+    user_id = data_usuario["id_usuario"]
 
-    resp = supabase.table("perfil_proveedor") \
-        .select("*") \
-        .eq("id_proveedor", id_usuario) \
-        .single() \
-        .execute()
+    # 2) perfil proveedor
+    prov = None
+    try:
+        prov = (
+            supabase.table("perfil_proveedor")
+            .select("nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score")
+            .eq("id_usuario", user_id)
+            .maybe_single()
+            .execute()
+        ).data
+    except Exception:
+        prov = None
 
-    nombres_apellidos = resp.data["nombres_apellidos"]
-    id_nit = resp.data["identificacion_nit"]
-    telefono = resp.data["telefono"]
-    direccion = resp.data["direccion"]
-    ciudad = resp.data["ciudad"]
-    portafolio_resumen = resp.data["portafolio_resumen"]
-    score = resp.data["score"]
+    # 3) si no hay proveedor, intentar perfil admin
+    adm = None
+    if not prov:
+        try:
+            adm = (
+                supabase.table("perfil_admin")
+                .select("nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score")
+                .eq("id_usuario", user_id)
+                .maybe_single()
+                .execute()
+            ).data
+        except Exception:
+            adm = None
 
-    return username, correo, estado_cuenta, instagram, linkedin, website, github, nombres_apellidos, id_nit, telefono, direccion, ciudad, portafolio_resumen, score
+    perfil = prov or adm or {
+        "nombres_apellidos": "",
+        "identificacion_nit": "",
+        "telefono": "",
+        "direccion": "",
+        "ciudad": "",
+        "portafolio_resumen": "",
+        "score": 0,
+    }
+
+    return [
+        data_usuario["username"],
+        data_usuario["correo"],
+        data_usuario["estado_cuenta"],
+        data_usuario.get("instagram"),
+        data_usuario.get("linkedin"),
+        data_usuario.get("website"),
+        data_usuario.get("github"),
+        perfil["nombres_apellidos"],
+        perfil["identificacion_nit"],
+        perfil["telefono"],
+        perfil["direccion"],
+        perfil["ciudad"],
+        perfil["portafolio_resumen"],
+        perfil["score"],
+    ]
 
 
 # ------------------------

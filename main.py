@@ -9,6 +9,8 @@ from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Req
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse, HTMLResponse
+from starlette.status import HTTP_303_SEE_OTHER
 from generate_answer import ask_gpt_chat, get_pdf_text, summarize_pdf_text
 import uvicorn
 import markdown
@@ -274,37 +276,70 @@ async def register_p(
 
 
 @app.post("/login", response_class=HTMLResponse)
-async def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    """Log the user in (no validation here) and set a simple uid cookie."""
-    # Authenticate user with error handling
+async def login(request: Request, email: str = Form(...), password: str = Form(...)):
+    """Autentica por correo y redirige según rol (admin -> /admin, proveedor -> /profile)."""
+    # 1) autenticar por correo
     try:
-        is_valid = connector.login(username, password)
+        is_valid = connector.login_with_email(email, password)
     except Exception:
-        # Internal error during authentication, show login page without crashing
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "title": "Login",
-                "error": "Usuario no encontrado."},
+            {"request": request, "title": "Login", "error": "Usuario no encontrado."},
             status_code=500
         )
     if not is_valid:
         return templates.TemplateResponse(
-            "login.html", {"request": request, "title": "Login", "error": "Usuario o contraseña incorrectos"}, status_code=401)
+            "login.html",
+            {"request": request, "title": "Login", "error": "Correo o contraseña incorrectos"},
+            status_code=401
+        )
 
-    # Generate response and set session cookie
-    response = templates.TemplateResponse(
-        "chat.html", {"request": request, "title": "Chat"})
-    response.set_cookie("uid", username, httponly=True, samesite="lax")
+    # 2) obtener usuario y rol
+    u = connector.get_user_by_email(email)
+    if not u:
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "title": "Login", "error": "No se pudo cargar el usuario."},
+            status_code=500
+        )
 
-    # Load user profile with error handling
-    try:
-        profile_info.set_profile(username)
-    except Exception as e:
-        # Error loading profile, log and proceed with defaults
-        print(f"Error loading user profile: {e}")
-        # continue to chat with default profile data
-        pass
-    return response
+    is_admin = connector.user_is_admin(u["id_usuario"])
+
+    # 3) cookies + redirect
+    #    IMPORTANTE: seguimos usando username en 'uid' para no romper /profile, pfp, etc.
+    if is_admin:
+        resp = RedirectResponse(url="/admin", status_code=HTTP_303_SEE_OTHER)
+        resp.set_cookie("uid", u["username"], httponly=True, samesite="lax")
+        resp.set_cookie("role", "admin", httponly=False, samesite="lax")
+        return resp
+    else:
+        resp = RedirectResponse(url="/profile", status_code=HTTP_303_SEE_OTHER)
+        resp.set_cookie("uid", u["username"], httponly=True, samesite="lax")
+        resp.set_cookie("role", "provider", httponly=False, samesite="lax")
+        return resp
+
+def _is_admin_request(request: Request) -> bool:
+    """Verifica si el usuario autenticado es administrador."""
+    role = request.cookies.get("role", "")
+    if role == "admin":
+        return True
+    username = request.cookies.get("uid")
+    u = connector.get_user_by_username(username) if username else None
+    return connector.user_is_admin(u["id_usuario"]) if u else False
+
+
+@app.get("/admin")
+async def admin_dashboard(request: Request):
+    """Página principal del panel de administradores."""
+    if not _is_admin_request(request):
+        # Si el usuario no es admin, lo mandamos a su perfil
+        return RedirectResponse(url="/profile", status_code=HTTP_302_FOUND)
+
+    # Si es admin, renderiza su panel principal
+    return templates.TemplateResponse(
+        "chat.html",
+        {"request": request, "title": "Panel Administrador"},
+    )
 
 
 @app.get("/chat", response_class=HTMLResponse)
@@ -410,14 +445,55 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
     })
 
 
-@app.get("/profile")
+@app.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request):
-    """Serve the profile page with static demo user information."""
-    usernameX, name, email, status, instagram, linkedin, website, github, nombres_apellidos, id_nit, telefono, direccion, ciudad, portafolio_resumen, score = profile_info.get_profile()
+    username = request.cookies.get("uid")
+    if not username:
+        return RedirectResponse(url="/", status_code=302)
 
-    pfp = connector.get_img(usernameX, f"static/img/{usernameX}_pfp.png")
+    # Verificar rol desde BD
+    try:
+        u = connector.get_user_by_username(username)
+        if connector.user_is_admin(u["id_usuario"]):
+            print("admin")
+            return RedirectResponse(url="/admin", status_code=302)
+    except Exception as e:
+        print(f"Error verificando rol de {username}: {e}")
 
-    return templates.TemplateResponse("profile.html", {"request": request, "title": "Profile", "name": name, "email": email, "status": status, "instagram": instagram, "linkedin": linkedin, "website": website, "github": github, "nombres_apellidos": nombres_apellidos, "id_nit": id_nit, "telefono": telefono, "direccion": direccion, "ciudad": ciudad, "portafolio_resumen": portafolio_resumen, "score": score, "pfp": pfp})
+    # Cargar info del perfil (como antes)
+    profile_info.set_profile(username)
+    pfp = connector.get_img(username, f"static/img/{username}_pfp.png")
+
+    (
+        usernameX, name, email, status,
+        instagram, linkedin, website, github,
+        nombres_apellidos, id_nit, telefono, direccion,
+        ciudad, portafolio_resumen, score
+    ) = profile_info.get_profile()
+
+    return templates.TemplateResponse(
+        "profile.html",
+        {
+            "request": request,
+            "title": "Perfil del proveedor",
+            "username": usernameX,
+            "name": name,
+            "email": email,
+            "status": status,
+            "instagram": instagram,
+            "linkedin": linkedin,
+            "website": website,
+            "github": github,
+            "nombres_apellidos": nombres_apellidos,
+            "id_nit": id_nit,
+            "telefono": telefono,
+            "direccion": direccion,
+            "ciudad": ciudad,
+            "portafolio_resumen": portafolio_resumen,
+            "score": score,
+            "pfp": pfp,
+        },
+    )
 
 
 @app.post("/update-profile-field")

@@ -33,6 +33,12 @@ def set_profile(username: str):
     score = data[13]
 
 
-def get_profile():
-    set_profile(usernameX)
-    return usernameX, name, email, status, instagram, linkedin, website, github, nombres_apellidos, id_nit, telefono, direccion, ciudad, portafolio_resumen, score
+def get_profile(username: str | None = None):
+    if username:
+        set_profile(username)
+    return (
+        usernameX, name, email, status,
+        instagram, linkedin, website, github,
+        nombres_apellidos, id_nit, telefono, direccion,
+        ciudad, portafolio_resumen, score
+    )

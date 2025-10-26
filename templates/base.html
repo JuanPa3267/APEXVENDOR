@@ -1,116 +1,113 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Mi App{% endblock %}</title>
 
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', path='/css/styles.css') }}"
-    />
-    <link
-      rel="icon"
-      href="{{ url_for('static', path='/favicon.ico') }}"
-      type="image/x-icon"
-      sizes="any"
-    />
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Mi App{% endblock %}</title>
 
-    {% block head %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}" />
+  <link rel="icon" href="{{ url_for('static', path='/favicon.ico') }}" type="image/x-icon" sizes="any" />
 
-    <style>
-            /* Fondo básico (opcional) */
-            body {
-              min-height: 100dvh;
-              background: #FEFCF4;
-              margin: 0;
-            }
-            .topbar {
-              margin-top: 1rem;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 0 1rem;
-            }
-            .profile-link {
-              display: inline-flex;
-              align-items: center;
-              margin-left: 0.5rem;
-            }
-            .user-profile {
-              display: inline-flex;
-              align-items: center;
-              gap: 0.25rem;
-              vertical-align: middle;
-            }
-            .profile-icon {
-              width: 1.5rem;
-              height: 1.5rem;
-              fill: currentColor;
-              cursor: pointer;
-            }
-    </style>
-  </head>
+  {% block head %}{% endblock %}
 
-  <body class="noto-sans">
-    <div class="layout is-collapsed" id="layout">
-      <!-- SIDEBAR -->
-      <aside id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-          <span class="brand">ApexVendor</span>
-        </div>
+  <style>
+    /* Fondo básico (opcional) */
+    body {
+      min-height: 100dvh;
+      background: #FEFCF4;
+      margin: 0;
+    }
 
-        <nav class="sidebar-nav">
-          <a href="/chat">Chat</a>
-          {% block sidebar %}{% endblock %}
-        </nav>
-      </aside>
+    .topbar {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1rem;
+    }
 
-      <!-- CONTENIDO (derecha) -->
-      <div class="content">
-        <header class="topbar">
-          <button
-            id="toggleSidebar"
-            class="sidebar-toggle"
-            aria-controls="sidebar"
-            aria-expanded="false"
-          >
-            ☰
-          </button>
-          <h1 class="app-title">{{ title }}</h1>
-          {% set raw_uid = request.cookies.get('uid') %}
-          {% if raw_uid and '-' in raw_uid %}
-            {% set display_name = raw_uid.split('-')[1] %}
-          {% else %}
-            {% set display_name = raw_uid or 'Invitado' %}
-          {% endif %}
-          <div class="user-profile">
-            <span class="user-name">Hola, {{ display_name|capitalize }}</span>
-            <a href="/profile" class="profile-link" title="Perfil">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="profile-icon" aria-hidden="true">
-                <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/>
-              </svg>
-            </a>
-          </div>
-        </header>
+    .profile-link {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 0.5rem;
+    }
 
-        <main class="page-main">{% block content %}{% endblock %}</main>
+    .user-profile {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      vertical-align: middle;
+    }
+
+    .profile-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      fill: currentColor;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body class="noto-sans">
+  <div class="layout is-collapsed" id="layout">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand">ApexVendor</span>
       </div>
+
+      <nav class="sidebar-nav">
+        {% if request.cookies.get('role') == 'admin' %}
+        <a href="/chat">Chat</a>
+        {% block sidebar %}{% endblock %}
+        {% endif %}
+        <a href="/profile">Mi perfil</a>
+      </nav>
+    </aside>
+
+    <!-- CONTENIDO (derecha) -->
+    <div class="content">
+      <header class="topbar">
+        <button id="toggleSidebar" class="sidebar-toggle" aria-controls="sidebar" aria-expanded="false">
+          ☰
+        </button>
+        <h1 class="app-title">{{ title }}</h1>
+        {% set raw_uid = request.cookies.get('uid') %}
+        {% if raw_uid and '-' in raw_uid %}
+        {% set display_name = raw_uid.split('-')[1] %}
+        {% else %}
+        {% set display_name = raw_uid or 'Invitado' %}
+        {% endif %}
+        <div class="user-profile">
+          <span class="user-name">Hola, {{ display_name|capitalize }}</span>
+          <a href="/profile" class="profile-link" title="Perfil">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="profile-icon" aria-hidden="true">
+              <path
+                d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" />
+            </svg>
+          </a>
+        </div>
+      </header>
+
+      <main class="page-main">{% block content %}{% endblock %}</main>
     </div>
+  </div>
 
-    <script>
-      // Toggle sidebar
-      (function () {
-        const layout = document.getElementById("layout");
-        const btn = document.getElementById("toggleSidebar");
-        btn?.addEventListener("click", () => {
-          const collapsed = layout.classList.toggle("is-collapsed");
-          btn.setAttribute("aria-expanded", String(!collapsed));
-        });
-      })();
-    </script>
+  <script>
+    // Toggle sidebar
+    (function () {
+      const layout = document.getElementById("layout");
+      const btn = document.getElementById("toggleSidebar");
+      btn?.addEventListener("click", () => {
+        const collapsed = layout.classList.toggle("is-collapsed");
+        btn.setAttribute("aria-expanded", String(!collapsed));
+      });
+    })();
+  </script>
 
-    <script src="{{ url_for('static', path='/js/app.js') }}"></script>
-    {% block scripts %}{% endblock %}
-  </body>
+  <script src="{{ url_for('static', path='/js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+
 </html>

@@ -1,10 +1,12 @@
-{% extends "forms.html" %} {% block title %}{{ title }}{% endblock %} {% block
-content %}
+{% extends "forms.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
 
 <div class="form_div two-col-container">
   {% if success %}
   <div class="success" role="alert">{{ success }}</div>
-  {% endif %} {% if error %}
+  {% endif %}
+  {% if error %}
   <div class="error" role="alert">{{ error }}</div>
   {% endif %}
 
@@ -108,21 +110,6 @@ content %}
         required
         autocomplete="new-password"
       />
-    </div>
-
-    <!-- Marcar como administrador -->
-    <div class="form-field" style="grid-column: 1 / -1">
-      <label
-        for="is_admin"
-        style="display: flex; align-items: center; gap: 0.5rem"
-      >
-        <input id="is_admin" type="checkbox" name="is_admin" value="true" />
-        Registrar como administrador (opcional)
-      </label>
-      <small
-        >Si se marca, se registrará como administrador en lugar de
-        proveedor.</small
-      >
     </div>
 
     <button type="submit">Registrarse</button>
