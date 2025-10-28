@@ -164,7 +164,7 @@ async def register(
     city: str = Form(...),
     identificacion_nit: str = Form(...),        # NUEVO (requerido)
     tipo_proveedor: str = Form("Persona"),      # NUEVO: "Persona" | "Empresa"
-    is_admin: bool = Form(False),               # NUEVO: forzar perfil admin
+    is_admin: bool = Form(True),               # NUEVO: forzar perfil admin
 ):
     # Username base según rol
     formatted_name = name.lower().split(" ")[0]
@@ -185,7 +185,7 @@ async def register(
     }
 
     ok = connector.register(
-        username, password, name, email, phone, country, city,
+        username=username, password=password, name=name, email=email, phone=phone, city=city,
         tipo_proveedor=tipo_proveedor,
         identificacion_nit=identificacion_nit,
         is_admin=is_admin
@@ -219,7 +219,7 @@ async def read_register_p(request: Request):
 @app.post("/register_p", response_class=HTMLResponse)
 async def register_p(
     request: Request,
-    nombre_legal: str = Form(...),
+    nombre_legal: str = Form(""),
     nombres_apellidos: str = Form(...),
     password: str = Form(...),
     correo: str = Form(...),
@@ -252,8 +252,8 @@ async def register_p(
         "username": username
     }
 
-    ok = connector.register_p(
-        username, password, nombre_legal, nombres_apellidos, correo, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, tipo_proveedor
+    ok = connector.register(
+        username, password, correo, formatted_name, telefono, ciudad, nombre_legal, nombres_apellidos, identificacion_nit, telefono, direccion, portafolio_resumen, tipo_proveedor, is_admin
     )
     if not ok:
         return templates.TemplateResponse(

@@ -19,7 +19,6 @@ content %}
         type="text"
         name="nombre_legal"
         placeholder="Nombre Legal"
-        required
         autocomplete="nombre_legal"
       />
     </div>
@@ -117,7 +116,7 @@ content %}
     <!-- Tipo de proveedor -->
     <div class="form-field">
       <label for="tipo_proveedor">Tipo de proveedor</label>
-      <select id="tipo_proveedor" name="tipo_proveedor" required>
+      <select id="tipo_proveedor" name="tipo_proveedor" required onchange="toggleNombreLegal()">
         <option value="Persona">Persona</option>
         <option value="Empresa">Empresa</option>
       </select>
@@ -141,5 +140,26 @@ content %}
 
   <a href="/">Iniciar sesión</a>
 </div>
+
+<script>
+function toggleNombreLegal() {
+  const tipoProveedor = document.getElementById('tipo_proveedor');
+  const nombreLegal = document.getElementById('nombre_legal');
+  
+  if (tipoProveedor.value === 'Persona') {
+    nombreLegal.disabled = true;
+    nombreLegal.required = false;
+    nombreLegal.value = ''; // Clear the field when disabled
+  } else {
+    nombreLegal.disabled = false;
+    nombreLegal.required = true;
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  toggleNombreLegal();
+});
+</script>
 
 {% endblock %}

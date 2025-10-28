@@ -299,6 +299,104 @@ def get_img(username: str, output_path: str) -> str:
 # ------------------------
 
 
+def register(
+    username: str,
+    password: str,
+    email: str,
+    # Basic fields
+    name: str | None = None,
+    phone: str | None = None,
+    city: str | None = None,
+    # Provider-specific fields
+    nombre_legal: str | None = None,
+    nombres_apellidos: str | None = None,
+    identificacion_nit: str | None = None,
+    telefono: str | None = None,
+    direccion: str | None = None,
+    portafolio_resumen: str | None = None,
+    tipo_proveedor: str = "Persona",
+    is_admin: bool = False
+) -> bool:
+    """
+    Unified registration function that handles both admin and provider registration.
+    - If is_admin=True → creates perfil_admin
+    - If not → creates perfil_proveedor with provided fields
+    """
+    if not supabase:
+        return False
+    try:
+        # 1) Create usuario
+        usuario_data = {
+            "username": username,
+            "contraseña_hash": hash_password(password),
+            "correo": email,
+            "github": "",
+            "instagram": None,
+            "linkedin": None,
+            "website": None,
+        }
+        supabase.table("usuario").insert(usuario_data).execute()
+
+        # 2) Get id_usuario
+        u = (
+            supabase.table("usuario")
+            .select("id_usuario")
+            .eq("username", username)
+            .execute()
+        )
+        if not u.data:
+            print("register: no id_usuario after insert")
+            return False
+        id_usuario = u.data[0]["id_usuario"]
+
+        # 3) Create profile based on type
+        if is_admin:
+            # Admin profile
+            supabase.table("perfil_admin").insert({
+                "id_admin": id_usuario,
+                "nombre": name,
+            }).execute()
+            role_name = "Admin"
+        else:
+            # Provider profile - use provided fields or defaults
+            nit = identificacion_nit or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
+            supabase.table("perfil_proveedor").insert({
+                "id_proveedor": id_usuario,
+                "tipo_proveedor": tipo_proveedor,
+                "identificacion_nit": nit,
+                "nombre_legal": nombre_legal,
+                "nombres_apellidos": nombres_apellidos or name,
+                "telefono": telefono or phone,
+                "direccion": direccion,
+                "ciudad": city,
+                "portafolio_resumen": portafolio_resumen,
+            }).execute()
+            role_name = "Proveedor"
+
+        # 4) Assign role
+        role_data = (
+            supabase.table("rol")
+            .select("id_rol")
+            .eq("nombre", role_name)
+            .single()
+            .execute()
+        )
+        if not role_data.data:
+            print(f"register: no {role_name} role found")
+            return False
+        
+        id_rol = role_data.data["id_rol"]
+        supabase.table("usuario_rol").insert({
+            "id_usuario": id_usuario,
+            "id_rol": id_rol,
+        }).execute()
+
+        return True
+    except Exception as e:
+        print(f"register error: {e}")
+        return False
+
+
 def register_p(
     username: str,
     password: str,
@@ -311,162 +409,22 @@ def register_p(
     ciudad: str,
     portafolio_resumen: str,
     tipo_proveedor: str,
-):
-    pass
-    if not supabase:
-        return False
-    try:
-        # 1) usuario
-        supabase.table("usuario").insert({
-            "correo": correo,
-            "contraseña_hash": hash_password(password),
-            "username": username,
-            "github": None,
-            "instagram": None,
-            "linkedin": None,
-            "website": None,
-        }).execute()
-
-        # recuperar id_usuario
-        u = (
-            supabase.table("usuario")
-            .select("id_usuario")
-            .eq("username", username)
-            .execute()
-        )
-        if not u.data:
-            print("register: no id_usuario luego del insert")
-            return False
-        id_usuario = u.data[0]["id_usuario"]
-
-        # 2) perfil
-        supabase.table("perfil_proveedor").insert({
-            "id_proveedor": id_usuario,
-            "tipo_proveedor": tipo_proveedor,
-            "identificacion_nit": identificacion_nit,
-            "nombre_legal": nombre_legal,
-            "nombres_apellidos": nombres_apellidos,
-            "telefono": telefono,
-            "direccion": direccion,
-            "portafolio_resumen": portafolio_resumen,
-            "ciudad": ciudad,
-        }).execute()
-
-        w = (supabase.table("rol")
-             .select("*")
-             .eq("nombre", "Proveedor")
-             .single()
-             .execute()
-             )
-        if not w.data:
-            print("register_p: no rol luego del insert")
-            return False
-        id_rol = w.data["id_rol"]
-
-        # 3) usuario_rol
-        supabase.table("usuario_rol").insert({
-            "id_usuario": id_usuario,
-            "id_rol": id_rol,
-        }).execute()
-
-        return True
-    except Exception as e:
-        print(f"register_p error: {e}")
-        return False
-
-
-def register(
-    username: str,
-    password: str,
-    name: str,
-    email: str,
-    phone: str,
-    country: str,
-    city: str,
-    *,
-    tipo_proveedor: str = "Persona",        # "Persona" | "Empresa"
-    identificacion_nit: str | None = None,  # requerido si es proveedor
-    is_admin: bool = False                  # True → crea perfil_admin
 ) -> bool:
-    """
-    Crea usuario en ApexVendor.usuario y su perfil:
-    - Si is_admin=True → perfil_admin
-    - Si no → perfil_proveedor (requiere identificacion_nit; si falta, usa TEMP-<id>)
-    """
-    if not supabase:
-        return False
-    try:
-        # 1) usuario
-        supabase.table("usuario").insert({
-            "username": username,
-            "contraseña_hash": hash_password(password),
-            "correo": email,
-            "github": "",      # NOT NULL en tu schema → cadena vacía por defecto
-            "instagram": None,
-            "linkedin": None,
-            "website": None,
-        }).execute()
-
-        # recuperar id_usuario
-        u = (
-            supabase.table("usuario")
-            .select("id_usuario")
-            .eq("username", username)
-            .execute()
-        )
-        if not u.data:
-            print("register: no id_usuario luego del insert")
-            return False
-        id_usuario = u.data[0]["id_usuario"]
-
-        # 2) perfil
-        if is_admin:
-            supabase.table("perfil_admin").insert({
-                "id_admin": id_usuario,
-                "nombre": name or username,
-            }).execute()
-
-            id_admin_data = supabase.table("rol").\
-                select("id_rol").\
-                eq("nombre", "Admin").\
-                single().\
-                execute()
-
-            id_admin = id_admin_data.data["id_rol"]
-            supabase.table("usuario_rol").insert({
-                "id_usuario": id_usuario,
-                "id_rol": id_admin,
-            }).execute()
-        else:
-            nit = identificacion_nit or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
-            supabase.table("perfil_proveedor").insert({
-                "id_proveedor": id_usuario,
-                "tipo_proveedor": tipo_proveedor,
-                "identificacion_nit": nit,
-                "nombres_apellidos": name,
-                "telefono": phone or None,
-                "ciudad": city or None,
-                "direccion": None,
-                "portafolio_resumen": None,
-                "nombre_legal": None,
-            }).execute()
-
-            id_prov_data = supabase.table("rol").\
-                select("id_rol").\
-                eq("nombre", "Proveedor").\
-                single().\
-                execute()
-
-            id_prov = id_prov_data.data["id_rol"]
-            supabase.table("usuario_rol").insert({
-                "id_usuario": id_usuario,
-                "id_rol": id_prov,
-            }).execute()
-
-        return True
-    except Exception as e:
-        print(f"register error: {e}")
-        return False
+    """Legacy wrapper for provider registration."""
+    return register(
+        username=username,
+        password=password,
+        email=correo,
+        nombre_legal=nombre_legal,
+        nombres_apellidos=nombres_apellidos,
+        identificacion_nit=identificacion_nit,
+        telefono=telefono,
+        direccion=direccion,
+        city=ciudad,
+        portafolio_resumen=portafolio_resumen,
+        tipo_proveedor=tipo_proveedor,
+        is_admin=False
+    )
 
 
 def update_profile_field(username: str, field: str, value: str) -> bool:
