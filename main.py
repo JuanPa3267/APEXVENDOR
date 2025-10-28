@@ -176,8 +176,9 @@ async def register(
         name=formatted_name, base=base_prefix)
 
     context = {
-        "name": name.capitalize(),
+        "name": formatted_name.capitalize(),
         "phone": phone,
+        "city": city
     }
 
     ok = connector.register(
