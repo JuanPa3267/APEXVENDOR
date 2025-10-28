@@ -176,12 +176,8 @@ async def register(
         name=formatted_name, base=base_prefix)
 
     context = {
-        "name": name,
-        "email": email,
+        "name": name.capitalize(),
         "phone": phone,
-        "country": country,
-        "city": city,
-        "username": username
     }
 
     ok = connector.register(
@@ -241,15 +237,9 @@ async def register_p(
         name=formatted_name, base=base_prefix)
 
     context = {
-        "nombre_legal": nombre_legal,
-        "nombres_apellidos": nombres_apellidos,
-        "email": correo,
-        "identificacion_nit": identificacion_nit,
-        "telefono": telefono,
-        "direccion": direccion,
-        "ciudad": ciudad,
-        "portafolio_resumen": portafolio_resumen,
-        "username": username
+        "name": formatted_name.capitalize(),
+        "phone": telefono,
+        "city": ciudad
     }
 
     ok = connector.register(
