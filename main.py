@@ -415,14 +415,14 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
     url = f"/uploads/{fname}"
 
     raw_text = get_pdf_text(str(dest))
-    context = summarize_pdf_text(original_name, raw_text)
+    context = summarize_pdf_text(original_name, raw_text, connector.get_provs())
 
     uid = request.cookies.get("uid", "anon")
     history = CHAT_HISTORY.get(uid, [])
     md_msg = f"**PDF recibido:** [{original_name}]({url})\n\n**Contexto breve:**\n{context}"
     # Guarda markdown en el historial (plantilla server lo renderiza)
     history += [
-        {"role": "user",  "parts": [f"📎 PDF subido: {original_name}"]},
+        {"role": "user",  "parts": [f"PDF subido: {original_name}"]},
         {"role": "model", "parts": [md_msg]},
     ]
     CHAT_HISTORY[uid] = history

@@ -52,7 +52,7 @@ def get_pdf_text(file_path: str, max_pages: int = MAX_PDF_PAGES, max_chars: int 
     return merged[:MAX_CHARS]
 
 
-def summarize_pdf_text(name: str, text: str) -> str:
+def summarize_pdf_text(name: str, text: str, proveedores: list[dict]) -> str:
     """Ask the model to summarize a project's PDF contents in Spanish Markdown.
 
     Args:
@@ -72,6 +72,9 @@ def summarize_pdf_text(name: str, text: str) -> str:
     tener un proveedor(desarrollador tambien)
     para que el proyecto sea exitoso? Tanto blandas como duras,
     y que tipo de proveedor deberia ser? Responde en español y en Markdown.
+    
+    Los proveedores disponibles son los siguientes, dame un top de ellos y el por que deberiamos elegirlos para este proyecto, recuerda no mostrar sus IDs:
+    {proveedores}
     """
     try:
         resp = model.generate_content(prompt)

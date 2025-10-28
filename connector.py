@@ -384,7 +384,7 @@ def register(
         if not role_data.data:
             print(f"register: no {role_name} role found")
             return False
-        
+
         id_rol = role_data.data["id_rol"]
         supabase.table("usuario_rol").insert({
             "id_usuario": id_usuario,
@@ -454,3 +454,10 @@ def update_profile_field(username: str, field: str, value: str) -> bool:
     except Exception as e:
         print(f"update_profile_field error: {e}")
         return False
+
+
+def get_provs() -> list[dict]:
+    resp = supabase.table("perfil_proveedor") \
+        .select("*") \
+        .execute()
+    return resp.data if resp and resp.data else []
