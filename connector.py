@@ -27,6 +27,8 @@ else:
 # ------------------------
 # Obtener roles (ApexVendor.rol)
 # ------------------------
+
+
 def get_user_by_username(username: str):
     if not supabase:
         return None
@@ -38,6 +40,7 @@ def get_user_by_username(username: str):
         .execute()
     )
     return res.data if res and res.data else None
+
 
 def get_user_roles(id_usuario: str):
     """
@@ -75,11 +78,12 @@ def get_user_roles(id_usuario: str):
             roles.append(r.data["nombre"])
     return roles
 
+
 def user_is_admin(id_usuario: str) -> bool:
     print(id_usuario)
     roles = get_user_roles(id_usuario)
     # normaliza por si hay mayúsculas/espacios
-    roles_norm = { (r or "").strip().lower() for r in roles }
+    roles_norm = {(r or "").strip().lower() for r in roles}
     return "admin" in roles_norm or "administrator" in roles_norm or "administrador" in roles_norm
 
 # ------------------------
@@ -112,6 +116,7 @@ def login(username: str, password: str) -> bool:
 # Perfil (usuario + perfil_proveedor / perfil_admin)
 # ------------------------
 
+
 def get_user_by_email(email: str):
     if not supabase or not email:
         return None
@@ -124,6 +129,7 @@ def get_user_by_email(email: str):
     )
     return res.data if res and res.data else None
 
+
 def login_with_email(email: str, password: str) -> bool:
     """Auth por correo usando el hash almacenado."""
     u = get_user_by_email(email)
@@ -134,7 +140,7 @@ def login_with_email(email: str, password: str) -> bool:
         import bcrypt
         return bool(hash_bytes) and bcrypt.checkpw(password.encode("utf-8"), hash_bytes)
     except Exception:
-        return False   
+        return False
 
 # ------------------------
 # Perfil (usuario + perfil_proveedor / perfil_admin)
@@ -241,23 +247,13 @@ def set_img(username: str, img_path: str) -> None:
             img_bytes = f.read()
         img_base64 = base64.b64encode(img_bytes).decode("utf-8")
 
-        # intenta upsert; si cliente no soporta, usa update/insert
-        try:
-            supabase.table("pfps") \
-                .update({"image_base64": img_base64}) \
-                .eq("username", username) \
-                .execute()
-        except Exception:
-            upd = (
-                supabase.table("pfps")
-                .update({"image_base64": img_base64})
-                .eq("username", username)
-                .execute()
-            )
-            if not upd.data:
-                supabase.table("pfps").insert(
-                    {"username": username, "image_base64": img_base64}
-                ).execute()
+        if supabase.table("pfps").select("image_base64").eq("username", username).execute().data:
+            supabase.table("pfps").update({"image_base64": img_base64}).eq(
+                "username", username).execute()
+        else:
+            supabase.table("pfps").insert(
+                {"username": username, "image_base64": img_base64}).execute()
+
     except Exception as e:
         print(f"set_img error: {e}")
 
@@ -429,6 +425,18 @@ def register(
                 "id_admin": id_usuario,
                 "nombre": name or username,
             }).execute()
+
+            id_admin_data = supabase.table("rol").\
+                select("id_rol").\
+                eq("nombre", "Admin").\
+                single().\
+                execute()
+
+            id_admin = id_admin_data.data["id_rol"]
+            supabase.table("usuario_rol").insert({
+                "id_usuario": id_usuario,
+                "id_rol": id_admin,
+            }).execute()
         else:
             nit = identificacion_nit or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
             supabase.table("perfil_proveedor").insert({
@@ -441,6 +449,18 @@ def register(
                 "direccion": None,
                 "portafolio_resumen": None,
                 "nombre_legal": None,
+            }).execute()
+
+            id_prov_data = supabase.table("rol").\
+                select("id_rol").\
+                eq("nombre", "Proveedor").\
+                single().\
+                execute()
+
+            id_prov = id_prov_data.data["id_rol"]
+            supabase.table("usuario_rol").insert({
+                "id_usuario": id_usuario,
+                "id_rol": id_prov,
             }).execute()
 
         return True

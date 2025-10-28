@@ -171,7 +171,7 @@ async def register(
     if formatted_name == "fabian":
         formatted_name = "favian"
 
-    base_prefix = "a" if is_admin else "p"  # "a-" admin, "p-" proveedor
+    base_prefix = "a" if is_admin else "p"
     username = registerstuff.username_gen(
         name=formatted_name, base=base_prefix)
 
@@ -305,9 +305,7 @@ async def login(request: Request, email: str = Form(...), password: str = Form(.
 
     is_admin = connector.user_is_admin(u["id_usuario"])
     username = u["username"]
-    print(f"username: {username}")
     profile_info.set_profile(username)
-    print(f"profile_info: {profile_info.get_profile()}")
 
     # 3) cookies + redirect
     #    IMPORTANTE: seguimos usando username en 'uid' para no romper /profile, pfp, etc.
@@ -475,7 +473,6 @@ async def profile(request: Request):
         ciudad, portafolio_resumen, score
     ) = profile_info.get_profile()
     
-    print(f"nombres_apellidos: {nombres_apellidos}")
 
     return templates.TemplateResponse(
         "profile.html",
