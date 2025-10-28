@@ -9,10 +9,9 @@ score = 0
 
 def set_profile(username: str):
     data = connector.get_profile(username)
-    if not data:
-        # limpia si no hay datos
-        _assign_defaults(username)
-        return
+    # if not data:
+    #     _assign_defaults(username)
+    #     return
 
     global usernameX, name, email, status, instagram, linkedin, website, github, nombres_apellidos, id_nit, telefono, direccion, ciudad, portafolio_resumen, score
     

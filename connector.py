@@ -151,6 +151,7 @@ def get_profile(username: str):
     Si ninguno existe, retorna valores vacíos por defecto.
     """
     if not supabase or not username:
+        print("NO SUPABASE O NO USERNAME")
         return None
 
     # 1) usuario (usar maybe_single para evitar excepción si no hay filas)
@@ -173,11 +174,12 @@ def get_profile(username: str):
         prov = (
             supabase.table("perfil_proveedor")
             .select("nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score")
-            .eq("id_usuario", user_id)
+            .eq("id_proveedor", user_id)
             .maybe_single()
             .execute()
         ).data
-    except Exception:
+    except Exception as e:
+        print(f"NO PERFIL PROVEEDOR: {e}")
         prov = None
 
     # 3) si no hay proveedor, intentar perfil admin
@@ -187,11 +189,12 @@ def get_profile(username: str):
             adm = (
                 supabase.table("perfil_admin")
                 .select("nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score")
-                .eq("id_usuario", user_id)
+                .eq("id_admin", user_id)
                 .maybe_single()
                 .execute()
             ).data
-        except Exception:
+        except Exception as e:
+            print(f"NO PERFIL ADMIN: {e}")
             adm = None
 
     perfil = prov or adm or {
