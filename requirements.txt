@@ -1,4 +1,4 @@
-anyio
+anyio==4.8.0
 fastapi
 uvicorn[standard]
 jinja2
