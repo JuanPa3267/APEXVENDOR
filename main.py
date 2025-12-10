@@ -5,23 +5,28 @@ and a minimal in-memory chat history keyed by user id.
 """
 
 import os
-from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse, HTMLResponse
-from starlette.status import HTTP_303_SEE_OTHER
-from generate_answer import ask_gpt_chat, get_pdf_text, summarize_pdf_text
-import uvicorn
-import markdown
-from typing import List, Dict
-from pathlib import Path
-from uuid import uuid4
-import profile_info
-import registerstuff
 import re
+from pathlib import Path
+from typing import Dict, List
+from uuid import uuid4
+
+import markdown
+import uvicorn
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
+)
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
 
 import connector
+import profile_info
+import registerstuff
+from generate_answer import ask_gpt_chat, get_pdf_text, summarize_pdf_text
 
 
 def _unwrap_markdown_fence(text: str) -> str:
@@ -38,7 +43,7 @@ def _unwrap_markdown_fence(text: str) -> str:
         if first_nl != -1:
             lang = t[3:first_nl].strip().lower()
             if lang in ("", "md", "markdown"):
-                return t[first_nl + 1:-3].lstrip("\n")
+                return t[first_nl + 1 : -3].lstrip("\n")
     return text
 
 
@@ -78,30 +83,31 @@ def md_filter(text: str) -> str:
             "noclasses": False,  # usa clases CSS -> recuerda incluir CSS de Pygments
         },
         "toc": {
-            "permalink": True,   # añade ancla clickable en los encabezados
+            "permalink": True,  # añade ancla clickable en los encabezados
         },
     }
 
     # Si pymdown-extensions está disponible, añadimos mejoras (opcional)
     try:
         import pymdownx  # noqa: F401
+
         extensions += [
             "pymdownx.superfences",  # fences anidados/mixtos más robustos
-            "pymdownx.highlight",    # mejor integración con Pygments
-            "pymdownx.tasklist",     # [ ] y [x] en listas
-            "pymdownx.tilde",        # ~~tachado~~
-            "pymdownx.magiclink",    # autolink de URLs y @user/#123
+            "pymdownx.highlight",  # mejor integración con Pygments
+            "pymdownx.tasklist",  # [ ] y [x] en listas
+            "pymdownx.tilde",  # ~~tachado~~
+            "pymdownx.magiclink",  # autolink de URLs y @user/#123
         ]
-        extension_configs.update({
-            "pymdownx.highlight": {
-                "linenums": False,
-                "guess_lang": False,
-                "anchor_linenums": False,
-            },
-            "pymdownx.tasklist": {
-                "custom_checkbox": True
+        extension_configs.update(
+            {
+                "pymdownx.highlight": {
+                    "linenums": False,
+                    "guess_lang": False,
+                    "anchor_linenums": False,
+                },
+                "pymdownx.tasklist": {"custom_checkbox": True},
             }
-        })
+        )
     except Exception:
         # Si no está instalado, seguimos con lo base sin fallar.
         pass
@@ -131,6 +137,21 @@ def _render_messages(history: List[Dict]) -> List[Dict]:
 
 
 app = FastAPI()
+
+
+@app.middleware("http")
+async def add_no_cache_header(request: Request, call_next):
+    response = await call_next(request)
+    # Prevent caching for non-static files to ensure logout clears history view
+    if not request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, max-age=0"
+        )
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 templates = Jinja2Templates(directory="templates")
 templates.env.filters["md"] = md_filter
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -144,13 +165,17 @@ CHAT_HISTORY: dict[str, list[dict]] = {}
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     """Serve login page."""
-    return templates.TemplateResponse("login.html", {"request": request, "title": "Iniciar sesión"})
+    return templates.TemplateResponse(
+        "login.html", {"request": request, "title": "Iniciar sesión"}
+    )
 
 
 @app.get("/register", response_class=HTMLResponse)
 async def read_register(request: Request):
     """Serve registration page."""
-    return templates.TemplateResponse("register.html", {"request": request, "title": "Registrarse"})
+    return templates.TemplateResponse(
+        "register.html", {"request": request, "title": "Registrarse"}
+    )
 
 
 @app.post("/register", response_class=HTMLResponse)
@@ -162,9 +187,9 @@ async def register(
     phone: str = Form(...),
     country: str = Form(...),
     city: str = Form(...),
-    identificacion_nit: str = Form(...),        # NUEVO (requerido)
-    tipo_proveedor: str = Form("Persona"),      # NUEVO: "Persona" | "Empresa"
-    is_admin: bool = Form(True),               # NUEVO: forzar perfil admin
+    identificacion_nit: str = Form(...),  # NUEVO (requerido)
+    tipo_proveedor: str = Form("Persona"),  # NUEVO: "Persona" | "Empresa"
+    is_admin: bool = Form(True),  # NUEVO: forzar perfil admin
 ):
     # Username base según rol
     formatted_name = name.lower().split(" ")[0]
@@ -172,45 +197,52 @@ async def register(
         formatted_name = "favian"
 
     base_prefix = "a" if is_admin else "p"
-    username = registerstuff.username_gen(
-        name=formatted_name, base=base_prefix)
+    username = registerstuff.username_gen(name=formatted_name, base=base_prefix)
 
-    context = {
-        "name": formatted_name.capitalize(),
-        "phone": phone,
-        "city": city
-    }
+    context = {"name": formatted_name.capitalize(), "phone": phone, "city": city}
 
     ok = connector.register(
-        username=username, password=password, name=name, email=email, phone=phone, city=city,
+        username=username,
+        password=password,
+        name=name,
+        email=email,
+        phone=phone,
+        city=city,
         tipo_proveedor=tipo_proveedor,
         identificacion_nit=identificacion_nit,
-        is_admin=is_admin
+        is_admin=is_admin,
     )
     if not ok:
         return templates.TemplateResponse(
             "register.html",
-            {"request": request, "title": "Registrarse",
-             "error": "No se pudo registrar el usuario. Verifica los datos e inténtalo de nuevo."},
-            status_code=500
+            {
+                "request": request,
+                "title": "Registrarse",
+                "error": "No se pudo registrar el usuario. Verifica los datos e inténtalo de nuevo.",
+            },
+            status_code=500,
         )
 
     registerstuff.send_html_email(
-        email, "Registro exitoso",
-        "templates/register_mail.html", context
+        email, "Registro exitoso", "templates/register_mail.html", context
     )
 
     return templates.TemplateResponse(
         "register.html",
-        {"request": request, "title": "Registrarse",
-         "success": "Usuario registrado exitosamente"}
+        {
+            "request": request,
+            "title": "Registrarse",
+            "success": "Usuario registrado exitosamente",
+        },
     )
 
 
 @app.get("/register_p", response_class=HTMLResponse)
 async def read_register_p(request: Request):
     """Serve registration page."""
-    return templates.TemplateResponse("register_p.html", {"request": request, "title": "Registrarse como proveedor"})
+    return templates.TemplateResponse(
+        "register_p.html", {"request": request, "title": "Registrarse como proveedor"}
+    )
 
 
 @app.post("/register_p", response_class=HTMLResponse)
@@ -234,35 +266,48 @@ async def register_p(
         formatted_name = "favian"
 
     base_prefix = "p"  # "a-" admin, "p-" proveedor
-    username = registerstuff.username_gen(
-        name=formatted_name, base=base_prefix)
+    username = registerstuff.username_gen(name=formatted_name, base=base_prefix)
 
-    context = {
-        "name": formatted_name.capitalize(),
-        "phone": telefono,
-        "city": ciudad
-    }
+    context = {"name": formatted_name.capitalize(), "phone": telefono, "city": ciudad}
 
     ok = connector.register(
-        username, password, correo, formatted_name, telefono, ciudad, nombre_legal, nombres_apellidos, identificacion_nit, telefono, direccion, portafolio_resumen, tipo_proveedor, is_admin
+        username,
+        password,
+        correo,
+        formatted_name,
+        telefono,
+        ciudad,
+        nombre_legal,
+        nombres_apellidos,
+        identificacion_nit,
+        telefono,
+        direccion,
+        portafolio_resumen,
+        tipo_proveedor,
+        is_admin,
     )
     if not ok:
         return templates.TemplateResponse(
             "register_p.html",
-            {"request": request, "title": "Registrarse como Proveedor",
-             "error": "No se pudo registrar el usuario. Verifica los datos e inténtalo de nuevo."},
-            status_code=500
+            {
+                "request": request,
+                "title": "Registrarse como Proveedor",
+                "error": "No se pudo registrar el usuario. Verifica los datos e inténtalo de nuevo.",
+            },
+            status_code=500,
         )
 
     registerstuff.send_html_email(
-        correo, "Registro exitoso",
-        "templates/register_mail.html", context
+        correo, "Registro exitoso", "templates/register_mail.html", context
     )
 
     return templates.TemplateResponse(
         "register_p.html",
-        {"request": request, "title": "Registrarse como proveedor",
-         "success": "Usuario registrado exitosamente"}
+        {
+            "request": request,
+            "title": "Registrarse como proveedor",
+            "success": "Usuario registrado exitosamente",
+        },
     )
 
 
@@ -276,13 +321,17 @@ async def login(request: Request, email: str = Form(...), password: str = Form(.
         return templates.TemplateResponse(
             "login.html",
             {"request": request, "title": "Login", "error": "Usuario no encontrado."},
-            status_code=500
+            status_code=500,
         )
     if not is_valid:
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "title": "Login", "error": "Correo o contraseña incorrectos"},
-            status_code=401
+            {
+                "request": request,
+                "title": "Login",
+                "error": "Correo o contraseña incorrectos",
+            },
+            status_code=401,
         )
 
     # 2) obtener usuario y rol
@@ -290,8 +339,12 @@ async def login(request: Request, email: str = Form(...), password: str = Form(.
     if not u:
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "title": "Login", "error": "No se pudo cargar el usuario."},
-            status_code=500
+            {
+                "request": request,
+                "title": "Login",
+                "error": "No se pudo cargar el usuario.",
+            },
+            status_code=500,
         )
 
     is_admin = connector.user_is_admin(u["id_usuario"])
@@ -311,6 +364,7 @@ async def login(request: Request, email: str = Form(...), password: str = Form(.
         resp.set_cookie("role", "provider", httponly=False, samesite="lax")
         return resp
 
+
 def _is_admin_request(request: Request) -> bool:
     """Verifica si el usuario autenticado es administrador."""
     role = request.cookies.get("role", "")
@@ -319,6 +373,15 @@ def _is_admin_request(request: Request) -> bool:
     username = request.cookies.get("uid")
     u = connector.get_user_by_username(username) if username else None
     return connector.user_is_admin(u["id_usuario"]) if u else False
+
+
+@app.get("/logout")
+def logout(request: Request):
+    """Cierra sesión y redirige a la página de inicio."""
+    resp = RedirectResponse(url="/", status_code=HTTP_302_FOUND)
+    resp.delete_cookie("uid")
+    resp.delete_cookie("role")
+    return resp
 
 
 @app.get("/admin")
@@ -342,8 +405,7 @@ async def chat(request: Request):
     history = CHAT_HISTORY.get(uid, [])
     messages = _render_messages(history)
     return templates.TemplateResponse(
-        "chat.html",
-        {"request": request, "title": "Chat", "messages": messages}
+        "chat.html", {"request": request, "title": "Chat", "messages": messages}
     )
 
 
@@ -368,8 +430,7 @@ async def generate(request: Request, prompt: str = Form(...)):
     CHAT_HISTORY[uid] = history
     messages = _render_messages(history)
     return templates.TemplateResponse(
-        "chat.html",
-        {"request": request, "title": "Chat", "messages": messages}
+        "chat.html", {"request": request, "title": "Chat", "messages": messages}
     )
 
 
@@ -393,6 +454,7 @@ async def reset_chat(request: Request):
     resp.headers["Cache-Control"] = "no-store"
     return resp
 
+
 # (Opcional) soporta también GET por si usas enlaces en vez de formularios
 
 
@@ -404,9 +466,10 @@ async def reset_chat_get(request: Request):
 @app.post("/upload-pdf")
 async def upload_pdf(request: Request, file: UploadFile = File(...)):
     """Accept a PDF, extract and summarize text, and append to chat history."""
-    if file.content_type != "application/pdf" and not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(
-            status_code=415, detail="Solo se aceptan archivos PDF.")
+    if file.content_type != "application/pdf" and not file.filename.lower().endswith(
+        ".pdf"
+    ):
+        raise HTTPException(status_code=415, detail="Solo se aceptan archivos PDF.")
 
     original_name = Path(file.filename).name
     fname = f"{uuid4().hex}.pdf"
@@ -419,23 +482,27 @@ async def upload_pdf(request: Request, file: UploadFile = File(...)):
 
     uid = request.cookies.get("uid", "anon")
     history = CHAT_HISTORY.get(uid, [])
-    md_msg = f"**PDF recibido:** [{original_name}]({url})\n\n**Contexto breve:**\n{context}"
+    md_msg = (
+        f"**PDF recibido:** [{original_name}]({url})\n\n**Contexto breve:**\n{context}"
+    )
     # Guarda markdown en el historial (plantilla server lo renderiza)
     history += [
-        {"role": "user",  "parts": [f"PDF subido: {original_name}"]},
+        {"role": "user", "parts": [f"PDF subido: {original_name}"]},
         {"role": "model", "parts": [md_msg]},
     ]
     CHAT_HISTORY[uid] = history
 
     # También envía HTML directo para el flujo asíncrono
     html_msg = md_filter(md_msg)
-    return JSONResponse({
-        "ok": True,
-        "name": original_name,
-        "url": url,
-        "message": md_msg,
-        "html": html_msg
-    })
+    return JSONResponse(
+        {
+            "ok": True,
+            "name": original_name,
+            "url": url,
+            "message": md_msg,
+            "html": html_msg,
+        }
+    )
 
 
 @app.get("/profile", response_class=HTMLResponse)
@@ -458,12 +525,22 @@ async def profile(request: Request):
     pfp = connector.get_img(username, f"static/img/{username}_pfp.png")
 
     (
-        usernameX, name, email, status,
-        instagram, linkedin, website, github,
-        nombres_apellidos, id_nit, telefono, direccion,
-        ciudad, portafolio_resumen, score
+        usernameX,
+        name,
+        email,
+        status,
+        instagram,
+        linkedin,
+        website,
+        github,
+        nombres_apellidos,
+        id_nit,
+        telefono,
+        direccion,
+        ciudad,
+        portafolio_resumen,
+        score,
     ) = profile_info.get_profile()
-    
 
     return templates.TemplateResponse(
         "profile.html",
@@ -491,7 +568,9 @@ async def profile(request: Request):
 
 
 @app.post("/update-profile-field")
-async def update_profile_field(request: Request, field: str = Form(...), value: str = Form(...)):
+async def update_profile_field(
+    request: Request, field: str = Form(...), value: str = Form(...)
+):
     """Endpoint to update a single profile field (e.g., social links)."""
     uid = request.cookies.get("uid", "anon")
     # For email and phone, also update SMTP_USERNAME or other flows if needed

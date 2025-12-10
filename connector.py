@@ -80,7 +80,6 @@ def get_user_roles(id_usuario: str):
 
 
 def user_is_admin(id_usuario: str) -> bool:
-    print(id_usuario)
     roles = get_user_roles(id_usuario)
     # normaliza por si hay mayúsculas/espacios
     roles_norm = {(r or "").strip().lower() for r in roles}
