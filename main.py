@@ -392,16 +392,15 @@ async def admin_dashboard(request: Request):
         return RedirectResponse(url="/profile", status_code=HTTP_302_FOUND)
 
     # Si es admin, renderiza su panel principal
-    return templates.TemplateResponse(
-        "chat.html",
-        {"request": request, "title": "Panel Administrador"},
-    )
+    return RedirectResponse(url="/chat", status_code=HTTP_302_FOUND)
 
 
 @app.get("/chat", response_class=HTMLResponse)
 async def chat(request: Request):
     """Serve the chat page with the current user's message history."""
-    uid = request.cookies.get("uid", "anon")
+    uid = request.cookies.get("uid")
+    if not uid:
+        return RedirectResponse(url="/", status_code=HTTP_302_FOUND)
     history = CHAT_HISTORY.get(uid, [])
     messages = _render_messages(history)
     return templates.TemplateResponse(
@@ -411,7 +410,9 @@ async def chat(request: Request):
 
 @app.post("/generate-json")
 async def generate_json(request: Request, prompt: str = Form(...)):
-    uid = request.cookies.get("uid", "anon")
+    uid = request.cookies.get("uid")
+    if not uid:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
     history = CHAT_HISTORY.get(uid, [])
     answer, history = ask_gpt_chat(prompt, history)
     CHAT_HISTORY[uid] = history
@@ -424,7 +425,9 @@ async def generate_json(request: Request, prompt: str = Form(...)):
 @app.post("/generate", response_class=HTMLResponse)
 async def generate(request: Request, prompt: str = Form(...)):
     """Generate a model response and re-render the chat template."""
-    uid = request.cookies.get("uid", "anon")
+    uid = request.cookies.get("uid")
+    if not uid:
+        return RedirectResponse(url="/", status_code=HTTP_302_FOUND)
     history = CHAT_HISTORY.get(uid, [])
     answer, history = ask_gpt_chat(prompt, history)
     CHAT_HISTORY[uid] = history
@@ -437,7 +440,9 @@ async def generate(request: Request, prompt: str = Form(...)):
 @app.post("/reset-chat")
 async def reset_chat(request: Request):
     """Limpia el historial del usuario y redirige al chat (GET) de forma segura."""
-    uid = request.cookies.get("uid", "anon")
+    uid = request.cookies.get("uid")
+    if not uid:
+        return RedirectResponse(url="/", status_code=HTTP_302_FOUND)
     # Limpia el historial (en vez de no-hacer-nada)
     CHAT_HISTORY.pop(uid, None)
 
@@ -466,6 +471,10 @@ async def reset_chat_get(request: Request):
 @app.post("/upload-pdf")
 async def upload_pdf(request: Request, file: UploadFile = File(...)):
     """Accept a PDF, extract and summarize text, and append to chat history."""
+    uid = request.cookies.get("uid")
+    if not uid:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     if file.content_type != "application/pdf" and not file.filename.lower().endswith(
         ".pdf"
     ):
