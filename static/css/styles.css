@@ -1,3 +1,6 @@
+/* =========================================
+   MODULE: IMPORTS & VARIABLES
+   ========================================= */
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap");
 
 :root {
@@ -23,7 +26,9 @@
   --sidebar-anim: 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* ================== LAYOUT BASE (sidebar + contenido) ================== */
+/* =========================================
+   MODULE: LAYOUT BASE
+   ========================================= */
 
 .layout {
   display: grid;
@@ -178,7 +183,9 @@
   }
 }
 
-/* ================== BASE GLOBAL ================== */
+/* =========================================
+   MODULE: BASE GLOBAL
+   ========================================= */
 
 body {
   min-height: 100dvh;
@@ -248,7 +255,9 @@ a {
   font-weight: 600;
 }
 
-/* ================== TARJETAS / FORM ================== */
+/* =========================================
+   MODULE: AUTH CARDS
+   ========================================= */
 
 .form_div {
   display: flex;
@@ -279,7 +288,9 @@ a {
   margin-bottom: 1rem;
 }
 
-/* ================== MARKDOWN (Answer / Prose) ================== */
+/* =========================================
+   MODULE: MARKDOWN RENDERER
+   ========================================= */
 
 .answer {
   display: flex;
@@ -350,7 +361,9 @@ a {
   background: #fafafa;
 }
 
-/* ================== CHAT (mensajes + burbujas) ================== */
+/* =========================================
+   MODULE: CHAT INTERFACE
+   ========================================= */
 
 /* Fila 1: contenedor del chat (scrollable) */
 .chat-container {
@@ -436,7 +449,9 @@ a {
   background: #f6f8fa;
 }
 
-/* ================== CONTROLES / COMPOSER (fila 2, fijo abajo) ================== */
+/* =========================================
+   MODULE: CONTROLS & COMPOSER
+   ========================================= */
 
 /* Controles en dos filas: 1) input  2) botones */
 .controls {
@@ -582,7 +597,9 @@ a {
   }
 }
 
-/* ================== PROFILE ================== */
+/* =========================================
+   MODULE: PROFILE
+   ========================================= */
 
 .profile_div {
   display: flex;
@@ -734,7 +751,9 @@ a {
   pointer-events: none;
 }
 
-/* ====== Two-column form layout for register/login ====== */
+/* =========================================
+   MODULE: FORMS & INPUTS
+   ========================================= */
 .two-columns {
   display: grid;
   grid-template-columns: 1fr;
