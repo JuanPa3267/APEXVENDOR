@@ -1,17 +1,20 @@
 # connector.py — básico para esquema ApexVendor
 
-from supabase import create_client, Client
-from supabase.client import ClientOptions
-from dotenv import load_dotenv
-import os
-from passX import verify_password, hash_password
 import base64
+import os
+
+from dotenv import load_dotenv
+from supabase import Client, create_client
+from supabase.client import ClientOptions
+
+from passX import hash_password, verify_password
 
 load_dotenv()
 
 SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY: str = os.getenv(
-    "SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY", "")
+SUPABASE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv(
+    "SUPABASE_KEY", ""
+)
 SUPABASE_SCHEMA: str = os.getenv("SUPABASE_SCHEMA", "ApexVendor")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
@@ -21,7 +24,7 @@ else:
     supabase: Client = create_client(
         SUPABASE_URL,
         SUPABASE_KEY,
-        options=ClientOptions(schema=SUPABASE_SCHEMA)  # ← usa ApexVendor
+        options=ClientOptions(schema=SUPABASE_SCHEMA),  # ← usa ApexVendor
     )
 
 # ------------------------
@@ -67,13 +70,7 @@ def get_user_roles(id_usuario: str):
     # 2) nombres de rol
     roles = []
     for rid in rol_ids:
-        r = (
-            supabase.table("rol")
-            .select("nombre")
-            .eq("id_rol", rid)
-            .single()
-            .execute()
-        )
+        r = supabase.table("rol").select("nombre").eq("id_rol", rid).single().execute()
         if r and r.data and r.data.get("nombre"):
             roles.append(r.data["nombre"])
     return roles
@@ -83,7 +80,12 @@ def user_is_admin(id_usuario: str) -> bool:
     roles = get_user_roles(id_usuario)
     # normaliza por si hay mayúsculas/espacios
     roles_norm = {(r or "").strip().lower() for r in roles}
-    return "admin" in roles_norm or "administrator" in roles_norm or "administrador" in roles_norm
+    return (
+        "admin" in roles_norm
+        or "administrator" in roles_norm
+        or "administrador" in roles_norm
+    )
+
 
 # ------------------------
 # Auth (ApexVendor.usuario)
@@ -111,6 +113,7 @@ def login(username: str, password: str) -> bool:
         print(f"login error: {e}")
         return False
 
+
 # ------------------------
 # Perfil (usuario + perfil_proveedor / perfil_admin)
 # ------------------------
@@ -137,9 +140,11 @@ def login_with_email(email: str, password: str) -> bool:
     hash_bytes = (u.get("contraseña_hash") or "").encode("utf-8")
     try:
         import bcrypt
+
         return bool(hash_bytes) and bcrypt.checkpw(password.encode("utf-8"), hash_bytes)
     except Exception:
         return False
+
 
 # ------------------------
 # Perfil (usuario + perfil_proveedor / perfil_admin)
@@ -162,7 +167,9 @@ def get_profile(username: str):
     # 1) usuario (usar maybe_single para evitar excepción si no hay filas)
     res_u = (
         supabase.table("usuario")
-        .select("id_usuario, correo, estado_cuenta, instagram, linkedin, website, github, username")
+        .select(
+            "id_usuario, correo, estado_cuenta, instagram, linkedin, website, github, username"
+        )
         .eq("username", username)
         .maybe_single()
         .execute()
@@ -178,7 +185,9 @@ def get_profile(username: str):
     try:
         prov = (
             supabase.table("perfil_proveedor")
-            .select("nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score")
+            .select(
+                "nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score"
+            )
             .eq("id_proveedor", user_id)
             .maybe_single()
             .execute()
@@ -193,7 +202,9 @@ def get_profile(username: str):
         try:
             adm = (
                 supabase.table("perfil_admin")
-                .select("nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score")
+                .select(
+                    "nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score"
+                )
                 .eq("id_admin", user_id)
                 .maybe_single()
                 .execute()
@@ -202,15 +213,19 @@ def get_profile(username: str):
             print(f"NO PERFIL ADMIN: {e}")
             adm = None
 
-    perfil = prov or adm or {
-        "nombres_apellidos": "",
-        "identificacion_nit": "",
-        "telefono": "",
-        "direccion": "",
-        "ciudad": "",
-        "portafolio_resumen": "",
-        "score": 0,
-    }
+    perfil = (
+        prov
+        or adm
+        or {
+            "nombres_apellidos": "",
+            "identificacion_nit": "",
+            "telefono": "",
+            "direccion": "",
+            "ciudad": "",
+            "portafolio_resumen": "",
+            "score": 0,
+        }
+    )
 
     return [
         data_usuario["username"],
@@ -246,12 +261,20 @@ def set_img(username: str, img_path: str) -> None:
             img_bytes = f.read()
         img_base64 = base64.b64encode(img_bytes).decode("utf-8")
 
-        if supabase.table("pfps").select("image_base64").eq("username", username).execute().data:
+        if (
+            supabase.table("pfps")
+            .select("image_base64")
+            .eq("username", username)
+            .execute()
+            .data
+        ):
             supabase.table("pfps").update({"image_base64": img_base64}).eq(
-                "username", username).execute()
+                "username", username
+            ).execute()
         else:
             supabase.table("pfps").insert(
-                {"username": username, "image_base64": img_base64}).execute()
+                {"username": username, "image_base64": img_base64}
+            ).execute()
 
     except Exception as e:
         print(f"set_img error: {e}")
@@ -293,6 +316,7 @@ def get_img(username: str, output_path: str) -> str:
         print(f"get_img error: {e}")
         return "static/img/profile.png"
 
+
 # ------------------------
 # Registro (ApexVendor.usuario + perfil_proveedor / perfil_admin)
 # ------------------------
@@ -314,7 +338,7 @@ def register(
     direccion: str | None = None,
     portafolio_resumen: str | None = None,
     tipo_proveedor: str = "Persona",
-    is_admin: bool = False
+    is_admin: bool = False,
 ) -> bool:
     """
     Unified registration function that handles both admin and provider registration.
@@ -351,25 +375,29 @@ def register(
         # 3) Create profile based on type
         if is_admin:
             # Admin profile
-            supabase.table("perfil_admin").insert({
-                "id_admin": id_usuario,
-                "nombre": name,
-            }).execute()
+            supabase.table("perfil_admin").insert(
+                {
+                    "id_admin": id_usuario,
+                    "nombre": name,
+                }
+            ).execute()
             role_name = "Admin"
         else:
             # Provider profile - use provided fields or defaults
             nit = identificacion_nit or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
-            supabase.table("perfil_proveedor").insert({
-                "id_proveedor": id_usuario,
-                "tipo_proveedor": tipo_proveedor,
-                "identificacion_nit": nit,
-                "nombre_legal": nombre_legal,
-                "nombres_apellidos": nombres_apellidos or name,
-                "telefono": telefono or phone,
-                "direccion": direccion,
-                "ciudad": city,
-                "portafolio_resumen": portafolio_resumen,
-            }).execute()
+            supabase.table("perfil_proveedor").insert(
+                {
+                    "id_proveedor": id_usuario,
+                    "tipo_proveedor": tipo_proveedor,
+                    "identificacion_nit": nit,
+                    "nombre_legal": nombre_legal,
+                    "nombres_apellidos": nombres_apellidos or name,
+                    "telefono": telefono or phone,
+                    "direccion": direccion,
+                    "ciudad": city,
+                    "portafolio_resumen": portafolio_resumen,
+                }
+            ).execute()
             role_name = "Proveedor"
 
         # 4) Assign role
@@ -385,10 +413,12 @@ def register(
             return False
 
         id_rol = role_data.data["id_rol"]
-        supabase.table("usuario_rol").insert({
-            "id_usuario": id_usuario,
-            "id_rol": id_rol,
-        }).execute()
+        supabase.table("usuario_rol").insert(
+            {
+                "id_usuario": id_usuario,
+                "id_rol": id_rol,
+            }
+        ).execute()
 
         return True
     except Exception as e:
@@ -422,7 +452,7 @@ def register_p(
         city=ciudad,
         portafolio_resumen=portafolio_resumen,
         tipo_proveedor=tipo_proveedor,
-        is_admin=False
+        is_admin=False,
     )
 
 
@@ -443,12 +473,20 @@ def update_profile_field(username: str, field: str, value: str) -> bool:
             return False
         id_usuario = u.data["id_usuario"]
 
-        if field == "correo" or field == "instagram" or field == "linkedin" or field == "website" or field == "github":
+        if (
+            field == "correo"
+            or field == "instagram"
+            or field == "linkedin"
+            or field == "website"
+            or field == "github"
+        ):
             supabase.table("usuario").update({field: value}).eq(
-                "username", username).execute()
+                "username", username
+            ).execute()
         else:
             supabase.table("perfil_proveedor").update({field: value}).eq(
-                "id_proveedor", id_usuario).execute()
+                "id_proveedor", id_usuario
+            ).execute()
         return True
     except Exception as e:
         print(f"update_profile_field error: {e}")
@@ -456,7 +494,5 @@ def update_profile_field(username: str, field: str, value: str) -> bool:
 
 
 def get_provs() -> list[dict]:
-    resp = supabase.table("perfil_proveedor") \
-        .select("*") \
-        .execute()
+    resp = supabase.table("perfil_proveedor").select("*").execute()
     return resp.data if resp and resp.data else []

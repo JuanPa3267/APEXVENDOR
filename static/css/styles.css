@@ -774,7 +774,7 @@ a {
 /* Submit button full row, right aligned */
 .two-columns button[type="submit"] {
   grid-column: 1 / -1;
-  justify-self: end;
+  justify-self: center;
 }
 
 .no-scrollbar {
