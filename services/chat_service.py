@@ -1,10 +1,3 @@
-"""Utilities for LLM interaction and PDF processing.
-
-This module configures the Gemini model, provides helpers to extract text from
-PDFs, summarize that text, and maintain a simple chat interaction while
-returning updated history.
-"""
-
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -12,30 +5,25 @@ import time
 from PyPDF2 import PdfReader
 
 load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
 SYSTEM_CTX = "Responde en Markdown en español."
-model = genai.GenerativeModel(
-    model_name="gemini-2.5-flash",
-    system_instruction=SYSTEM_CTX,
-    generation_config={"temperature": 0.4}
-)
+
+# Configure Gemini
+api_key = os.getenv("GEMINI_API_KEY")
+model = None
+if api_key:
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(
+        model_name="gemini-2.5-flash",
+        system_instruction=SYSTEM_CTX,
+        generation_config={"temperature": 0.4}
+    )
+else:
+    print("Warning: GEMINI_API_KEY not found. Chat will not work.")
 
 MAX_PDF_PAGES = 500
 MAX_CHARS = 500000
 
-
 def get_pdf_text(file_path: str, max_pages: int = MAX_PDF_PAGES, max_chars: int = MAX_CHARS) -> str:
-    """Extract text from a PDF file up to limits.
-
-    Args:
-        file_path: Absolute or relative path to the PDF file.
-        max_pages: Maximum number of pages to read.
-        max_chars: Maximum number of characters to return.
-
-    Returns:
-        Extracted text truncated to `max_chars`. Empty string on failure.
-    """
     if not file_path:
         return ""
     text = []
@@ -51,19 +39,13 @@ def get_pdf_text(file_path: str, max_pages: int = MAX_PDF_PAGES, max_chars: int 
     merged = "\n".join(text).strip()
     return merged[:MAX_CHARS]
 
-
 def summarize_pdf_text(name: str, text: str, proveedores: list[dict]) -> str:
-    """Ask the model to summarize a project's PDF contents in Spanish Markdown.
-
-    Args:
-        name: Display name of the PDF/document.
-        text: Extracted text to summarize.
-
-    Returns:
-        Model-generated summary in Markdown, or a fallback message on failure.
-    """
+    if not model:
+        return "_Modelo no disponible (falta API KEY)._"
+        
     if not text.strip():
         return "_No se pudo extraer texto del PDF (posible escaneado o protegido)._"
+        
     prompt = f"""
     {name} es un proyecto, su texto es:
     {text}
@@ -82,23 +64,19 @@ def summarize_pdf_text(name: str, text: str, proveedores: list[dict]) -> str:
     except Exception:
         return "_No fue posible generar el resumen._"
 
+CHAT_HISTORY: dict[str, list[dict]] = {}
 
 def ask_gpt_chat(prompt: str, history: list[dict]) -> tuple[str, list[dict]]:
-    """Send a prompt within an existing chat history and return updated state.
-
-    Args:
-        prompt: User input to send to the model.
-        history: Prior chat turns as list of role/parts dicts.
-
-    Returns:
-        Tuple of (answer string, updated history list).
-    """
+    if not model:
+        return "Error: API Key no configurada.", history
+        
     start_time = time.time()
     chat = model.start_chat(history=history)
     resp = chat.send_message(prompt)
     answer = resp.text or ""
     end_time = time.time()
     print(f"Time taken: {round(end_time - start_time, 2)} seconds")
+    
     history += [
         {"role": "user",  "parts": [prompt]},
         {"role": "model", "parts": [answer]},
