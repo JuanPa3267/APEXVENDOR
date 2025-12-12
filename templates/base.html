@@ -67,8 +67,10 @@
         <nav class="sidebar-nav">
           {% if request.cookies.get('role') == 'admin' %}
           <a href="/chat">Chat</a>
-          {% block sidebar %}{% endblock %} {% endif %}
+          <a href="/admin">Proveedores</a>
+          {% block sidebar %}{% endblock %} {% else %}
           <a href="/profile">Mi perfil</a>
+          {% endif %}
         </nav>
       </aside>
 
