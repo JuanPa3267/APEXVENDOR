@@ -251,6 +251,7 @@ async def register_p(
     nombre_legal: str = Form(""),
     nombres_apellidos: str = Form(...),
     password: str = Form(...),
+    verify_password: str = Form(...),
     correo: str = Form(...),
     identificacion_nit: str = Form(...),
     telefono: str = Form(...),
@@ -260,6 +261,16 @@ async def register_p(
     tipo_proveedor: str = Form("Persona"),
     is_admin: bool = Form(False),
 ):
+    if password != verify_password:
+        return templates.TemplateResponse(
+            "register_p.html",
+            {
+                "request": request,
+                "title": "Registrarse como Proveedor",
+                "error": "Las contraseñas no coinciden.",
+            },
+            status_code=400,
+        )
     # Username base según rol
     formatted_name = nombres_apellidos.lower().split(" ")[0]
     if formatted_name == "fabian":
