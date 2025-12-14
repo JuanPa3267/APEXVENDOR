@@ -1,84 +1,109 @@
-# connector.py — básico para esquema ApexVendor
-
 import base64
 import os
+from typing import Any, Dict, List, Optional
 
-from dotenv import load_dotenv
-from supabase import Client, create_client
-from supabase.client import ClientOptions
+import dotenv
+import psycopg2
+from psycopg2 import Error as Psycopg2Error
+from psycopg2.extras import RealDictCursor
 
+# ⚠️ Asegúrate de que este archivo exista en tu proyecto y contenga
+# las funciones hash_password y verify_password.
 from passX import hash_password, verify_password
 
-load_dotenv()
+# Cargar variables de entorno desde el archivo .env
+dotenv.load_dotenv()
 
-SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv(
-    "SUPABASE_KEY", ""
-)
-SUPABASE_SCHEMA: str = os.getenv("SUPABASE_SCHEMA", "ApexVendor")
+# --- 1. CONFIGURACIÓN DE CONEXIÓN (LEYENDO DE .env) ---
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+# Nombre del esquema (ApexVendor, por ejemplo)
+SCHEMA: str = os.getenv("SCHEMA", "ApexVendor")
+# --------------------------------------------------------
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("Warning: missing SUPABASE_URL or SUPABASE_KEY. Supabase disabled.")
-    supabase: Client | None = None
-else:
-    supabase: Client = create_client(
-        SUPABASE_URL,
-        SUPABASE_KEY,
-        options=ClientOptions(schema=SUPABASE_SCHEMA),  # ← usa ApexVendor
+
+def get_db_connection() -> psycopg2.extensions.connection:
+    """Establece y devuelve una conexión de psycopg2 con configuración de Azure SSL."""
+    if not all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
+        raise EnvironmentError(
+            "Faltan variables de entorno (DB_HOST, DB_NAME, etc.) para la conexión DB. "
+            "Revisa tu archivo .env."
+        )
+
+    conn = psycopg2.connect(
+        host=DB_HOST,
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        sslmode="require",  # Requisito de Azure PostgreSQL
+        cursor_factory=RealDictCursor,
     )
-
-# ------------------------
-# Obtener roles (ApexVendor.rol)
-# ------------------------
+    return conn
 
 
-def get_user_by_username(username: str):
-    if not supabase:
+def execute_query(
+    sql: str, params: tuple = None, fetch_one: bool = False
+) -> Optional[Any]:
+    """
+    Función de utilidad para ejecutar consultas de SQL con manejo de conexión/cursor
+    y transacciones seguras (evita SQL Injection usando %s en 'params').
+    """
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # Ejecutar la consulta con parámetros separados para seguridad
+                cur.execute(sql, params or ())
+
+                if cur.description:
+                    if fetch_one:
+                        return cur.fetchone()
+                    return cur.fetchall()
+
+                conn.commit()
+                return True
+
+    except Psycopg2Error as e:
+        print(f"Database error executing query: {e}")
         return None
-    res = (
-        supabase.table("usuario")
-        .select("id_usuario, username, correo, contraseña_hash, estado_cuenta")
-        .eq("username", username)
-        .single()
-        .execute()
-    )
-    return res.data if res and res.data else None
+    except EnvironmentError as e:
+        print(f"Configuration error: {e}")
+        return None
 
 
-def get_user_roles(id_usuario: str):
+# ------------------------
+# Obtener usuarios y roles
+# ------------------------
+
+
+def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
+    sql = f"""
+    SELECT id_usuario, username, correo, contraseña_hash, estado_cuenta
+    FROM "{SCHEMA}".usuario
+    WHERE username = %s;
     """
-    Devuelve una lista de nombres de rol para el usuario.
-    Tablas esperadas:
-      - usuario_rol(id_usuario, id_rol)
-      - rol(id_rol, nombre)
-    """
-    if not supabase or not id_usuario:
+    return execute_query(sql, (username,), fetch_one=True)
+
+
+def get_user_roles(id_usuario: str) -> List[str]:
+    """Devuelve una lista de nombres de rol para el usuario."""
+    if not id_usuario:
         return []
 
-    # 1) relaciones usuario_rol
-    ur = (
-        supabase.table("usuario_rol")
-        .select("id_rol")
-        .eq("id_usuario", id_usuario)
-        .execute()
-    )
-    rol_ids = [row["id_rol"] for row in (ur.data or [])]
+    sql = f"""
+    SELECT r.nombre
+    FROM "{SCHEMA}".usuario_rol ur
+    JOIN "{SCHEMA}".rol r ON ur.id_rol = r.id_rol
+    WHERE ur.id_usuario = %s;
+    """
+    roles_data = execute_query(sql, (id_usuario,))
 
-    if not rol_ids:
-        return []
-
-    # 2) nombres de rol
-    roles = []
-    for rid in rol_ids:
-        r = supabase.table("rol").select("nombre").eq("id_rol", rid).single().execute()
-        if r and r.data and r.data.get("nombre"):
-            roles.append(r.data["nombre"])
-    return roles
+    return [row["nombre"] for row in roles_data] if roles_data else []
 
 
 def user_is_admin(id_usuario: str) -> bool:
     roles = get_user_roles(id_usuario)
-    # normaliza por si hay mayúsculas/espacios
     roles_norm = {(r or "").strip().lower() for r in roles}
     return (
         "admin" in roles_norm
@@ -88,48 +113,39 @@ def user_is_admin(id_usuario: str) -> bool:
 
 
 # ------------------------
-# Auth (ApexVendor.usuario)
+# Auth
 # ------------------------
 
 
 def login(username: str, password: str) -> bool:
-    """
-    Autentica con ApexVendor.usuario usando 'contraseña_hash'.
-    """
-    if not supabase:
-        return False
+    """Autentica contra la tabla usuario usando el hash de contraseña almacenado."""
     try:
-        resp = (
-            supabase.table("usuario")
-            .select("contraseña_hash")
-            .eq("username", username)
-            .execute()
-        )
-        if not resp.data:
+        sql = f"""
+        SELECT contraseña_hash
+        FROM "{SCHEMA}".usuario
+        WHERE username = %s;
+        """
+        resp = execute_query(sql, (username,), fetch_one=True)
+
+        if not resp:
             return False
-        stored_hash = resp.data[0]["contraseña_hash"]
+
+        stored_hash = resp["contraseña_hash"]
         return verify_password(password, stored_hash)
     except Exception as e:
         print(f"login error: {e}")
         return False
 
 
-# ------------------------
-# Perfil (usuario + perfil_proveedor / perfil_admin)
-# ------------------------
-
-
-def get_user_by_email(email: str):
-    if not supabase or not email:
+def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    if not email:
         return None
-    res = (
-        supabase.table("usuario")
-        .select("id_usuario, username, correo, contraseña_hash, estado_cuenta")
-        .eq("correo", email)
-        .single()
-        .execute()
-    )
-    return res.data if res and res.data else None
+    sql = f"""
+    SELECT id_usuario, username, correo, contraseña_hash, estado_cuenta
+    FROM "{SCHEMA}".usuario
+    WHERE correo = %s;
+    """
+    return execute_query(sql, (email,), fetch_one=True)
 
 
 def login_with_email(email: str, password: str) -> bool:
@@ -137,13 +153,9 @@ def login_with_email(email: str, password: str) -> bool:
     u = get_user_by_email(email)
     if not u:
         return False
-    hash_bytes = (u.get("contraseña_hash") or "").encode("utf-8")
-    try:
-        import bcrypt
 
-        return bool(hash_bytes) and bcrypt.checkpw(password.encode("utf-8"), hash_bytes)
-    except Exception:
-        return False
+    stored_hash = u.get("contraseña_hash")
+    return verify_password(password, stored_hash)
 
 
 # ------------------------
@@ -151,67 +163,33 @@ def login_with_email(email: str, password: str) -> bool:
 # ------------------------
 
 
-def get_profile(username: str):
-    """
-    Devuelve una lista con:
-    [username, correo, estado_cuenta, instagram, linkedin, website, github,
-     nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score]
-
-    Busca primero perfil_proveedor; si no existe, intenta perfil_admin.
-    Si ninguno existe, retorna valores vacíos por defecto.
-    """
-    if not supabase or not username:
-        print("NO SUPABASE O NO USERNAME")
-        return None
-
-    # 1) usuario (usar maybe_single para evitar excepción si no hay filas)
-    res_u = (
-        supabase.table("usuario")
-        .select(
-            "id_usuario, correo, estado_cuenta, instagram, linkedin, website, github, username"
-        )
-        .eq("username", username)
-        .maybe_single()
-        .execute()
-    )
-    data_usuario = res_u.data
+def get_profile(username: str) -> Optional[List[Any]]:
+    """Obtiene datos de usuario y perfil (proveedor o admin)."""
+    data_usuario = get_user_by_username(username)
     if not data_usuario:
         return None
 
     user_id = data_usuario["id_usuario"]
 
-    # 2) perfil proveedor
-    prov = None
-    try:
-        prov = (
-            supabase.table("perfil_proveedor")
-            .select(
-                "nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score"
-            )
-            .eq("id_proveedor", user_id)
-            .maybe_single()
-            .execute()
-        ).data
-    except Exception as e:
-        print(f"NO PERFIL PROVEEDOR: {e}")
-        prov = None
+    # 1) Intentar Perfil Proveedor
+    sql_prov = f"""
+    SELECT nombres_apellidos, identificacion_nit, telefono, direccion, ciudad,
+           portafolio_resumen, score
+    FROM "{SCHEMA}".perfil_proveedor
+    WHERE id_proveedor = %s;
+    """
+    prov = execute_query(sql_prov, (user_id,), fetch_one=True)
 
-    # 3) si no hay proveedor, intentar perfil admin
+    # 2) Si no hay proveedor, intentar Perfil Admin
     adm = None
     if not prov:
-        try:
-            adm = (
-                supabase.table("perfil_admin")
-                .select(
-                    "nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score"
-                )
-                .eq("id_admin", user_id)
-                .maybe_single()
-                .execute()
-            ).data
-        except Exception as e:
-            print(f"NO PERFIL ADMIN: {e}")
-            adm = None
+        sql_adm = f"""
+        SELECT nombres_apellidos, identificacion_nit, telefono, direccion, ciudad,
+               portafolio_resumen, score
+        FROM "{SCHEMA}".perfil_admin
+        WHERE id_admin = %s;
+        """
+        adm = execute_query(sql_adm, (user_id,), fetch_one=True)
 
     perfil = (
         prov
@@ -227,6 +205,7 @@ def get_profile(username: str):
         }
     )
 
+    # Retorna la lista de campos en el orden esperado
     return [
         data_usuario["username"],
         data_usuario["correo"],
@@ -251,64 +230,54 @@ def get_profile(username: str):
 
 
 def set_img(username: str, img_path: str) -> None:
-    """
-    Sube/actualiza imagen base64 en ApexVendor.pfps (username FK a usuario.username).
-    """
-    if not supabase:
-        return
+    """Sube/actualiza imagen base64 en ApexVendor.pfps."""
     try:
         with open(img_path, "rb") as f:
             img_bytes = f.read()
         img_base64 = base64.b64encode(img_bytes).decode("utf-8")
 
-        if (
-            supabase.table("pfps")
-            .select("image_base64")
-            .eq("username", username)
-            .execute()
-            .data
-        ):
-            supabase.table("pfps").update({"image_base64": img_base64}).eq(
-                "username", username
-            ).execute()
+        # Verificar si existe la imagen (para decidir INSERT o UPDATE)
+        check_sql = f"""
+        SELECT 1
+        FROM "{SCHEMA}".pfps
+        WHERE username = %s;
+        """
+        exists = execute_query(check_sql, (username,), fetch_one=True)
+
+        if exists:
+            # UPDATE
+            update_sql = f"""
+            UPDATE "{SCHEMA}".pfps
+            SET image_base64 = %s
+            WHERE username = %s;
+            """
+            execute_query(update_sql, (img_base64, username))
         else:
-            supabase.table("pfps").insert(
-                {"username": username, "image_base64": img_base64}
-            ).execute()
+            # INSERT
+            insert_sql = f"""
+            INSERT INTO "{SCHEMA}".pfps (username, image_base64)
+            VALUES (%s, %s);
+            """
+            execute_query(insert_sql, (username, img_base64))
 
     except Exception as e:
         print(f"set_img error: {e}")
 
 
 def get_img(username: str, output_path: str) -> str:
-    """
-    Descarga la imagen de ApexVendor.pfps → guarda en output_path.
-    """
-    if not supabase:
-        return "static/img/profile.png"
+    """Descarga la imagen de ApexVendor.pfps y la guarda en output_path."""
     try:
-        try:
-            resp = (
-                supabase.table("pfps")
-                .select("image_base64")
-                .eq("username", username)
-                .single()
-                .execute()
-            )
-        except Exception:
-            resp = (
-                supabase.table("pfps")
-                .select("image_base64")
-                .eq("username", username)
-                .execute()
-            )
-            if resp.data:
-                resp.data = resp.data[0]
+        sql = f"""
+        SELECT image_base64
+        FROM "{SCHEMA}".pfps
+        WHERE username = %s;
+        """
+        resp = execute_query(sql, (username,), fetch_one=True)
 
-        if not resp.data or not resp.data.get("image_base64"):
+        if not resp or not resp.get("image_base64"):
             return "static/img/profile.png"
 
-        img_bytes = base64.b64decode(resp.data["image_base64"].strip())
+        img_bytes = base64.b64decode(resp["image_base64"].strip())
         with open(output_path, "wb") as f:
             f.write(img_bytes)
         return output_path
@@ -318,7 +287,7 @@ def get_img(username: str, output_path: str) -> str:
 
 
 # ------------------------
-# Registro (ApexVendor.usuario + perfil_proveedor / perfil_admin)
+# Registro (Transaccional)
 # ------------------------
 
 
@@ -326,11 +295,9 @@ def register(
     username: str,
     password: str,
     email: str,
-    # Basic fields
     name: str | None = None,
     phone: str | None = None,
     city: str | None = None,
-    # Provider-specific fields
     nombre_legal: str | None = None,
     nombres_apellidos: str | None = None,
     identificacion_nit: str | None = None,
@@ -340,89 +307,92 @@ def register(
     tipo_proveedor: str = "Persona",
     is_admin: bool = False,
 ) -> bool:
-    """
-    Unified registration function that handles both admin and provider registration.
-    - If is_admin=True → creates perfil_admin
-    - If not → creates perfil_proveedor with provided fields
-    """
-    if not supabase:
-        return False
+    """Registra un usuario y su perfil (admin o proveedor) en una transacción segura."""
     try:
-        # 1) Create usuario
-        usuario_data = {
-            "username": username,
-            "contraseña_hash": hash_password(password),
-            "correo": email,
-            "github": "",
-            "instagram": None,
-            "linkedin": None,
-            "website": None,
-        }
-        supabase.table("usuario").insert(usuario_data).execute()
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # 1) Create usuario + RETURNING id_usuario
+                insert_user_sql = f"""
+                INSERT INTO "{SCHEMA}".usuario (
+                    username, contraseña_hash, correo, github, instagram, linkedin, website
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s
+                ) RETURNING id_usuario;
+                """
+                cur.execute(
+                    insert_user_sql,
+                    (username, hash_password(password), email, "", None, None, None),
+                )
 
-        # 2) Get id_usuario
-        u = (
-            supabase.table("usuario")
-            .select("id_usuario")
-            .eq("username", username)
-            .execute()
-        )
-        if not u.data:
-            print("register: no id_usuario after insert")
-            return False
-        id_usuario = u.data[0]["id_usuario"]
+                id_usuario = cur.fetchone()["id_usuario"]
+                if not id_usuario:
+                    print("register: no id_usuario after insert")
+                    conn.rollback()
+                    return False
 
-        # 3) Create profile based on type
-        if is_admin:
-            # Admin profile
-            supabase.table("perfil_admin").insert(
-                {
-                    "id_admin": id_usuario,
-                    "nombre": name,
-                }
-            ).execute()
-            role_name = "Admin"
-        else:
-            # Provider profile - use provided fields or defaults
-            nit = identificacion_nit or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
-            supabase.table("perfil_proveedor").insert(
-                {
-                    "id_proveedor": id_usuario,
-                    "tipo_proveedor": tipo_proveedor,
-                    "identificacion_nit": nit,
-                    "nombre_legal": nombre_legal,
-                    "nombres_apellidos": nombres_apellidos or name,
-                    "telefono": telefono or phone,
-                    "direccion": direccion,
-                    "ciudad": city,
-                    "portafolio_resumen": portafolio_resumen,
-                }
-            ).execute()
-            role_name = "Proveedor"
+                # 2) Create profile based on type
+                if is_admin:
+                    insert_profile_sql = f"""
+                    INSERT INTO "{SCHEMA}".perfil_admin (id_admin, nombre)
+                    VALUES (%s, %s);
+                    """
+                    cur.execute(insert_profile_sql, (id_usuario, name))
+                    role_name = "Admin"
+                else:
+                    nit = (
+                        identificacion_nit
+                        or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
+                    )
+                    insert_profile_sql = f"""
+                    INSERT INTO "{SCHEMA}".perfil_proveedor (
+                        id_proveedor, tipo_proveedor, identificacion_nit, nombre_legal,
+                        nombres_apellidos, telefono, direccion, ciudad, portafolio_resumen
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """
+                    cur.execute(
+                        insert_profile_sql,
+                        (
+                            id_usuario,
+                            tipo_proveedor,
+                            nit,
+                            nombre_legal,
+                            nombres_apellidos or name,
+                            telefono or phone,
+                            direccion,
+                            city,
+                            portafolio_resumen,
+                        ),
+                    )
+                    role_name = "Proveedor"
 
-        # 4) Assign role
-        role_data = (
-            supabase.table("rol")
-            .select("id_rol")
-            .eq("nombre", role_name)
-            .single()
-            .execute()
-        )
-        if not role_data.data:
-            print(f"register: no {role_name} role found")
-            return False
+                # 3) Assign role
+                select_role_sql = f"""
+                SELECT id_rol FROM "{SCHEMA}".rol WHERE nombre = %s;
+                """
+                cur.execute(select_role_sql, (role_name,))
+                role_data = cur.fetchone()
 
-        id_rol = role_data.data["id_rol"]
-        supabase.table("usuario_rol").insert(
-            {
-                "id_usuario": id_usuario,
-                "id_rol": id_rol,
-            }
-        ).execute()
+                if not role_data:
+                    print(f"register: no {role_name} role found")
+                    conn.rollback()
+                    return False
 
-        return True
+                id_rol = role_data["id_rol"]
+                insert_user_role_sql = f"""
+                INSERT INTO "{SCHEMA}".usuario_rol (id_usuario, id_rol)
+                VALUES (%s, %s);
+                """
+                cur.execute(insert_user_role_sql, (id_usuario, id_rol))
+
+                # 4) Commit de toda la transacción
+                conn.commit()
+                return True
+
+    except Psycopg2Error as e:
+        print(f"register Psycopg2 error: {e}")
+        return False
     except Exception as e:
-        print(f"register error: {e}")
+        print(f"register general error: {e}")
         return False
 
 
@@ -439,7 +409,7 @@ def register_p(
     portafolio_resumen: str,
     tipo_proveedor: str,
 ) -> bool:
-    """Legacy wrapper for provider registration."""
+    """Wrapper para el registro de proveedor."""
     return register(
         username=username,
         password=password,
@@ -456,43 +426,53 @@ def register_p(
     )
 
 
-def update_profile_field(username: str, field: str, value: str) -> bool:
-    if not supabase:
-        return False
-    try:
-        # recuperar id_usuario
-        u = (
-            supabase.table("usuario")
-            .select("id_usuario")
-            .eq("username", username)
-            .single()
-            .execute()
-        )
-        if not u.data:
-            print("update_profile_field: no id_usuario luego del select")
-            return False
-        id_usuario = u.data["id_usuario"]
+# ------------------------
+# Update y Select
+# ------------------------
 
-        if (
-            field == "correo"
-            or field == "instagram"
-            or field == "linkedin"
-            or field == "website"
-            or field == "github"
+
+def update_profile_field(username: str, field: str, value: str) -> bool:
+    """Actualiza un campo en la tabla usuario o perfil_proveedor."""
+    try:
+        u = get_user_by_username(username)
+        if not u:
+            print("update_profile_field: no usuario encontrado")
+            return False
+        id_usuario = u["id_usuario"]
+
+        if field in (
+            "correo",
+            "instagram",
+            "linkedin",
+            "website",
+            "github",
+            "estado_cuenta",
         ):
-            supabase.table("usuario").update({field: value}).eq(
-                "username", username
-            ).execute()
+            table = f'"{SCHEMA}".usuario'
+            where_col = "username"
+            where_val = username
         else:
-            supabase.table("perfil_proveedor").update({field: value}).eq(
-                "id_proveedor", id_usuario
-            ).execute()
-        return True
+            table = f'"{SCHEMA}".perfil_proveedor'
+            where_col = "id_proveedor"
+            where_val = id_usuario
+
+        update_sql = f"""
+        UPDATE {table}
+        SET {field} = %s
+        WHERE {where_col} = %s;
+        """
+
+        return execute_query(update_sql, (value, where_val))
+
     except Exception as e:
         print(f"update_profile_field error: {e}")
         return False
 
 
-def get_provs() -> list[dict]:
-    resp = supabase.table("perfil_proveedor").select("*").execute()
-    return resp.data if resp and resp.data else []
+def get_provs() -> List[Dict]:
+    """Obtiene todos los perfiles de proveedor."""
+    sql = f"""
+    SELECT * FROM "{SCHEMA}".perfil_proveedor;
+    """
+    resp = execute_query(sql)
+    return resp if resp else []
