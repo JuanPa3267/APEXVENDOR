@@ -2,12 +2,14 @@
 
 Refactored to Modular Monolith architecture.
 """
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+
 from pathlib import Path
 
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
 # Import routers
-from routers import auth, profile, chat, admin
+from routers import admin, auth, chat, profile
 
 app = FastAPI()
 
@@ -26,4 +28,5 @@ app.include_router(admin.router)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="localhost", port=6969)
