@@ -1,52 +1,55 @@
-from core.database import supabase
-from passX import verify_password, hash_password
-import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from string import Template
-import random
-import string
 import hashlib
+import os
+import random
+import smtplib
+import string
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from string import Template
+from typing import Any, Dict, List, Optional
+
+from core.database import SCHEMA, execute_query
+from passX import hash_password, verify_password
 
 # -------------------------------------------------------------------------
 # Utilidades (anteriormente en registerstuff.py)
 # -------------------------------------------------------------------------
+
 
 def username_gen(name: str = "user", base: str = "p", length: int = 8) -> str:
     """Generate a pseudo-unique username token."""
     formatted_name = name.lower().split(" ")[0]
     if formatted_name == "fabian":
         formatted_name = "favian"
-    
-    random_str = ''.join(random.choices(
-        string.ascii_lowercase + string.digits, k=16))
+
+    random_str = "".join(random.choices(string.ascii_lowercase + string.digits, k=16))
     hash_str = hashlib.sha256(random_str.encode()).hexdigest()
     return f"{base}-{formatted_name}-{hash_str[:length]}"
 
+
 def send_html_email(to, subject, template_path, context):
     """Send an HTML email using a template and context values."""
-    SMTP_SERVER = 'smtp.gmail.com'
+    SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 587
-    SMTP_USERNAME = os.getenv('SMTP_USERNAME')
-    SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
-    
+    SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
     if not SMTP_USERNAME or not SMTP_PASSWORD:
         print("Correos deshabilitados: faltan credenciales SMTP.")
         return False
 
     try:
-        with open(template_path, 'r', encoding='utf-8') as f:
+        with open(template_path, "r", encoding="utf-8") as f:
             html_template = Template(f.read())
-        
+
         html_content = html_template.safe_substitute(context)
 
-        msg = MIMEMultipart('alternative')
-        msg['From'] = SMTP_USERNAME
-        msg['To'] = to
-        msg['Subject'] = subject
+        msg = MIMEMultipart("alternative")
+        msg["From"] = SMTP_USERNAME
+        msg["To"] = to
+        msg["Subject"] = subject
 
-        part = MIMEText(html_content, 'html')
+        part = MIMEText(html_content, "html")
         msg.attach(part)
 
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
@@ -59,80 +62,76 @@ def send_html_email(to, subject, template_path, context):
         print(f"Error sending HTML email: {e}")
         return False
 
+
 # -------------------------------------------------------------------------
-# Lógica de Queries (anteriormente en connector.py)
+# Lógica de Queries
 # -------------------------------------------------------------------------
 
-def get_user_by_email(email: str):
-    if not supabase or not email:
-        return None
-    res = (
-        supabase.table("usuario")
-        .select("id_usuario, username, correo, contraseña_hash, estado_cuenta")
-        .eq("correo", email)
-        .single()
-        .execute()
-    )
-    return res.data if res and res.data else None
 
-def get_user_by_username(username: str):
-    if not supabase:
+def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    if not email:
         return None
-    res = (
-        supabase.table("usuario")
-        .select("id_usuario, username, correo, contraseña_hash, estado_cuenta")
-        .eq("username", username)
-        .single()
-        .execute()
-    )
-    return res.data if res and res.data else None
 
-def get_user_roles(id_usuario: str) -> list[str]:
-    if not supabase or not id_usuario:
+    sql = f"""
+    SELECT id_usuario, username, correo, contraseña_hash, estado_cuenta
+    FROM "{SCHEMA}".usuario
+    WHERE correo = %s;
+    """
+    return execute_query(sql, (email,), fetch_one=True)
+
+
+def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
+    if not username:
+        return None
+
+    sql = f"""
+    SELECT id_usuario, username, correo, contraseña_hash, estado_cuenta
+    FROM "{SCHEMA}".usuario
+    WHERE username = %s;
+    """
+    return execute_query(sql, (username,), fetch_one=True)
+
+
+def get_user_roles(id_usuario: str) -> List[str]:
+    if not id_usuario:
         return []
 
-    # 1) relaciones usuario_rol
-    ur = (
-        supabase.table("usuario_rol")
-        .select("id_rol")
-        .eq("id_usuario", id_usuario)
-        .execute()
-    )
-    rol_ids = [row["id_rol"] for row in (ur.data or [])]
+    sql = f"""
+    SELECT r.nombre
+    FROM "{SCHEMA}".usuario_rol ur
+    JOIN "{SCHEMA}".rol r ON ur.id_rol = r.id_rol
+    WHERE ur.id_usuario = %s;
+    """
+    roles_data = execute_query(sql, (id_usuario,))
+    return [row["nombre"] for row in roles_data] if roles_data else []
 
-    if not rol_ids:
-        return []
-
-    # 2) nombres de rol
-    roles = []
-    for rid in rol_ids:
-        r = (
-            supabase.table("rol")
-            .select("nombre")
-            .eq("id_rol", rid)
-            .single()
-            .execute()
-        )
-        if r and r.data and r.data.get("nombre"):
-            roles.append(r.data["nombre"])
-    return roles
 
 def user_is_admin(id_usuario: str) -> bool:
     roles = get_user_roles(id_usuario)
     roles_norm = {(r or "").strip().lower() for r in roles}
-    return "admin" in roles_norm or "administrator" in roles_norm or "administrador" in roles_norm
+    return (
+        "admin" in roles_norm
+        or "administrator" in roles_norm
+        or "administrador" in roles_norm
+    )
+
 
 def login_with_email(email: str, password: str) -> bool:
     """Auth por correo usando el hash almacenado."""
     u = get_user_by_email(email)
     if not u:
         return False
-    hash_bytes = (u.get("contraseña_hash") or "").encode("utf-8")
-    try:
-        return bool(hash_bytes) and verify_password(password, hash_bytes.decode())
-    except Exception:
-        # Fallback si el hash no es compatible con passX directo (sucio) o error
+
+    stored_hash = u.get("contraseña_hash")
+    if not stored_hash:
         return False
+
+    try:
+        return verify_password(password, stored_hash)
+    except Exception as e:
+        print(f"login_with_email error: {e}")
+        return False
+
 
 def register_user(
     username: str,
@@ -150,82 +149,100 @@ def register_user(
     direccion: str | None = None,
     portafolio_resumen: str | None = None,
     tipo_proveedor: str = "Persona",
-    is_admin: bool = False
+    is_admin: bool = False,
 ) -> bool:
     """
     Unified registration function that handles both admin and provider registration.
     """
-    if not supabase:
-        return False
     try:
-        # 1) Create usuario
-        usuario_data = {
-            "username": username,
-            "contraseña_hash": hash_password(password),
-            "correo": email,
-            "github": "",
-            "instagram": None,
-            "linkedin": None,
-            "website": None,
-        }
-        supabase.table("usuario").insert(usuario_data).execute()
+        from core.database import get_db_connection
 
-        # 2) Get id_usuario
-        u = (
-            supabase.table("usuario")
-            .select("id_usuario")
-            .eq("username", username)
-            .execute()
-        )
-        if not u.data:
-            print("register: no id_usuario after insert")
-            return False
-        id_usuario = u.data[0]["id_usuario"]
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # 1) Create usuario
+                insert_user_sql = f"""
+                INSERT INTO "{SCHEMA}".usuario (
+                    username, contraseña_hash, correo, github, instagram, linkedin, website
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s
+                ) RETURNING id_usuario;
+                """
+                cur.execute(
+                    insert_user_sql,
+                    (username, hash_password(password), email, "", None, None, None),
+                )
 
-        # 3) Create profile based on type
-        role_name = "Proveedor"
-        if is_admin:
-            # Admin profile
-            supabase.table("perfil_admin").insert({
-                "id_admin": id_usuario,
-                "nombre": name,
-            }).execute()
-            role_name = "Admin"
-        else:
-            # Provider profile
-            nit = identificacion_nit or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
-            supabase.table("perfil_proveedor").insert({
-                "id_proveedor": id_usuario,
-                "tipo_proveedor": tipo_proveedor,
-                "identificacion_nit": nit,
-                "nombre_legal": nombre_legal,
-                "nombres_apellidos": nombres_apellidos or name,
-                "telefono": telefono or phone,
-                "direccion": direccion,
-                "ciudad": city,
-                "portafolio_resumen": portafolio_resumen,
-            }).execute()
+                row = cur.fetchone()
+                id_usuario = row["id_usuario"] if row else None
 
-        # 4) Assign role
-        role_data = (
-            supabase.table("rol")
-            .select("id_rol")
-            .eq("nombre", role_name)
-            .single()
-            .execute()
-        )
-        # Si no existe el rol exacto, intenta fallback o falla
-        if not role_data.data:
-            print(f"register: no {role_name} role found")
-            return False
+                if not id_usuario:
+                    print("register: no id_usuario after insert")
+                    conn.rollback()
+                    return False
 
-        id_rol = role_data.data["id_rol"]
-        supabase.table("usuario_rol").insert({
-            "id_usuario": id_usuario,
-            "id_rol": id_rol,
-        }).execute()
+                # 2) Create profile based on type
+                role_name = "Proveedor"
+                if is_admin:
+                    # Admin profile
+                    insert_admin_sql = f"""
+                    INSERT INTO "{SCHEMA}".perfil_admin (id_admin, nombre)
+                    VALUES (%s, %s);
+                    """
+                    cur.execute(insert_admin_sql, (id_usuario, name))
+                    role_name = "Admin"
+                else:
+                    # Provider profile
+                    nit = (
+                        identificacion_nit
+                        or f"TEMP-{str(id_usuario).replace('-', '')[-6:]}"
+                    )
 
-        return True
+                    insert_prov_sql = f"""
+                    INSERT INTO "{SCHEMA}".perfil_proveedor (
+                        id_proveedor, tipo_proveedor, identificacion_nit, nombre_legal,
+                        nombres_apellidos, telefono, direccion, ciudad, portafolio_resumen
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """
+                    cur.execute(
+                        insert_prov_sql,
+                        (
+                            id_usuario,
+                            tipo_proveedor,
+                            nit,
+                            nombre_legal,
+                            nombres_apellidos or name,
+                            telefono or phone,
+                            direccion,
+                            city,
+                            portafolio_resumen,
+                        ),
+                    )
+
+                # 3) Assign role
+                select_role_sql = (
+                    f'SELECT id_rol FROM "{SCHEMA}".rol WHERE nombre = %s;'
+                )
+                cur.execute(select_role_sql, (role_name,))
+                role_data = cur.fetchone()
+
+                if not role_data:
+                    # Try fallback to 'Administrator' or similar if needed?
+                    # But for now assume 'Admin' or 'Proveedor' exists as per connector.py logic.
+                    print(f"register: no {role_name} role found")
+                    conn.rollback()
+                    return False
+
+                id_rol = role_data["id_rol"]
+
+                insert_role_sql = f"""
+                INSERT INTO "{SCHEMA}".usuario_rol (id_usuario, id_rol)
+                VALUES (%s, %s);
+                """
+                cur.execute(insert_role_sql, (id_usuario, id_rol))
+
+                conn.commit()
+                return True
+
     except Exception as e:
         print(f"register error: {e}")
         return False

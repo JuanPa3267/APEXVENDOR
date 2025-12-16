@@ -1,64 +1,49 @@
 import base64
+from typing import Any, Dict, List, Optional
 
-from core.database import supabase
+from core.database import SCHEMA, execute_query
 
 
-def get_profile_data(username: str) -> dict | None:
+def get_profile_data(username: str) -> Optional[Dict[str, Any]]:
     """
     Fetches profile data for a given username.
     Returns a dictionary with all profile fields, or None if user not found.
     """
-    if not supabase or not username:
+    if not username:
         return None
 
-    # 1) usuario
-    res_u = (
-        supabase.table("usuario")
-        .select(
-            "id_usuario, correo, estado_cuenta, instagram, linkedin, website, github, username"
-        )
-        .eq("username", username)
-        .maybe_single()
-        .execute()
-    )
-    data_usuario = res_u.data
+    # 1) Get user data
+    sql_user = f"""
+    SELECT id_usuario, correo, estado_cuenta, instagram, linkedin, website, github, username
+    FROM "{SCHEMA}".usuario
+    WHERE username = %s;
+    """
+    data_usuario = execute_query(sql_user, (username,), fetch_one=True)
+
     if not data_usuario:
         return None
 
     user_id = data_usuario["id_usuario"]
 
-    # 2) perfil proveedor
-    prov = None
-    try:
-        prov = (
-            supabase.table("perfil_proveedor")
-            .select(
-                "nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score"
-            )
-            .eq("id_proveedor", user_id)
-            .maybe_single()
-            .execute()
-        ).data
-    except Exception as e:
-        print(f"NO PERFIL PROVEEDOR: {e}")
-        prov = None
+    # 2) Try Provider Profile
+    sql_prov = f"""
+    SELECT nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, 
+           portafolio_resumen, score
+    FROM "{SCHEMA}".perfil_proveedor
+    WHERE id_proveedor = %s;
+    """
+    prov = execute_query(sql_prov, (user_id,), fetch_one=True)
 
-    # 3) si no hay proveedor, intentar perfil admin
+    # 3) Try Admin Profile if not provider
     adm = None
     if not prov:
-        try:
-            adm = (
-                supabase.table("perfil_admin")
-                .select(
-                    "nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, portafolio_resumen, score"
-                )
-                .eq("id_admin", user_id)
-                .maybe_single()
-                .execute()
-            ).data
-        except Exception as e:
-            print(f"NO PERFIL ADMIN: {e}")
-            adm = None
+        sql_adm = f"""
+        SELECT nombres_apellidos, identificacion_nit, telefono, direccion, ciudad, 
+               portafolio_resumen, score
+        FROM "{SCHEMA}".perfil_admin
+        WHERE id_admin = %s;
+        """
+        adm = execute_query(sql_adm, (user_id,), fetch_one=True)
 
     perfil = (
         prov
@@ -75,11 +60,19 @@ def get_profile_data(username: str) -> dict | None:
     )
 
     # Construct the dictionary safely
+    # Note: 'username' field might contain a dash like 'User-Name' -> 'Name' if we follow split logic
+    # But usually splitting username for display name is a specific logic.
+    # We will keep the logic from previous version.
+
+    display_name = data_usuario["username"]
+    if "-" in display_name:
+        parts = display_name.split("-")
+        if len(parts) > 1:
+            display_name = parts[1].capitalize()
+
     return {
         "username": data_usuario["username"],
-        "name": data_usuario["username"].split("-")[1].capitalize()
-        if "-" in data_usuario["username"]
-        else data_usuario["username"],
+        "name": display_name,
         "email": data_usuario["correo"],
         "status": data_usuario["estado_cuenta"],
         "instagram": data_usuario.get("instagram") or "",
@@ -97,31 +90,28 @@ def get_profile_data(username: str) -> dict | None:
 
 
 def update_profile_field(username: str, field: str, value: str) -> bool:
-    if not supabase:
-        return False
     try:
-        # recuperar id_usuario
-        u = (
-            supabase.table("usuario")
-            .select("id_usuario")
-            .eq("username", username)
-            .single()
-            .execute()
-        )
-        if not u.data:
+        # Get user ID
+        sql_user = f'SELECT id_usuario FROM "{SCHEMA}".usuario WHERE username = %s;'
+        u = execute_query(sql_user, (username,), fetch_one=True)
+
+        if not u:
             return False
-        id_usuario = u.data["id_usuario"]
+
+        id_usuario = u["id_usuario"]
 
         if field in ["correo", "instagram", "linkedin", "website", "github"]:
-            supabase.table("usuario").update({field: value}).eq(
-                "username", username
-            ).execute()
+            sql_update = (
+                f'UPDATE "{SCHEMA}".usuario SET {field} = %s WHERE username = %s;'
+            )
+            result = execute_query(sql_update, (value, username))
         else:
-            # Asumimos que es campo de proveedor
-            supabase.table("perfil_proveedor").update({field: value}).eq(
-                "id_proveedor", id_usuario
-            ).execute()
-        return True
+            # Assume provider field
+            sql_update = f'UPDATE "{SCHEMA}".perfil_proveedor SET {field} = %s WHERE id_proveedor = %s;'
+            result = execute_query(sql_update, (value, id_usuario))
+
+        return result is not None
+
     except Exception as e:
         print(f"update_profile_field error: {e}")
         return False
@@ -129,28 +119,25 @@ def update_profile_field(username: str, field: str, value: str) -> bool:
 
 def set_img(username: str, img_path: str) -> None:
     """Sube/actualiza imagen base64 en ApexVendor.pfps"""
-    if not supabase:
-        return
     try:
         with open(img_path, "rb") as f:
             img_bytes = f.read()
         img_base64 = base64.b64encode(img_bytes).decode("utf-8")
 
-        existing = (
-            supabase.table("pfps")
-            .select("image_base64")
-            .eq("username", username)
-            .execute()
-            .data
-        )
-        if existing:
-            supabase.table("pfps").update({"image_base64": img_base64}).eq(
-                "username", username
-            ).execute()
+        # Check existing
+        check_sql = f'SELECT 1 FROM "{SCHEMA}".pfps WHERE username = %s;'
+        exists = execute_query(check_sql, (username,), fetch_one=True)
+
+        if exists:
+            update_sql = (
+                f'UPDATE "{SCHEMA}".pfps SET image_base64 = %s WHERE username = %s;'
+            )
+            execute_query(update_sql, (img_base64, username))
         else:
-            supabase.table("pfps").insert(
-                {"username": username, "image_base64": img_base64}
-            ).execute()
+            insert_sql = (
+                f'INSERT INTO "{SCHEMA}".pfps (username, image_base64) VALUES (%s, %s);'
+            )
+            execute_query(insert_sql, (username, img_base64))
 
     except Exception as e:
         print(f"set_img error: {e}")
@@ -158,20 +145,14 @@ def set_img(username: str, img_path: str) -> None:
 
 def get_img(username: str, output_path: str) -> str:
     """Descarga la imagen de ApexVendor.pfps → guarda en output_path logic."""
-    if not supabase:
-        return "static/img/profile.png"
     try:
-        resp = (
-            supabase.table("pfps")
-            .select("image_base64")
-            .eq("username", username)
-            .maybe_single()
-            .execute()
-        )
-        if not resp.data or not resp.data.get("image_base64"):
+        sql = f'SELECT image_base64 FROM "{SCHEMA}".pfps WHERE username = %s;'
+        resp = execute_query(sql, (username,), fetch_one=True)
+
+        if not resp or not resp.get("image_base64"):
             return "static/img/profile.png"
 
-        img_bytes = base64.b64decode(resp.data["image_base64"].strip())
+        img_bytes = base64.b64decode(resp["image_base64"].strip())
         with open(output_path, "wb") as f:
             f.write(img_bytes)
         return output_path
@@ -180,18 +161,34 @@ def get_img(username: str, output_path: str) -> str:
         return "static/img/profile.png"
 
 
-def get_all_providers() -> list[dict]:
-    if not supabase:
-        return []
+def get_all_providers() -> List[Dict]:
     # Fetch providers with their associated user info (username, email, status)
-    # Assuming foreign key relationship exists between perfil_proveedor.id_proveedor and usuario.id_usuario
     try:
-        resp = (
-            supabase.table("perfil_proveedor")
-            .select("*, usuario(username, correo, estado_cuenta)")
-            .execute()
-        )
-        return resp.data if resp and resp.data else []
+        sql = f"""
+        SELECT pp.*, u.username, u.correo, u.estado_cuenta
+        FROM "{SCHEMA}".perfil_proveedor pp
+        JOIN "{SCHEMA}".usuario u ON pp.id_proveedor = u.id_usuario;
+        """
+        resp = execute_query(sql)
+        if not resp:
+            return []
+
+        # Transform flat structure to nested structure for template compatibility
+        # Template expects p.usuario.username etc.
+        providers = []
+        for row in resp:
+            # Convert RealDictRow to dict to be mutable and serializable if needed
+            p_data = dict(row)
+
+            # Nest user info
+            p_data["usuario"] = {
+                "username": p_data.pop("username", None),
+                "correo": p_data.pop("correo", None),
+                "estado_cuenta": p_data.pop("estado_cuenta", None),
+            }
+            providers.append(p_data)
+
+        return providers
     except Exception as e:
         print(f"get_all_providers error: {e}")
         return []
@@ -199,27 +196,17 @@ def get_all_providers() -> list[dict]:
 
 def delete_user(username: str) -> bool:
     """Deletes a user and their associated data from the system."""
-    if not supabase:
-        return False
     try:
-        # First get the user ID
-        u = (
-            supabase.table("usuario")
-            .select("id_usuario")
-            .eq("username", username)
-            .maybe_single()
-            .execute()
-        )
-        if not u.data:
+        # Get user ID
+        sql_u = f'SELECT id_usuario FROM "{SCHEMA}".usuario WHERE username = %s;'
+        u = execute_query(sql_u, (username,), fetch_one=True)
+        if not u:
             return False
 
-        id_usuario = u.data["id_usuario"]
+        id_usuario = u["id_usuario"]
 
-        # Delete from derived tables first if no cascade (Supabase usually handles cascade if configured, but to be sure)
-        # Note: If cascade delete is on, we just delete from usuario.
-        # We will attempt to delete from usuario directly.
-
-        supabase.table("usuario").delete().eq("id_usuario", id_usuario).execute()
+        sql_del = f'DELETE FROM "{SCHEMA}".usuario WHERE id_usuario = %s;'
+        execute_query(sql_del, (id_usuario,))
         return True
     except Exception as e:
         print(f"delete_user error: {e}")

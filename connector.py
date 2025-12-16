@@ -1,76 +1,19 @@
 import base64
-import os
 from typing import Any, Dict, List, Optional
 
-import dotenv
-import psycopg2
 from psycopg2 import Error as Psycopg2Error
-from psycopg2.extras import RealDictCursor
+
+# Import DB connection from core
+from core.database import SCHEMA, execute_query, get_db_connection
 
 # ⚠️ Asegúrate de que este archivo exista en tu proyecto y contenga
 # las funciones hash_password y verify_password.
 from passX import hash_password, verify_password
 
-# Cargar variables de entorno desde el archivo .env
-dotenv.load_dotenv()
-
-# --- 1. CONFIGURACIÓN DE CONEXIÓN (LEYENDO DE .env) ---
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-# Nombre del esquema (ApexVendor, por ejemplo)
-SCHEMA: str = os.getenv("SCHEMA", "ApexVendor")
+# --- 1. CONFIGURACIÓN DE CONEXIÓN (Delegada a core/database.py) ---
+# DB_HOST, DB_NAME, etc. are handled in core.database
+# We import SCHEMA from there.
 # --------------------------------------------------------
-
-
-def get_db_connection() -> psycopg2.extensions.connection:
-    """Establece y devuelve una conexión de psycopg2 con configuración de Azure SSL."""
-    if not all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
-        raise EnvironmentError(
-            "Faltan variables de entorno (DB_HOST, DB_NAME, etc.) para la conexión DB. "
-            "Revisa tu archivo .env."
-        )
-
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        sslmode="require",  # Requisito de Azure PostgreSQL
-        cursor_factory=RealDictCursor,
-    )
-    return conn
-
-
-def execute_query(
-    sql: str, params: tuple = None, fetch_one: bool = False
-) -> Optional[Any]:
-    """
-    Función de utilidad para ejecutar consultas de SQL con manejo de conexión/cursor
-    y transacciones seguras (evita SQL Injection usando %s en 'params').
-    """
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                # Ejecutar la consulta con parámetros separados para seguridad
-                cur.execute(sql, params or ())
-
-                if cur.description:
-                    if fetch_one:
-                        return cur.fetchone()
-                    return cur.fetchall()
-
-                conn.commit()
-                return True
-
-    except Psycopg2Error as e:
-        print(f"Database error executing query: {e}")
-        return None
-    except EnvironmentError as e:
-        print(f"Configuration error: {e}")
-        return None
-
 
 # ------------------------
 # Obtener usuarios y roles
