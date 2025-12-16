@@ -57,7 +57,7 @@ def get_profile_data(username: str) -> dict | None:
                 .execute()
             ).data
         except Exception as e:
-            # print(f"NO PERFIL ADMIN: {e}")
+            print(f"NO PERFIL ADMIN: {e}")
             adm = None
 
     perfil = (
