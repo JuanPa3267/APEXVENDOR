@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["ApexVendor", "public"]
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model Usuario {
+  id_usuario             String                   @id @default(dbgenerated("gen_random_uuid()")) @map("id_usuario") @db.Uuid
+  correo                 String                   @unique
+  passwordHash           String                   @map("contraseña_hash")
+  estado_cuenta          String                   @default("Activo") @map("estado_cuenta")
+  ultimo_acceso          DateTime?                @map("ultimo_acceso") @db.Timestamptz(6)
+  creado_en              DateTime                 @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizado_en         DateTime                 @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+  username               String?                  @unique
+  instagram              String?
+  linkedin               String?
+  website                String?
+  github                 String?
+  contrato_participacion contrato_participacion[]
+  evaluacion             evaluacion[]
+  perfilAdmin            PerfilAdmin?
+  perfilProveedor        PerfilProveedor?
+  pfps                   Pfps[]
+  resumen_participacion  resumen_participacion[]
+  roles                  UsuarioRol[]
+
+  @@map("usuario")
+  @@schema("ApexVendor")
+}
+
+model Rol {
+  id_rol      String       @id @default(dbgenerated("gen_random_uuid()")) @map("id_rol") @db.Uuid
+  nombre      String       @unique
+  descripcion String?
+  usuarios    UsuarioRol[]
+
+  @@map("rol")
+  @@schema("ApexVendor")
+}
+
+model UsuarioRol {
+  id_usuario String  @map("id_usuario") @db.Uuid
+  id_rol     String  @map("id_rol") @db.Uuid
+  rol        Rol     @relation(fields: [id_rol], references: [id_rol], onUpdate: NoAction)
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id_usuario, id_rol])
+  @@map("usuario_rol")
+  @@schema("ApexVendor")
+}
+
+model PerfilProveedor {
+  id_proveedor            String                    @id @map("id_proveedor") @db.Uuid
+  tipo_proveedor          String                    @map("tipo_proveedor")
+  identificacion_nit      String                    @map("identificacion_nit")
+  nombre_legal            String?                   @map("nombre_legal")
+  nombres_apellidos       String?                   @map("nombres_apellidos")
+  telefono                String?
+  direccion               String?
+  portafolio_resumen      String?                   @map("portafolio_resumen")
+  ciudad                  String?
+  score                   Float?
+  certificaciones         Certificacion[]
+  hoja_vida_proveedor     hoja_vida_proveedor[]
+  participacion_proveedor participacion_proveedor[]
+  usuario                 Usuario                   @relation(fields: [id_proveedor], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([identificacion_nit], map: "idx_proveedor_identificacion")
+  @@map("perfil_proveedor")
+  @@schema("ApexVendor")
+}
+
+model PerfilAdmin {
+  id_admin String  @id @map("id_admin") @db.Uuid
+  nombre   String
+  usuario  Usuario @relation(fields: [id_admin], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("perfil_admin")
+  @@schema("ApexVendor")
+}
+
+model Pfps {
+  id           BigInt   @id @default(autoincrement())
+  username     String?
+  image_base64 String?  @map("image_base64")
+  usuario      Usuario? @relation(fields: [username], references: [username], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("pfps")
+  @@schema("ApexVendor")
+}
+
+model Certificacion {
+  id_cert              String          @id @default(dbgenerated("gen_random_uuid()")) @map("id_cert") @db.Uuid
+  id_proveedor         String          @map("id_proveedor") @db.Uuid
+  nombre_certificacion String          @map("nombre_certificacion")
+  emisor               String
+  nivel_categoria      String?         @map("nivel_categoria")
+  fecha_emision        DateTime        @map("fecha_emision") @db.Date
+  fecha_expiracion     DateTime?       @map("fecha_expiracion") @db.Date
+  url_archivo          String          @map("url_archivo")
+  fecha_carga          DateTime        @default(now()) @map("fecha_carga") @db.Timestamptz(6)
+  proveedor            PerfilProveedor @relation(fields: [id_proveedor], references: [id_proveedor], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([id_proveedor], map: "idx_cert_proveedor")
+  @@map("certificacion")
+  @@schema("ApexVendor")
+}
+
+model contrato_participacion {
+  id_contrato             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_participacion        String                  @db.Uuid
+  nombre_archivo          String
+  url_archivo             String
+  fecha_carga             DateTime                @default(now()) @db.Timestamptz(6)
+  cargado_por             String                  @db.Uuid
+  usuario                 Usuario                 @relation(fields: [cargado_por], references: [id_usuario], onUpdate: NoAction)
+  participacion_proveedor participacion_proveedor @relation(fields: [id_participacion], references: [id_participacion], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("ApexVendor")
+}
+
+model evaluacion {
+  id_evaluacion           String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_participacion        String?                  @db.Uuid
+  fecha                   DateTime                 @default(dbgenerated("CURRENT_DATE")) @db.Date
+  evaluador               String                   @db.Uuid
+  comentario_cualitativo  String?
+  calificacion_global     Decimal?                 @db.Decimal(6, 3)
+  usuario                 Usuario                  @relation(fields: [evaluador], references: [id_usuario], onUpdate: NoAction)
+  participacion_proveedor participacion_proveedor? @relation(fields: [id_participacion], references: [id_participacion], onDelete: Cascade, onUpdate: NoAction)
+  evaluacion_detalle      evaluacion_detalle[]
+
+  @@index([id_participacion], map: "idx_eval_participacion")
+  @@schema("ApexVendor")
+}
+
+model evaluacion_detalle {
+  id_eval_detalle String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_eval         String     @db.Uuid
+  id_metrica      String     @db.Uuid
+  valor_numerico  Decimal?   @db.Decimal(12, 4)
+  evidencia       String?
+  evaluacion      evaluacion @relation(fields: [id_eval], references: [id_evaluacion], onDelete: Cascade, onUpdate: NoAction)
+  metrica         metrica    @relation(fields: [id_metrica], references: [id_metrica], onUpdate: NoAction)
+
+  @@schema("ApexVendor")
+}
+
+model hoja_vida_proveedor {
+  id_hojavida      String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_proveedor     String          @db.Uuid
+  url_pdf          String
+  fecha_carga      DateTime        @default(now()) @db.Timestamptz(6)
+  perfil_proveedor PerfilProveedor @relation(fields: [id_proveedor], references: [id_proveedor], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("ApexVendor")
+}
+
+model metrica {
+  id_metrica         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre             String               @unique
+  notas              String?
+  evaluacion_detalle evaluacion_detalle[]
+
+  @@schema("ApexVendor")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model participacion_proveedor {
+  id_participacion       String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_proyecto            String                   @db.Uuid
+  id_proveedor           String                   @db.Uuid
+  rol_en_proyecto        String
+  inicio                 DateTime?                @db.Date
+  fin                    DateTime?                @db.Date
+  resultado              String?
+  hitos_logrados         String?
+  contrato_participacion contrato_participacion[]
+  evaluacion             evaluacion[]
+  perfil_proveedor       PerfilProveedor          @relation(fields: [id_proveedor], references: [id_proveedor], onDelete: Cascade, onUpdate: NoAction)
+  proyecto               proyecto                 @relation(fields: [id_proyecto], references: [id_proyecto], onDelete: Cascade, onUpdate: NoAction)
+  resumen_participacion  resumen_participacion[]
+
+  @@index([id_proveedor], map: "idx_participacion_proveedor")
+  @@index([id_proyecto], map: "idx_participacion_proyecto")
+  @@schema("ApexVendor")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model proyecto {
+  id_proyecto             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cliente                 String
+  nombre                  String
+  descripcion             String?
+  tecnologia_stack        String?
+  inicio                  DateTime?                 @db.Date
+  fin                     DateTime?                 @db.Date
+  estado                  String?
+  participacion_proveedor participacion_proveedor[]
+
+  @@schema("ApexVendor")
+}
+
+model resumen_participacion {
+  id_resumen              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_participacion        String                  @db.Uuid
+  texto_resumen           String?
+  fecha_registro          DateTime                @default(now()) @db.Timestamptz(6)
+  registrado_por          String                  @db.Uuid
+  participacion_proveedor participacion_proveedor @relation(fields: [id_participacion], references: [id_participacion], onDelete: Cascade, onUpdate: NoAction)
+  usuario                 Usuario                 @relation(fields: [registrado_por], references: [id_usuario], onUpdate: NoAction)
+
+  @@schema("ApexVendor")
+}
