@@ -13,12 +13,14 @@
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@types/nodemailer": "^7.0.4",
+    "autoprefixer": "^10.4.23",
     "bcryptjs": "^3.0.3",
     "next": "16.1.1",
     "nodemailer": "^7.0.12",
     "pdf-parse": "^2.4.5",
     "pdf2json": "^4.0.1",
     "pg": "^8.16.3",
+    "postcss": "^8.5.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
@@ -34,7 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "prisma": "^7.2.0",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5"
   },
   "ignoreScripts": [
@@ -42,6 +44,8 @@
     "unrs-resolver"
   ],
   "trustedDependencies": [
+    "@prisma/engines",
+    "prisma",
     "sharp",
     "unrs-resolver"
   ]
