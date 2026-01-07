@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm"; // Importamos el plugin para tablas
+import remarkGfm from "remark-gfm";
 import { sendMessageAction, uploadPdfAction } from "./actions";
 
 interface Message {
@@ -16,7 +16,8 @@ export default function ChatContainer() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll al final cuando hay nuevos mensajes o carga
+  const isInitialState = messages.length === 0;
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -26,7 +27,6 @@ export default function ChatContainer() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-
     const userMsg = input.trim();
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
@@ -41,10 +41,7 @@ export default function ChatContainer() {
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "ai",
-          content: "❌ Error: No se pudo conectar con Apex Intelligence.",
-        },
+        { role: "ai", content: "❌ Error de conexión." },
       ]);
     } finally {
       setIsLoading(false);
@@ -54,30 +51,21 @@ export default function ChatContainer() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.type !== "application/pdf") {
-      alert("Por favor, sube solo archivos PDF.");
-      return;
-    }
-
     setIsLoading(true);
     const formData = new FormData();
     formData.append("file", file);
-
     try {
       const result = await uploadPdfAction(formData);
-
-      if (result.error) {
-        alert(result.error);
-      } else if (result.summary) {
+      if (result.error) alert(result.error);
+      else if (result.summary) {
         setMessages((prev) => [
           ...prev,
-          { role: "user", content: `📄 Documento subido: ${result.fileName}` },
+          { role: "user", content: `📄 Analizando: ${result.fileName}` },
           { role: "ai", content: result.summary },
         ]);
       }
     } catch (error) {
-      alert("Error crítico al procesar el PDF.");
+      alert("Error procesando PDF.");
     } finally {
       setIsLoading(false);
       e.target.value = "";
@@ -85,124 +73,208 @@ export default function ChatContainer() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white relative">
-      {/* Área de Mensajes */}
+    <div className="flex flex-col h-full w-full relative">
+      {/* AREA DE MENSAJES: Corregido el centrado vertical absoluto */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth custom-scrollbar"
+        className={`flex-1 overflow-y-auto px-6 custom-scrollbar ${
+          isInitialState
+            ? "flex flex-col items-center justify-center -mt-20"
+            : "pt-4 pb-40"
+        }`}
       >
-        {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-center opacity-20 select-none">
-            <span className="text-7xl mb-4">🤖</span>
-            <p className="font-black uppercase tracking-widest text-xl text-[#252525]">
-              Sistema de Análisis Activo
+        {isInitialState ? (
+          <div className="w-full max-w-3xl flex flex-col items-center animate-in fade-in zoom-in duration-1000">
+            <h1 className="text-6xl font-black text-[#252525] uppercase tracking-tighter mb-2 text-center">
+              ¿Qué analizamos <span className="text-[#bba955]">hoy?</span>
+            </h1>
+            <p className="text-gray-400 font-bold tracking-[0.4em] uppercase text-[10px] mb-10">
+              Apex Intelligence Terminal
             </p>
-            <p className="text-sm font-bold text-[#252525]">
-              Sube un pliego en PDF o consulta sobre proveedores
-            </p>
-          </div>
-        )}
 
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${
-              msg.role === "user"
-                ? "justify-end"
-                : "justify-start animate-in fade-in slide-in-from-bottom-2 duration-300"
-            }`}
-          >
-            <div
-              className={`bubble ${
-                msg.role === "user" ? "user" : "ai"
-              } max-w-[90%] md:max-w-[80%]`}
+            {/* El formulario dentro del centrado para el estado inicial */}
+            <form
+              onSubmit={handleSubmit}
+              className="prompt_row shadow-2xl items-center bg-white border border-gray-100 py-4 px-6 w-full"
             >
-              <div className="markdown-content">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {msg.content}
-                </ReactMarkdown>
-              </div>
+              <label className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 cursor-pointer transition-colors group">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5 text-gray-400 group-hover:text-[#bba955] transition-all"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94a3 3 0 1 1 4.243 4.243l-8.94 8.94a1.5 1.5 0 1 1-2.122-2.122l8-8"
+                  />
+                </svg>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="application/pdf"
+                  onChange={handleFileUpload}
+                  disabled={isLoading}
+                />
+              </label>
+
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Describe el proyecto o sube un PDF..."
+                className="flex-1 bg-transparent border-none outline-none text-[#252525] placeholder:text-gray-400 font-medium text-lg ml-2"
+                disabled={isLoading}
+              />
+
+              <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#252525] text-[#e9d26a] hover:bg-black transition-all active:scale-90 shadow-lg"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-[#e9d26a] border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                  </svg>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-10 flex flex-wrap justify-center gap-3">
+              {[
+                "IA Multimodal",
+                "Ranking de Proveedores",
+                "Análisis de Pliegos",
+              ].map((tag) => (
+                <div
+                  key={tag}
+                  className="px-5 py-2 bg-white/50 backdrop-blur-sm shadow-sm border border-gray-100 rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest"
+                >
+                  {tag}
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-
-        {isLoading && (
-          <div className="flex justify-start items-center gap-3">
-            <div className="bubble ai animate-pulse flex items-center gap-2">
-              <span className="w-2 h-2 bg-[#e9d26a] rounded-full animate-bounce"></span>
-              <span className="w-2 h-2 bg-[#e9d26a] rounded-full animate-bounce [animation-delay:0.2s]"></span>
-              <span className="w-2 h-2 bg-[#e9d26a] rounded-full animate-bounce [animation-delay:0.4s]"></span>
-              <span className="text-[10px] font-black text-gray-400 ml-2 uppercase tracking-widest">
-                Apex AI Analizando...
-              </span>
-            </div>
+        ) : (
+          /* MODO CHAT ACTIVO */
+          <div className="space-y-6 max-w-5xl mx-auto w-full">
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex ${
+                  msg.role === "user"
+                    ? "justify-end"
+                    : "justify-start animate-in slide-in-from-bottom-4"
+                }`}
+              >
+                <div
+                  className={`bubble ${
+                    msg.role === "user"
+                      ? "user shadow-md"
+                      : "ai shadow-sm border border-gray-100"
+                  } max-w-[90%] md:max-w-[85%]`}
+                >
+                  <div className="markdown-content">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bubble ai animate-pulse border border-gray-100 flex gap-2">
+                  <span className="w-2 h-2 bg-[#e9d26a] rounded-full animate-bounce"></span>
+                  <span className="w-2 h-2 bg-[#e9d26a] rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                  <span className="w-2 h-2 bg-[#e9d26a] rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Input de Chat */}
-      <div className="p-6 border-t border-gray-100 bg-gray-50/50">
-        <form
-          onSubmit={handleSubmit}
-          className="prompt_row !max-w-none shadow-sm focus-within:shadow-md transition-all duration-300"
-        >
-          <label className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 cursor-pointer transition-colors group">
-            <span className="text-xl group-hover:scale-110 transition-transform">
-              📎
-            </span>
+      {/* INPUT FIJO SOLO CUANDO HAY MENSAJES */}
+      {!isInitialState && (
+        <div className="absolute bottom-0 left-0 w-full p-8 bg-[#fafae6]/40 backdrop-blur-xl border-t border-black/5 z-10 animate-in fade-in slide-in-from-bottom-10 duration-700">
+          <form
+            onSubmit={handleSubmit}
+            className="prompt_row shadow-2xl items-center bg-white border border-gray-200 py-2.5 px-4 mx-auto max-w-5xl"
+          >
+            <label className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 cursor-pointer transition-colors group">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5 text-gray-400 group-hover:text-[#bba955] transition-all"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94a3 3 0 1 1 4.243 4.243l-8.94 8.94a1.5 1.5 0 1 1-2.122-2.122l8-8"
+                />
+              </svg>
+              <input
+                type="file"
+                className="hidden"
+                accept="application/pdf"
+                onChange={handleFileUpload}
+                disabled={isLoading}
+              />
+            </label>
+
             <input
-              type="file"
-              className="hidden"
-              accept="application/pdf"
-              onChange={handleFileUpload}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Escribe tu consulta..."
+              className="flex-1 bg-transparent border-none outline-none text-[#252525] placeholder:text-gray-400 font-medium text-lg ml-2"
               disabled={isLoading}
             />
-          </label>
 
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              isLoading
-                ? "La IA está procesando..."
-                : "Escribe tu consulta aquí..."
-            }
-            className="flex-1 bg-transparent border-none outline-none text-[#252525] placeholder:text-gray-400 font-medium"
-            disabled={isLoading}
-          />
-
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="btn-gold !mt-0 !py-2 !px-8 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "..." : "Enviar"}
-          </button>
-        </form>
-      </div>
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#252525] text-[#e9d26a] hover:bg-black transition-all active:scale-90"
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-[#e9d26a] border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                </svg>
+              )}
+            </button>
+          </form>
+        </div>
+      )}
 
       <style jsx global>{`
-        .markdown-content p {
-          margin-bottom: 0.75rem;
-          line-height: 1.6;
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
         }
-        .markdown-content p:last-child {
-          margin-bottom: 0;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e9d26a;
+          border-radius: 10px;
         }
-        .markdown-content ul {
-          list-style-type: disc;
-          margin-left: 1.5rem;
-          margin-bottom: 1rem;
-        }
-        .markdown-content li {
-          margin-bottom: 0.25rem;
-        }
-        .markdown-content strong {
-          font-weight: 800;
-          color: inherit;
-        }
-        /* Estilos de Tabla Mejorados */
         .markdown-content table {
           width: 100%;
           border-collapse: separate;
@@ -210,31 +282,23 @@ export default function ChatContainer() {
           margin: 1.5rem 0;
           font-size: 0.85rem;
           background: white;
-          border-radius: 12px;
+          border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
           border: 1px solid #eee;
         }
         .markdown-content th {
           background-color: #252525;
           color: #e9d26a;
-          padding: 14px;
+          padding: 16px;
           text-align: left;
           font-weight: 900;
           text-transform: uppercase;
-          letter-spacing: 1px;
         }
         .markdown-content td {
           border-bottom: 1px solid #f0f0f0;
-          padding: 12px 14px;
+          padding: 14px;
           color: #333;
-          vertical-align: top;
-        }
-        .markdown-content tr:last-child td {
-          border-bottom: none;
-        }
-        .markdown-content tr:hover {
-          background-color: #fafafa;
         }
       `}</style>
     </div>
