@@ -35,7 +35,7 @@ export async function getFullProfile(username: string) {
           city: data.perfilProveedor.ciudad,
           nit: data.perfilProveedor.identificacion_nit,
           score: data.perfilProveedor.score,
-          portafolio: data.perfilProveedor.portafolio_resumen,
+          portafolio_resumen: data.perfilProveedor.portafolio_resumen,
         }
       : null,
     roles: data.roles.map((r: any) => r.rol.nombre), // Ajustado a 'nombre' según tu schema

@@ -31,7 +31,6 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log("Correo enviado a:", email);
   } catch (error) {
     console.error("Error enviando SMTP:", error);
   }
