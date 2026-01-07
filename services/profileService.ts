@@ -13,6 +13,9 @@ export async function getFullProfile(username: string) {
 
   if (!data) return null;
 
+  // Verificamos si pfps viene como array o como objeto único
+  const pfpData = Array.isArray(data.pfps) ? data.pfps[0] : data.pfps;
+
   return {
     user: {
       id: data.id_usuario,
@@ -31,13 +34,12 @@ export async function getFullProfile(username: string) {
           fullName: data.perfilProveedor.nombres_apellidos,
           city: data.perfilProveedor.ciudad,
           nit: data.perfilProveedor.identificacion_nit,
-          // CORRECCIÓN 1: El error dice que se llama 'score', no 'puntuacion_score'
           score: data.perfilProveedor.score,
           portafolio: data.perfilProveedor.portafolio_resumen,
         }
       : null,
-    roles: data.roles.map((r: any) => r.rol.nombre_rol),
-    avatar: data.pfps?.image_base64 || null,
+    roles: data.roles.map((r: any) => r.rol.nombre), // Ajustado a 'nombre' según tu schema
+    avatar: pfpData?.image_base64 || null, // Usamos la variable pfpData que ya validamos
   };
 }
 
