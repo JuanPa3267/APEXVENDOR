@@ -105,6 +105,28 @@ export const userService = {
         });
       }
 
+      // 4) Asignar imagen de perfil predeterminada
+      try {
+        const fs = require("fs");
+        const path = require("path");
+        const imagePath = path.join(process.cwd(), "img", "tak_logo.png");
+
+        if (fs.existsSync(imagePath)) {
+          const imageBuffer = fs.readFileSync(imagePath);
+          const base64Image = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+
+          await tx.pfps.create({
+            data: {
+              username: user.username,
+              image_base64: base64Image,
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error asignando imagen por defecto:", error);
+        // No fallamos el registro si falla la imagen, pero lo logueamos
+      }
+
       // ✅ Retorna el usuario para que actions.ts use id_usuario como id_proveedor
       return user;
     });
