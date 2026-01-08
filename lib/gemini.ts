@@ -28,11 +28,14 @@ export async function getPdfText(buffer: Buffer): Promise<string> {
 
 export async function askGemini(prompt: string, history: any[]) {
   try {
+    // Filtramos el historial para asegurarnos de que los roles sean correctos
+    const formattedHistory = history.map((msg) => ({
+      role: msg.role === "ai" ? "model" : "user",
+      parts: [{ text: msg.content }],
+    }));
+
     const chat = model.startChat({
-      history: history.map((msg) => ({
-        role: msg.role === "ai" ? "model" : "user",
-        parts: [{ text: msg.content }],
-      })),
+      history: formattedHistory,
     });
 
     const result = await chat.sendMessage(prompt);

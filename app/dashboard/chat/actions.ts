@@ -5,11 +5,43 @@ import { askGemini, getPdfText } from "@/lib/gemini";
 
 export async function sendMessageAction(message: string, history: any[]) {
   try {
-    const answer = await askGemini(message, history);
+    // 1. Obtener los proveedores actuales de la DB
+    const proveedores = await db.perfilProveedor.findMany({
+      select: {
+        nombres_apellidos: true,
+        nombre_legal: true,
+        tipo_proveedor: true,
+        ciudad: true,
+        score: true,
+        portafolio_resumen: true,
+      },
+    });
+
+    // 2. Crear un "System Instruction" que le dé identidad a la IA
+    // Se lo pasamos como el primer mensaje si el historial está vacío o como contexto adicional
+    const baseContext = `
+      Eres Apex Intelligence, el asistente experto de la plataforma Apex. 
+      Tienes acceso en tiempo real a nuestra base de datos de proveedores.
+      
+      CONOCIMIENTO ACTUAL DE PROVEEDORES:
+      ${JSON.stringify(proveedores)}
+      
+      INSTRUCCIONES:
+      - Si el usuario pregunta por recomendaciones, usa los datos anteriores.
+      - Si preguntan sobre capacidades técnicas, analiza los 'portafolio_resumen'.
+      - Mantén un tono profesional, ejecutivo y tecnológico.
+      - No menciones que eres una IA de Google, preséntate como el cerebro de Apex.
+    `;
+
+    // 3. Enviamos el mensaje inyectando el contexto al principio del prompt
+    // para que siempre esté "fresco" en su memoria.
+    const promptConContexto = `CONTEXTO DEL SISTEMA: ${baseContext}\n\nMENSAJE DEL USUARIO: ${message}`;
+
+    const answer = await askGemini(promptConContexto, history);
     return { response: answer };
   } catch (error) {
     console.error("Error en sendMessageAction:", error);
-    return { response: "❌ Error al conectar con la IA." };
+    return { response: "Error al conectar con el cerebro de Apex." };
   }
 }
 
