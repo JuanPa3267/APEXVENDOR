@@ -1,5 +1,6 @@
 // services/userService.ts
 import { db } from "@/lib/db";
+import { deleteFromAzureBlob, extractBlobNameFromUrl } from "@/lib/azureBlob";
 
 type RegisterUserInput = {
   username: string;
@@ -132,6 +133,50 @@ export const userService = {
           : null,
         url_archivo: data.url_archivo,
       },
+    });
+  },
+
+  async deleteUser(id_usuario: string) {
+    // 1. Obtener datos antes de borrar
+    const user = await db.usuario.findUnique({
+      where: { id_usuario },
+      include: {
+        perfilProveedor: {
+          include: {
+            certificaciones: true,
+            hoja_vida_proveedor: true,
+          },
+        },
+      },
+    });
+
+    if (!user) return null;
+
+    // 2. Borrar archivos de Azure si es proveedor
+    if (user.perfilProveedor) {
+      const cvContainer = process.env.AZURE_STORAGE_CV_CONTAINER || "";
+      const certContainer = process.env.AZURE_STORAGE_CERTS_CONTAINER || "";
+
+      // Hojas de vida
+      for (const hv of user.perfilProveedor.hoja_vida_proveedor) {
+        const blobName = extractBlobNameFromUrl(hv.url_pdf, cvContainer);
+        if (blobName) {
+          await deleteFromAzureBlob(cvContainer, blobName);
+        }
+      }
+
+      // Certificaciones
+      for (const cert of user.perfilProveedor.certificaciones) {
+        const blobName = extractBlobNameFromUrl(cert.url_archivo, certContainer);
+        if (blobName) {
+          await deleteFromAzureBlob(certContainer, blobName);
+        }
+      }
+    }
+
+    // 3. Borrar usuario de BD (Cascade se encarga del resto)
+    return await db.usuario.delete({
+      where: { id_usuario },
     });
   },
 };

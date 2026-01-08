@@ -17,6 +17,12 @@ export const authService = {
       return { success: false, error: "Contraseña incorrecta" };
     }
 
+    // Actualizar último acceso
+    await db.usuario.update({
+      where: { id_usuario: user.id_usuario },
+      data: { ultimo_acceso: new Date() },
+    });
+
     return {
       success: true,
       user: {
