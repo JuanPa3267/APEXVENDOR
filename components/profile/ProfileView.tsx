@@ -403,7 +403,7 @@ export default function ProfileView({
                     <div className="flex gap-2">
                       <button
                         onClick={() => openWithSas(cv.url_pdf)}
-                        className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a]"
+                        className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer"
                       >
                         Ver
                       </button>
@@ -415,7 +415,7 @@ export default function ProfileView({
                             const res = await deleteCvAction(cv.id_hojavida);
                             if (res?.error) alert(res.error);
                           }}
-                          className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white"
+                          className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white cursor-pointer"
                         >
                           Eliminar
                         </button>
@@ -511,7 +511,7 @@ export default function ProfileView({
                         file: null,
                       });
                     }}
-                    className="text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full bg-[#252525] text-[#e9d26a]"
+                    className="text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer"
                   >
                     {certUploading ? "Agregando..." : "+ Agregar"}
                   </button>
@@ -551,9 +551,9 @@ export default function ProfileView({
                       <div className="flex gap-2">
                         <button
                           onClick={() => openWithSas(c.url_archivo)}
-                          className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a]"
+                          className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer"
                         >
-                          Ver PDF
+                          Ver
                         </button>
 
                         {!isAdminViewing && (
@@ -563,7 +563,7 @@ export default function ProfileView({
                               const res = await deleteCertAction(c.id_cert);
                               if (res?.error) alert(res.error);
                             }}
-                            className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white"
+                            className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white cursor-pointer"
                           >
                             Eliminar
                           </button>
