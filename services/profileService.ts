@@ -1,10 +1,17 @@
 import { db } from "@/lib/db";
 
 export async function getFullProfile(username: string) {
+
+  if (!username) return null;
   const data = await db.usuario.findUnique({
     where: { username },
     include: {
-      perfilProveedor: true,
+      perfilProveedor: {
+        include: {
+          certificaciones: true,
+          hoja_vida_proveedor: true,
+        },
+      },
       perfilAdmin: true,
       roles: { include: { rol: true } },
       pfps: true,
@@ -13,7 +20,6 @@ export async function getFullProfile(username: string) {
 
   if (!data) return null;
 
-  // Verificamos si pfps viene como array o como objeto único
   const pfpData = Array.isArray(data.pfps) ? data.pfps[0] : data.pfps;
 
   return {
@@ -22,6 +28,7 @@ export async function getFullProfile(username: string) {
       username: data.username,
       email: data.correo,
       status: data.estado_cuenta,
+      lastLogin: data.ultimo_acceso,
       social: {
         instagram: data.instagram,
         linkedin: data.linkedin,
@@ -31,32 +38,42 @@ export async function getFullProfile(username: string) {
     },
     details: data.perfilProveedor
       ? {
-          fullName: data.perfilProveedor.nombres_apellidos,
-          city: data.perfilProveedor.ciudad,
-          nit: data.perfilProveedor.identificacion_nit,
-          score: data.perfilProveedor.score,
-          portafolio_resumen: data.perfilProveedor.portafolio_resumen,
-        }
+        fullName: data.perfilProveedor.nombres_apellidos, // NO tocamos por ahora
+        city: data.perfilProveedor.ciudad,
+        nit: data.perfilProveedor.identificacion_nit,
+        score: data.perfilProveedor.score,
+        portafolio_resumen: data.perfilProveedor.portafolio_resumen,
+        telefono: data.perfilProveedor.telefono,
+        direccion: data.perfilProveedor.direccion,
+        tipo_proveedor: data.perfilProveedor.tipo_proveedor,
+      }
       : null,
-    roles: data.roles.map((r: any) => r.rol.nombre), // Ajustado a 'nombre' según tu schema
-    avatar: pfpData?.image_base64 || null, // Usamos la variable pfpData que ya validamos
+    documents: data.perfilProveedor
+      ? {
+        cvs: data.perfilProveedor.hoja_vida_proveedor
+          .slice()
+          .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
+        certificaciones: data.perfilProveedor.certificaciones
+          .slice()
+          .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
+      }
+      : { cvs: [], certificaciones: [] },
+    roles: data.roles.map((r: any) => r.rol.nombre),
+    avatar: pfpData?.image_base64 || null,
   };
 }
 
 export async function updatePfp(username: string, base64Image: string) {
-  // Buscamos si ya existe una entrada para este username en pfps
   const existingPfp = await db.pfps.findFirst({
     where: { username: username },
   });
 
   if (existingPfp) {
-    // Si existe, actualizamos usando su id (que es int8/Identity)
     return await db.pfps.update({
       where: { id: existingPfp.id },
       data: { image_base64: base64Image },
     });
   } else {
-    // Si no existe, creamos el registro nuevo
     return await db.pfps.create({
       data: {
         username: username,

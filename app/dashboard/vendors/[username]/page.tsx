@@ -1,17 +1,34 @@
-// app/dashboard/vendors/[username]/page.tsx
-import ProfileView from "@/components/profile/ProfileView"; // <-- Ahora ya existe
+import ProfileView from "@/components/profile/ProfileView";
 import { getFullProfile } from "@/services/profileService";
-import Link from "next/link"; // <-- Importación que faltaba
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { db } from "@/lib/db";
 
 export default async function VendorDetailPage({
   params,
 }: {
-  params: { username: string };
+  params: Promise<{ username?: string }>;
 }) {
-  const { username } = await params;
-  const profile = await getFullProfile(username);
+  // ✅ Verificación Admin
+  const cookieStore = await cookies();
+  const sessionUsername = cookieStore.get("username")?.value;
 
+  if (!sessionUsername) redirect("/login");
+
+  const user = await db.usuario.findUnique({
+    where: { username: sessionUsername },
+    include: { roles: { include: { rol: true } } },
+  });
+
+  const isAdmin = user?.roles.some((r: any) => r.rol.nombre === "Admin");
+  if (!isAdmin) redirect("/dashboard/profile?error=unauthorized");
+
+  // ✅ Username del proveedor desde la URL (Next 16)
+  const { username: vendorUsername } = await params;
+  if (!vendorUsername) redirect("/dashboard/vendors?error=badparam");
+
+  const profile = await getFullProfile(vendorUsername);
   if (!profile) redirect("/dashboard/vendors?error=notfound");
 
   return (
@@ -24,7 +41,6 @@ export default async function VendorDetailPage({
           <span className="text-lg">←</span> Volver al listado
         </Link>
 
-        {/* Usamos el componente que acabamos de crear */}
         <ProfileView profile={profile} isAdminViewing={true} />
       </div>
     </div>

@@ -1,4 +1,3 @@
-// app/dashboard/profile/page.tsx
 import ProfileView from "@/components/profile/ProfileView";
 import { getFullProfile } from "@/services/profileService";
 import { cookies } from "next/headers";
