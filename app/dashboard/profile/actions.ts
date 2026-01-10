@@ -25,6 +25,51 @@ async function getSessionUser() {
   return await db.usuario.findUnique({ where: { username } });
 }
 
+export async function updatePersonalDataAction(formData: FormData) {
+  const cookieStore = await cookies();
+  const username = cookieStore.get("username")?.value;
+
+  if (!username) return { error: "No autorizado" };
+
+  try {
+    const user = await db.usuario.findUnique({
+      where: { username },
+      include: { perfilProveedor: true },
+    });
+
+    if (!user || !user.perfilProveedor) {
+      return { error: "Perfil no encontrado" };
+    }
+
+    // 1️⃣ Actualizar redes (Usuario)
+    await db.usuario.update({
+      where: { id_usuario: user.id_usuario },
+      data: {
+        linkedin: formData.get("linkedin") as string | null,
+        github: formData.get("github") as string | null,
+        website: formData.get("website") as string | null,
+        instagram: formData.get("instagram") as string | null,
+      },
+    });
+
+    // 2️⃣ Actualizar datos de contacto (PerfilProveedor)
+    await db.perfilProveedor.update({
+      where: { id_proveedor: user.id_usuario },
+      data: {
+        telefono: formData.get("telefono") as string | null,
+        direccion: formData.get("direccion") as string | null,
+        ciudad: formData.get("ciudad") as string | null,
+      },
+    });
+
+    revalidatePath("/dashboard/profile");
+    return { success: true };
+  } catch (e) {
+    console.error("Error updating personal data:", e);
+    return { error: "Error al actualizar los datos" };
+  }
+}
+
 export async function uploadPfpAction(base64Image: string) {
   const sessionUsername = await getSessionUsername();
   if (!sessionUsername) return { error: "No autorizado" };

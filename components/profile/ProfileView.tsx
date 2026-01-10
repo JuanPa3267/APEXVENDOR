@@ -8,6 +8,7 @@ import {
   getSasUrlAction,
   uploadCertAction,
   uploadCvAction,
+  updatePersonalDataAction
 } from "@/app/dashboard/profile/actions";
 import { useEffect, useState } from "react";
 
@@ -39,6 +40,8 @@ export default function ProfileView({
     fecha_expiracion: "",
     file: null as File | null,
   });
+
+  const [isSavingData, setIsSavingData] = useState(false);
 
   const openWithSas = async (blobUrl: string) => {
     const res = await getSasUrlAction(blobUrl);
@@ -348,6 +351,83 @@ export default function ProfileView({
           </div>
         </div>
       </div>
+
+      {!isAdminViewing && (
+        <form
+          action={async (formData) => {
+            setIsSavingData(true);
+            const res = await updatePersonalDataAction(formData);
+            if (res?.error) alert(res.error);
+            setIsSavingData(false);
+          }}
+          className="mt-10 bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl p-10 space-y-8"
+        >
+          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">
+            Datos de contacto y redes
+          </h4>
+
+          {/* CONTACTO */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <input
+              name="telefono"
+              defaultValue={profile.details?.telefono || ""}
+              placeholder="Teléfono"
+              className="styled-input"
+            />
+            <input
+              name="direccion"
+              defaultValue={profile.details?.direccion || ""}
+              placeholder="Dirección"
+              className="styled-input"
+            />
+            <input
+              name="ciudad"
+              defaultValue={profile.details?.city || ""}
+              placeholder="Ciudad"
+              className="styled-input"
+            />
+          </div>
+
+          {/* REDES */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <input
+              name="linkedin"
+              defaultValue={profile.user.social.linkedin || ""}
+              placeholder="LinkedIn"
+              className="styled-input"
+            />
+            <input
+              name="github"
+              defaultValue={profile.user.social.github || ""}
+              placeholder="GitHub"
+              className="styled-input"
+            />
+            <input
+              name="website"
+              defaultValue={profile.user.social.website || ""}
+              placeholder="Website"
+              className="styled-input"
+            />
+            <input
+              name="instagram"
+              defaultValue={profile.user.social.instagram || ""}
+              placeholder="Instagram"
+              className="styled-input"
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSavingData}
+              className={`btn-gold px-8 py-3 ${isSavingData ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                }`}
+            >
+              {isSavingData ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* 4.6 Documentación */}
       <div className="w-full bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl overflow-hidden transition-all mt-8">
