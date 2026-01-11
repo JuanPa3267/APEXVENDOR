@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import VendorsTable from "./VendorsTable";
+import CreateAdminButton from "./CreateAdminButton";
 
 export default async function VendorsPage() {
   const cookieStore = await cookies();
@@ -32,9 +33,14 @@ export default async function VendorsPage() {
             Gestión y Auditoría de Cuentas Apex
           </p>
         </div>
-        <div className="bg-[#252525] text-[#e9d26a] text-[10px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-xl border border-[#e9d26a]/20">
-          Total: {vendors.length} Registros
+        <div className="flex items-center gap-3">
+          <CreateAdminButton />
+
+          <div className="bg-[#252525] text-[#e9d26a] text-[10px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-xl border border-[#e9d26a]/20">
+            Total: {vendors.length} Registros
+          </div>
         </div>
+
       </div>
 
       <VendorsTable initialVendors={vendors} />
