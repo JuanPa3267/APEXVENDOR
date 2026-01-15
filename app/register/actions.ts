@@ -1,6 +1,7 @@
 "use server";
 
 import { uploadToAzureBlob } from "@/lib/azureBlob";
+import { db } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/mail";
 import { generateUsername } from "@/lib/utils";
 import { userService } from "@/services/userService";
@@ -57,6 +58,15 @@ export async function registerAction(prevState: any, formData: FormData) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
+    // 0) Verificar si el correo ya existe
+    const existingUser = await db.usuario.findUnique({
+      where: { correo: email },
+    });
+
+    if (existingUser) {
+      return { error: "Este correo ya está registrado." };
+    }
+
     // 1) Crear usuario + perfil (retorna Usuario con id_usuario)
     const user = await userService.registerUser({
       username,
