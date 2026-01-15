@@ -1,14 +1,17 @@
 "use server";
 
+import { uploadToAzureBlob } from "@/lib/azureBlob";
 import { sendWelcomeEmail } from "@/lib/mail";
 import { generateUsername } from "@/lib/utils";
 import { userService } from "@/services/userService";
-import { uploadToAzureBlob } from "@/lib/azureBlob";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 
 function safeFileName(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9.-]+/g, "-").replace(/-+/g, "-");
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]+/g, "-")
+    .replace(/-+/g, "-");
 }
 
 function assertPdf(file: File) {
@@ -32,7 +35,8 @@ export async function registerAction(prevState: any, formData: FormData) {
   // Extras (perfil proveedor)
   const telefono = (formData.get("telefono") as string) || null;
   const direccion = (formData.get("direccion") as string) || null;
-  const portafolio_resumen = (formData.get("portafolio_resumen") as string) || null;
+  const portafolio_resumen =
+    (formData.get("portafolio_resumen") as string) || null;
 
   // Redes (Usuario)
   const linkedin = (formData.get("linkedin") as string) || null;
@@ -40,7 +44,10 @@ export async function registerAction(prevState: any, formData: FormData) {
   const website = (formData.get("website") as string) || null;
   const instagram = (formData.get("instagram") as string) || null;
 
-  if (!email || !password) return { error: "Correo y contraseña son obligatorios." };
+  if (!email || !password)
+    return { error: "Correo y contraseña son obligatorios." };
+  if (password.length < 8)
+    return { error: "La contraseña debe tener al menos 8 caracteres." };
   if (!name) return { error: "El nombre es obligatorio." };
   if (!nit || !city) return { error: "NIT/Cédula y ciudad son obligatorios." };
 
@@ -77,7 +84,9 @@ export async function registerAction(prevState: any, formData: FormData) {
       assertPdf(cvFile);
 
       const cvContainer = process.env.AZURE_STORAGE_CV_CONTAINER || "cvs";
-      const cvBlobName = `${idProveedor}/${Date.now()}-cv-${safeFileName(cvFile.name)}`;
+      const cvBlobName = `${idProveedor}/${Date.now()}-cv-${safeFileName(
+        cvFile.name
+      )}`;
 
       const uploadedCv = await uploadToAzureBlob({
         containerName: cvContainer,
@@ -95,11 +104,16 @@ export async function registerAction(prevState: any, formData: FormData) {
     const certNombres = formData.getAll("cert_nombre[]") as string[];
     const certEmisores = formData.getAll("cert_emisor[]") as string[];
     const certNiveles = formData.getAll("cert_nivel[]") as string[];
-    const certFechasEmision = formData.getAll("cert_fecha_emision[]") as string[];
-    const certFechasExp = formData.getAll("cert_fecha_expiracion[]") as string[];
+    const certFechasEmision = formData.getAll(
+      "cert_fecha_emision[]"
+    ) as string[];
+    const certFechasExp = formData.getAll(
+      "cert_fecha_expiracion[]"
+    ) as string[];
     const certFiles = formData.getAll("cert_file[]") as File[];
 
-    const certContainer = process.env.AZURE_STORAGE_CERTS_CONTAINER || "certificaciones";
+    const certContainer =
+      process.env.AZURE_STORAGE_CERTS_CONTAINER || "certificaciones";
 
     // Recorre por índice (se asume que vienen alineados)
     const max = Math.max(
@@ -128,7 +142,9 @@ export async function registerAction(prevState: any, formData: FormData) {
 
       // Si no está vacía, exige los obligatorios
       if (!nombre || !emisor || !fecha_emision) {
-        throw new Error(`Faltan datos obligatorios en la certificación #${i + 1}.`);
+        throw new Error(
+          `Faltan datos obligatorios en la certificación #${i + 1}.`
+        );
       }
       if (!file || file.size === 0) {
         throw new Error(`Falta el PDF en la certificación #${i + 1}.`);
@@ -136,7 +152,9 @@ export async function registerAction(prevState: any, formData: FormData) {
 
       assertPdf(file);
 
-      const certBlobName = `${idProveedor}/${Date.now()}-cert-${safeFileName(file.name)}`;
+      const certBlobName = `${idProveedor}/${Date.now()}-cert-${safeFileName(
+        file.name
+      )}`;
 
       const uploadedCert = await uploadToAzureBlob({
         containerName: certContainer,

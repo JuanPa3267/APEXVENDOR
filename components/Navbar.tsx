@@ -101,6 +101,11 @@ export default function Navbar({ username, role }: NavbarProps) {
         <form action={logoutAction}>
           <button
             type="submit"
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                localStorage.removeItem("apex_chat_history");
+              }
+            }}
             className="group relative overflow-hidden bg-transparent border border-red-500/50 hover:border-red-500 py-2 px-6 rounded-xl transition-all duration-300"
           >
             <span className="relative z-10 text-red-500 group-hover:text-white text-[10px] font-black uppercase tracking-widest">

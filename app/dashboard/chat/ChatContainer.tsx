@@ -14,9 +14,30 @@ export default function ChatContainer() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isInitialState = messages.length === 0;
+
+  // Cargar historial al iniciar
+  useEffect(() => {
+    const saved = localStorage.getItem("apex_chat_history");
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (e) {
+        console.error("Error parsing chat history", e);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Guardar historial cuando cambia
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("apex_chat_history", JSON.stringify(messages));
+    }
+  }, [messages, isLoaded]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -70,6 +91,11 @@ export default function ChatContainer() {
       setIsLoading(false);
       e.target.value = "";
     }
+  };
+
+  const clearHistory = () => {
+    setMessages([]);
+    localStorage.removeItem("apex_chat_history");
   };
 
   return (
@@ -207,64 +233,88 @@ export default function ChatContainer() {
 
       {/* INPUT FIJO SOLO CUANDO HAY MENSAJES */}
       {!isInitialState && (
-        <div className="absolute bottom-0 left-0 w-full p-8 bg-[#fafae6]/40 backdrop-blur-xl border-t border-black/5 z-10 animate-in fade-in slide-in-from-bottom-10 duration-700">
-          <form
-            onSubmit={handleSubmit}
-            className="prompt_row shadow-2xl items-center bg-white border border-gray-200 py-2.5 px-4 mx-auto max-w-5xl"
-          >
-            <label className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 cursor-pointer transition-colors group">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5 text-gray-400 group-hover:text-[#bba955] transition-all"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94a3 3 0 1 1 4.243 4.243l-8.94 8.94a1.5 1.5 0 1 1-2.122-2.122l8-8"
-                />
-              </svg>
-              <input
-                type="file"
-                className="hidden"
-                accept="application/pdf"
-                onChange={handleFileUpload}
-                disabled={isLoading}
-              />
-            </label>
-
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Escribe tu consulta..."
-              className="flex-1 bg-transparent border-none outline-none text-[#252525] placeholder:text-gray-400 font-medium text-lg ml-2"
-              disabled={isLoading}
-            />
-
-            <button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#252525] text-[#e9d26a] hover:bg-black transition-all active:scale-90"
+        <>
+          <div className="absolute bottom-0 left-0 w-full p-8 bg-[#fafae6]/40 backdrop-blur-xl border-t border-black/5 z-10 animate-in fade-in slide-in-from-bottom-10 duration-700">
+            <form
+              onSubmit={handleSubmit}
+              className="prompt_row shadow-2xl items-center bg-white border border-gray-200 py-2.5 px-4 mx-auto max-w-5xl"
             >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-[#e9d26a] border-t-transparent rounded-full animate-spin"></div>
-              ) : (
+              <button
+                type="button"
+                onClick={clearHistory}
+                className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors mr-1"
+                title="Borrar historial"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
                   viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                 </svg>
-              )}
-            </button>
-          </form>
-        </div>
+              </button>
+              <label className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 cursor-pointer transition-colors group">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5 text-gray-400 group-hover:text-[#bba955] transition-all"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94a3 3 0 1 1 4.243 4.243l-8.94 8.94a1.5 1.5 0 1 1-2.122-2.122l8-8"
+                  />
+                </svg>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="application/pdf"
+                  onChange={handleFileUpload}
+                  disabled={isLoading}
+                />
+              </label>
+
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Escribe tu consulta..."
+                className="flex-1 bg-transparent border-none outline-none text-[#252525] placeholder:text-gray-400 font-medium text-lg ml-2"
+                disabled={isLoading}
+              />
+
+              <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#252525] text-[#e9d26a] hover:bg-black transition-all active:scale-90"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-[#e9d26a] border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                  </svg>
+                )}
+              </button>
+            </form>
+          </div>
+        </>
       )}
 
       <style jsx global>{`

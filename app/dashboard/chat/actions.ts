@@ -14,6 +14,11 @@ export async function sendMessageAction(message: string, history: any[]) {
         ciudad: true,
         score: true,
         portafolio_resumen: true,
+        usuario: {
+          select: {
+            username: true,
+          },
+        },
       },
     });
 
@@ -31,6 +36,9 @@ export async function sendMessageAction(message: string, history: any[]) {
       - Si preguntan sobre capacidades técnicas, analiza los 'portafolio_resumen'.
       - Mantén un tono profesional, ejecutivo y tecnológico.
       - No menciones que eres una IA de Google, preséntate como el cerebro de Apex.
+      - IMPORTANTE: Cuando menciones a un proveedor específico, DEBES crear un enlace a su perfil usando Markdown así: 
+        [Nombre del Proveedor](/dashboard/vendors/USERNAME)
+        (Usa el 'username' que viene en el objeto 'usuario').
     `;
 
     // 3. Enviamos el mensaje inyectando el contexto al principio del prompt
@@ -71,6 +79,11 @@ export async function uploadPdfAction(formData: FormData) {
         ciudad: true,
         score: true,
         portafolio_resumen: true,
+        usuario: {
+          select: {
+            username: true,
+          },
+        },
       },
     });
 
@@ -91,6 +104,7 @@ export async function uploadPdfAction(formData: FormData) {
       REGLAS DE RESPUESTA:
       - Responde en español y usa Markdown profesional.
       - Presenta el TOP de proveedores en una TABLA.
+      - IMPORTANTE: En la tabla, el nombre del proveedor DEBE ser un enlace a su perfil: [Nombre](/dashboard/vendors/USERNAME).
       - No menciones IDs de base de datos.
     `;
 

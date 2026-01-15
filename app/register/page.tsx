@@ -59,10 +59,18 @@ export default function RegisterPage() {
   ]);
 
   const passMismatch = confirm.length > 0 && password !== confirm;
+  const isPasswordShort = password.length > 0 && password.length < 8;
 
   const next = () => {
     if (step === 1) {
-      if (!correo || !password || !confirm || passMismatch || !acceptedTyC)
+      if (
+        !correo ||
+        !password ||
+        !confirm ||
+        passMismatch ||
+        !acceptedTyC ||
+        isPasswordShort
+      )
         return;
     }
     if (step === 2) {
@@ -147,15 +155,21 @@ export default function RegisterPage() {
                 onChange={(e) => setCorreo(e.target.value)}
                 required
               />
-              {/* TODO: Modificar longitud minima de contraseña */}
               <input
                 type="password"
                 placeholder="Contraseña"
-                className="styled-input"
+                className={`styled-input ${
+                  isPasswordShort ? "border-red-400" : ""
+                }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {isPasswordShort && (
+                <span className="text-xs text-red-500">
+                  La contraseña debe tener al menos 8 caracteres.
+                </span>
+              )}
 
               <div className="flex flex-col gap-1">
                 <input
@@ -204,7 +218,8 @@ export default function RegisterPage() {
                   !password ||
                   !confirm ||
                   passMismatch ||
-                  !acceptedTyC
+                  !acceptedTyC ||
+                  isPasswordShort
                 }
               >
                 Siguiente

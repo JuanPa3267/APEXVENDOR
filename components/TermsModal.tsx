@@ -57,7 +57,6 @@ export default function TermsModal({
             Condiciones. Si no está de acuerdo, deberá abstenerse de utilizar la
             plataforma.
           </p>
-
           {/* 2. DEFINICIONES */}
           <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             2. DEFINICIONES
