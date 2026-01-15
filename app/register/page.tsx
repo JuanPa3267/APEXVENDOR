@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import TermsModal from "@/components/TermsModal";
 import { useActionState, useState } from "react";
 import { registerAction } from "./actions";
 
@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [acceptedTyC, setAcceptedTyC] = useState(false);
+  const [showTyC, setShowTyC] = useState(false);
 
   // Paso 2
   const [tipoProveedor, setTipoProveedor] = useState<"Persona" | "Empresa">(
@@ -184,13 +185,13 @@ export default function RegisterPage() {
                 />
                 <label htmlFor="tyc" className="text-xs text-gray-500">
                   He leído y acepto los{" "}
-                  <Link
-                    href="/tyc"
+                  <button
+                    type="button"
+                    onClick={() => setShowTyC(true)}
                     className="text-[#bba955] font-bold hover:underline"
-                    target="_blank"
                   >
                     Términos y Condiciones
-                  </Link>
+                  </button>
                 </label>
               </div>
 
@@ -513,6 +514,19 @@ export default function RegisterPage() {
           </a>
         </div>
       </div>
+
+      {showTyC && (
+        <TermsModal
+          onAccept={() => {
+            setAcceptedTyC(true);
+            setShowTyC(false);
+          }}
+          onReject={() => {
+            setAcceptedTyC(false);
+            setShowTyC(false);
+          }}
+        />
+      )}
     </div>
   );
 }

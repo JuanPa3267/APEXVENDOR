@@ -1,24 +1,48 @@
-import Link from "next/link";
-
-export default function TermsPage() {
+export default function TermsModal({
+  onAccept,
+  onReject,
+}: {
+  onAccept: () => void;
+  onReject: () => void;
+}) {
   return (
-    <div className="flex items-center justify-center min-h-screen py-10 px-4 bg-[#fafae6]">
-      <div className="w-full max-w-4xl bg-white p-8 md:p-12 rounded-2xl shadow-2xl border border-black/5 flex flex-col gap-6 text-[#252525]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="text-center mb-4">
-          <h1 className="text-3xl md:text-4xl font-black text-[#252525] tracking-tighter uppercase">
-            Términos y Condiciones
-          </h1>
-          <div className="h-1.5 w-20 bg-[#e9d26a] mx-auto mt-3 rounded-full" />
-          <p className="text-sm text-gray-500 mt-4">
-            Última actualización: 15 de enero de 2026
-          </p>
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white rounded-t-2xl z-10">
+          <div>
+            <h2 className="text-2xl font-black text-[#252525] uppercase tracking-tight">
+              Términos y Condiciones
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Última actualización: 15 de enero de 2026
+            </p>
+          </div>
+          <button
+            onClick={onReject}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-red-500"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* Content */}
-        <div className="prose prose-slate max-w-none text-justify text-sm md:text-base overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
+        <div className="p-6 overflow-y-auto custom-scrollbar text-justify text-sm text-[#333]">
           {/* 1. INTRODUCCIÓN Y ACEPTACIÓN */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 text-[#252525]">
             1. INTRODUCCIÓN Y ACEPTACIÓN
           </h3>
           <p className="mb-4">
@@ -35,7 +59,7 @@ export default function TermsPage() {
           </p>
 
           {/* 2. DEFINICIONES */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             2. DEFINICIONES
           </h3>
           <p className="mb-4">
@@ -53,7 +77,7 @@ export default function TermsPage() {
           </p>
 
           {/* 3. DESCRIPCIÓN DEL SERVICIO Y ALCANCE DE LA IA */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             3. DESCRIPCIÓN DEL SERVICIO Y ALCANCE DE LA IA
           </h3>
           <p className="mb-4">
@@ -80,7 +104,7 @@ export default function TermsPage() {
           </p>
 
           {/* 4. RELACIÓN ENTRE LAS PARTES */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             4. RELACIÓN ENTRE LAS PARTES
           </h3>
           <p className="mb-4">
@@ -91,7 +115,7 @@ export default function TermsPage() {
           </p>
 
           {/* 5. RESPONSABILIDAD SOBRE LA INFORMACIÓN (INPUTS) */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             5. RESPONSABILIDAD SOBRE LA INFORMACIÓN (INPUTS)
           </h3>
           <p className="mb-4">
@@ -117,7 +141,7 @@ export default function TermsPage() {
           </p>
 
           {/* 6. PROPIEDAD INTELECTUAL */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             6. PROPIEDAD INTELECTUAL
           </h3>
           <p className="mb-4">
@@ -130,7 +154,7 @@ export default function TermsPage() {
           </p>
 
           {/* 7. TRATAMIENTO DE DATOS Y HABEAS DATA */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             7. TRATAMIENTO DE DATOS Y HABEAS DATA
           </h3>
           <p className="mb-4">
@@ -150,7 +174,7 @@ export default function TermsPage() {
           </p>
 
           {/* 8. LIMITACIÓN DE RESPONSABILIDAD */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             8. LIMITACIÓN DE RESPONSABILIDAD
           </h3>
           <p className="mb-4">
@@ -166,7 +190,7 @@ export default function TermsPage() {
           </p>
 
           {/* 9. LEY APLICABLE */}
-          <h3 className="text-lg font-bold uppercase mb-2 mt-6 text-[#333]">
+          <h3 className="text-base font-bold uppercase mb-2 mt-6 text-[#252525]">
             9. LEY APLICABLE
           </h3>
           <p className="mb-4">
@@ -177,12 +201,13 @@ export default function TermsPage() {
         </div>
 
         {/* Footer Actions */}
-        <div className="flex justify-center mt-6 pt-6 border-t border-gray-100">
-          <Link href="/register">
-            <button className="bg-[#e9d26a] text-[#333] px-8 py-3 rounded-xl font-bold uppercase tracking-wider shadow-md hover:bg-[#bba955] hover:shadow-lg transition-all transform hover:-translate-y-1">
-              Aceptar y Volver
-            </button>
-          </Link>
+        <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+          <button onClick={onReject} className="btn-delete px-6 py-2">
+            Rechazar
+          </button>
+          <button onClick={onAccept} className="btn-gold px-8 py-2">
+            Entendido, Aceptar
+          </button>
         </div>
       </div>
     </div>
