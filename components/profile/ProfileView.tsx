@@ -2,13 +2,13 @@
 
 import PfpEditor from "@/app/dashboard/profile/PfpEditor";
 import {
-  updatePortfolioAction,
   deleteCertAction,
   deleteCvAction,
   getSasUrlAction,
+  updatePersonalDataAction,
+  updatePortfolioAction,
   uploadCertAction,
   uploadCvAction,
-  updatePersonalDataAction
 } from "@/app/dashboard/profile/actions";
 import { useEffect, useState } from "react";
 
@@ -183,9 +183,9 @@ export default function ProfileView({
               <span className="text-[#252525] font-bold text-lg">
                 {profile.user.lastLogin
                   ? new Date(profile.user.lastLogin).toLocaleString("es-CO", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
                   : "Nunca"}
               </span>
             </div>
@@ -245,10 +245,11 @@ export default function ProfileView({
               <button
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
-                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
-                  ? "bg-green-500 text-white scale-95"
-                  : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
-                  }`}
+                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${
+                  isSaving
+                    ? "bg-green-500 text-white scale-95"
+                    : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
+                }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
               </button>
@@ -299,21 +300,27 @@ export default function ProfileView({
               <div className="text-[9px] font-black text-[#bba955] uppercase tracking-widest mb-1">
                 Tipo de proveedor
               </div>
-              <div className="font-bold">{profile.details?.tipo_proveedor || "N/A"}</div>
+              <div className="font-bold">
+                {profile.details?.tipo_proveedor || "N/A"}
+              </div>
             </div>
 
             <div>
               <div className="text-[9px] font-black text-[#bba955] uppercase tracking-widest mb-1">
                 Teléfono
               </div>
-              <div className="font-bold">{profile.details?.telefono || "No definido"}</div>
+              <div className="font-bold">
+                {profile.details?.telefono || "No definido"}
+              </div>
             </div>
 
             <div>
               <div className="text-[9px] font-black text-[#bba955] uppercase tracking-widest mb-1">
                 Dirección
               </div>
-              <div className="font-bold">{profile.details?.direccion || "No definida"}</div>
+              <div className="font-bold">
+                {profile.details?.direccion || "No definida"}
+              </div>
             </div>
           </div>
         </div>
@@ -323,6 +330,7 @@ export default function ProfileView({
             Redes sociales
           </h4>
 
+          {/* FIXME: Asegurarse de que se pueden visualizar los links, nada de localhost */}
           <div className="space-y-4">
             {[
               ["LinkedIn", profile.user.social?.linkedin],
@@ -420,8 +428,11 @@ export default function ProfileView({
             <button
               type="submit"
               disabled={isSavingData}
-              className={`btn-gold px-8 py-3 ${isSavingData ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                }`}
+              className={`btn-gold px-8 py-3 ${
+                isSavingData
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
+              }`}
             >
               {isSavingData ? "Guardando..." : "Guardar cambios"}
             </button>
@@ -465,7 +476,9 @@ export default function ProfileView({
             </div>
 
             {cvs.length === 0 ? (
-              <div className="text-gray-500 text-sm">No has subido CV todavía.</div>
+              <div className="text-gray-500 text-sm">
+                No has subido CV todavía.
+              </div>
             ) : (
               <div className="space-y-3">
                 {cvs.map((cv: any) => (
@@ -522,19 +535,25 @@ export default function ProfileView({
                     className="styled-input"
                     placeholder="Nombre"
                     value={certForm.nombre}
-                    onChange={(e) => setCertForm((p) => ({ ...p, nombre: e.target.value }))}
+                    onChange={(e) =>
+                      setCertForm((p) => ({ ...p, nombre: e.target.value }))
+                    }
                   />
                   <input
                     className="styled-input"
                     placeholder="Emisor"
                     value={certForm.emisor}
-                    onChange={(e) => setCertForm((p) => ({ ...p, emisor: e.target.value }))}
+                    onChange={(e) =>
+                      setCertForm((p) => ({ ...p, emisor: e.target.value }))
+                    }
                   />
                   <input
                     className="styled-input"
                     placeholder="Nivel/Categoría (opcional)"
                     value={certForm.nivel}
-                    onChange={(e) => setCertForm((p) => ({ ...p, nivel: e.target.value }))}
+                    onChange={(e) =>
+                      setCertForm((p) => ({ ...p, nivel: e.target.value }))
+                    }
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <input
@@ -542,7 +561,10 @@ export default function ProfileView({
                       type="date"
                       value={certForm.fecha_emision}
                       onChange={(e) =>
-                        setCertForm((p) => ({ ...p, fecha_emision: e.target.value }))
+                        setCertForm((p) => ({
+                          ...p,
+                          fecha_emision: e.target.value,
+                        }))
                       }
                     />
                     <input
@@ -550,7 +572,10 @@ export default function ProfileView({
                       type="date"
                       value={certForm.fecha_expiracion}
                       onChange={(e) =>
-                        setCertForm((p) => ({ ...p, fecha_expiracion: e.target.value }))
+                        setCertForm((p) => ({
+                          ...p,
+                          fecha_expiracion: e.target.value,
+                        }))
                       }
                     />
                   </div>
@@ -561,7 +586,10 @@ export default function ProfileView({
                     type="file"
                     accept="application/pdf"
                     onChange={(e) =>
-                      setCertForm((p) => ({ ...p, file: e.target.files?.[0] ?? null }))
+                      setCertForm((p) => ({
+                        ...p,
+                        file: e.target.files?.[0] ?? null,
+                      }))
                     }
                   />
 
@@ -600,11 +628,15 @@ export default function ProfileView({
             )}
 
             {certs.length === 0 ? (
-              <div className="text-gray-500 text-sm">No has subido certificaciones todavía.</div>
+              <div className="text-gray-500 text-sm">
+                No has subido certificaciones todavía.
+              </div>
             ) : (
               <div className="space-y-3">
                 {certs.map((c: any) => {
-                  const exp = c.fecha_expiracion ? new Date(c.fecha_expiracion) : null;
+                  const exp = c.fecha_expiracion
+                    ? new Date(c.fecha_expiracion)
+                    : null;
                   const vigente = !exp || exp.getTime() > Date.now();
 
                   return (
@@ -617,12 +649,16 @@ export default function ProfileView({
                           {c.nombre_certificacion}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {c.emisor} • Emitida: {new Date(c.fecha_emision).toLocaleDateString()}
+                          {c.emisor} • Emitida:{" "}
+                          {new Date(c.fecha_emision).toLocaleDateString()}
                           {exp ? ` • Expira: ${exp.toLocaleDateString()}` : ""}
                         </div>
                         <div
-                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            }`}
+                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
+                            vigente
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
                         </div>
@@ -639,7 +675,8 @@ export default function ProfileView({
                         {!isAdminViewing && (
                           <button
                             onClick={async () => {
-                              if (!confirm("¿Eliminar esta certificación?")) return;
+                              if (!confirm("¿Eliminar esta certificación?"))
+                                return;
                               const res = await deleteCertAction(c.id_cert);
                               if (res?.error) alert(res.error);
                             }}

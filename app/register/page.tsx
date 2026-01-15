@@ -23,7 +23,9 @@ export default function RegisterPage() {
   const [confirm, setConfirm] = useState("");
 
   // Paso 2
-  const [tipoProveedor, setTipoProveedor] = useState<"Persona" | "Empresa">("Persona");
+  const [tipoProveedor, setTipoProveedor] = useState<"Persona" | "Empresa">(
+    "Persona"
+  );
 
   // Paso 3 (datos + redes)
   const [name, setName] = useState("");
@@ -43,7 +45,14 @@ export default function RegisterPage() {
   const [cv, setCv] = useState<File | null>(null);
 
   const [certs, setCerts] = useState<CertUI[]>([
-    { nombre: "", emisor: "", nivel: "", fechaEmision: "", fechaExpiracion: "", file: null },
+    {
+      nombre: "",
+      emisor: "",
+      nivel: "",
+      fechaEmision: "",
+      fechaExpiracion: "",
+      file: null,
+    },
   ]);
 
   const passMismatch = confirm.length > 0 && password !== confirm;
@@ -66,7 +75,14 @@ export default function RegisterPage() {
   const addCert = () => {
     setCerts((prev) => [
       ...prev,
-      { nombre: "", emisor: "", nivel: "", fechaEmision: "", fechaExpiracion: "", file: null },
+      {
+        nombre: "",
+        emisor: "",
+        nivel: "",
+        fechaEmision: "",
+        fechaExpiracion: "",
+        file: null,
+      },
     ]);
   };
 
@@ -75,7 +91,9 @@ export default function RegisterPage() {
   };
 
   const updateCert = (i: number, patch: Partial<CertUI>) => {
-    setCerts((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+    setCerts((prev) =>
+      prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c))
+    );
   };
 
   return (
@@ -90,7 +108,9 @@ export default function RegisterPage() {
         </div>
 
         <form action={formAction} className="flex flex-col gap-4">
-          {state?.error && <div className="error text-sm mb-2">{state.error}</div>}
+          {state?.error && (
+            <div className="error text-sm mb-2">{state.error}</div>
+          )}
 
           {/* Hidden fields para enviar todo al final */}
           <input type="hidden" name="correo" value={correo} />
@@ -123,7 +143,7 @@ export default function RegisterPage() {
                 onChange={(e) => setCorreo(e.target.value)}
                 required
               />
-
+              {/* TODO: Modificar longitud minima de contraseña */}
               <input
                 type="password"
                 placeholder="Contraseña"
@@ -137,13 +157,17 @@ export default function RegisterPage() {
                 <input
                   type="password"
                   placeholder="Confirmar contraseña"
-                  className={`styled-input ${passMismatch ? "border-red-400" : ""}`}
+                  className={`styled-input ${
+                    passMismatch ? "border-red-400" : ""
+                  }`}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
                 />
                 {passMismatch && (
-                  <span className="text-xs text-red-500">Las contraseñas no coinciden.</span>
+                  <span className="text-xs text-red-500">
+                    Las contraseñas no coinciden.
+                  </span>
                 )}
               </div>
 
@@ -186,10 +210,18 @@ export default function RegisterPage() {
               </div>
 
               <div className="flex gap-3 mt-2">
-                <button type="button" className="btn-secondary flex-1 py-3" onClick={back}>
+                <button
+                  type="button"
+                  className="btn-secondary flex-1 py-3"
+                  onClick={back}
+                >
                   Atrás
                 </button>
-                <button type="button" className="btn-gold flex-1 py-3" onClick={next}>
+                <button
+                  type="button"
+                  className="btn-gold flex-1 py-3"
+                  onClick={next}
+                >
                   Siguiente
                 </button>
               </div>
@@ -201,7 +233,9 @@ export default function RegisterPage() {
             <>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-bold text-gray-400 ml-1 uppercase">
-                  {tipoProveedor === "Empresa" ? "Razón social" : "Nombre completo"}
+                  {tipoProveedor === "Empresa"
+                    ? "Razón social"
+                    : "Nombre completo"}
                 </label>
                 <input
                   placeholder={
@@ -233,10 +267,12 @@ export default function RegisterPage() {
                 />
               </div>
 
+              {/* TODO: Modificar longitud minima de telefono */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   placeholder="Teléfono (opcional)"
                   className="styled-input"
+                  type="number"
                   value={telefono}
                   onChange={(e) => setTelefono(e.target.value)}
                 />
@@ -287,7 +323,11 @@ export default function RegisterPage() {
               </div>
 
               <div className="flex gap-3 mt-2">
-                <button type="button" className="btn-secondary flex-1 py-3" onClick={back}>
+                <button
+                  type="button"
+                  className="btn-secondary flex-1 py-3"
+                  onClick={back}
+                >
                   Atrás
                 </button>
                 <button
@@ -322,7 +362,11 @@ export default function RegisterPage() {
                 <label className="text-xs font-bold text-gray-400 ml-1 uppercase">
                   Certificaciones
                 </label>
-                <button type="button" className="btn-secondary px-3 py-2" onClick={addCert}>
+                <button
+                  type="button"
+                  className="btn-secondary px-3 py-2"
+                  onClick={addCert}
+                >
                   + Agregar
                 </button>
               </div>
@@ -331,7 +375,9 @@ export default function RegisterPage() {
                 {certs.map((c, idx) => (
                   <div key={idx} className="p-3 rounded-xl border">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold">Certificación #{idx + 1}</span>
+                      <span className="text-sm font-semibold">
+                        Certificación #{idx + 1}
+                      </span>
                       {certs.length > 1 && (
                         <button
                           type="button"
@@ -349,21 +395,27 @@ export default function RegisterPage() {
                       placeholder="Nombre certificación"
                       className="styled-input"
                       value={c.nombre}
-                      onChange={(e) => updateCert(idx, { nombre: e.target.value })}
+                      onChange={(e) =>
+                        updateCert(idx, { nombre: e.target.value })
+                      }
                     />
                     <input
                       name="cert_emisor[]"
                       placeholder="Emisor"
                       className="styled-input mt-2"
                       value={c.emisor}
-                      onChange={(e) => updateCert(idx, { emisor: e.target.value })}
+                      onChange={(e) =>
+                        updateCert(idx, { emisor: e.target.value })
+                      }
                     />
                     <input
                       name="cert_nivel[]"
                       placeholder="Nivel / categoría (opcional)"
                       className="styled-input mt-2"
                       value={c.nivel}
-                      onChange={(e) => updateCert(idx, { nivel: e.target.value })}
+                      onChange={(e) =>
+                        updateCert(idx, { nivel: e.target.value })
+                      }
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
@@ -372,7 +424,9 @@ export default function RegisterPage() {
                         type="date"
                         className="styled-input"
                         value={c.fechaEmision}
-                        onChange={(e) => updateCert(idx, { fechaEmision: e.target.value })}
+                        onChange={(e) =>
+                          updateCert(idx, { fechaEmision: e.target.value })
+                        }
                       />
                       <input
                         name="cert_fecha_expiracion[]"
@@ -393,14 +447,20 @@ export default function RegisterPage() {
                       name="cert_file[]"
                       accept="application/pdf"
                       className="styled-input"
-                      onChange={(e) => updateCert(idx, { file: e.target.files?.[0] ?? null })}
+                      onChange={(e) =>
+                        updateCert(idx, { file: e.target.files?.[0] ?? null })
+                      }
                     />
                   </div>
                 ))}
               </div>
 
               <div className="flex gap-3 mt-2">
-                <button type="button" className="btn-secondary flex-1 py-3" onClick={back}>
+                <button
+                  type="button"
+                  className="btn-secondary flex-1 py-3"
+                  onClick={back}
+                >
                   Atrás
                 </button>
                 <button
