@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { registerAction } from "./actions";
 
@@ -21,6 +22,7 @@ export default function RegisterPage() {
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [acceptedTyC, setAcceptedTyC] = useState(false);
 
   // Paso 2
   const [tipoProveedor, setTipoProveedor] = useState<"Persona" | "Empresa">(
@@ -59,7 +61,8 @@ export default function RegisterPage() {
 
   const next = () => {
     if (step === 1) {
-      if (!correo || !password || !confirm || passMismatch) return;
+      if (!correo || !password || !confirm || passMismatch || !acceptedTyC)
+        return;
     }
     if (step === 2) {
       if (!tipoProveedor) return;
@@ -171,11 +174,37 @@ export default function RegisterPage() {
                 )}
               </div>
 
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="tyc"
+                  className="w-4 h-4 text-[#e9d26a] bg-white border-gray-300 rounded focus:ring-[#e9d26a]"
+                  checked={acceptedTyC}
+                  onChange={(e) => setAcceptedTyC(e.target.checked)}
+                />
+                <label htmlFor="tyc" className="text-xs text-gray-500">
+                  He leído y acepto los{" "}
+                  <Link
+                    href="/tyc"
+                    className="text-[#bba955] font-bold hover:underline"
+                    target="_blank"
+                  >
+                    Términos y Condiciones
+                  </Link>
+                </label>
+              </div>
+
               <button
                 type="button"
                 className="btn-gold mt-2 py-3"
                 onClick={next}
-                disabled={!correo || !password || !confirm || passMismatch}
+                disabled={
+                  !correo ||
+                  !password ||
+                  !confirm ||
+                  passMismatch ||
+                  !acceptedTyC
+                }
               >
                 Siguiente
               </button>
