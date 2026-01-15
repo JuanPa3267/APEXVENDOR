@@ -96,8 +96,9 @@ export default function ProfileEditForm({
         <button
           type="submit"
           disabled={isSavingData}
-          className={`btn-gold px-8 py-3 w-full md:w-auto ${isSavingData ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-            }`}
+          className={`btn-gold px-8 py-3 w-full md:w-auto ${
+            isSavingData ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          }`}
         >
           {isSavingData ? "Guardando..." : "Guardar cambios"}
         </button>

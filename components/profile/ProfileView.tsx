@@ -184,9 +184,9 @@ export default function ProfileView({
               <span className="text-[#252525] font-bold text-lg">
                 {profile.user.lastLogin
                   ? new Date(profile.user.lastLogin).toLocaleString("es-CO", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
                   : "Nunca"}
               </span>
             </div>
@@ -246,10 +246,11 @@ export default function ProfileView({
               <button
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
-                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
+                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${
+                  isSaving
                     ? "bg-green-500 text-white scale-95"
                     : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
-                  }`}
+                }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
               </button>
@@ -350,7 +351,7 @@ export default function ProfileView({
             )}
           </div>
 
-          {/* FIXME: Asegurarse de que se pueden visualizar los links, nada de localhost */}
+          {/* TODO: Asegurarse de que se pueden visualizar los links, nada de localhost */}
           <div className="space-y-4">
             {[
               ["LinkedIn", profile.user.social?.linkedin],
@@ -384,8 +385,9 @@ export default function ProfileView({
         <Modal
           isOpen={!!editMode}
           onClose={() => setEditMode(null)}
-          title={`Actualizar ${editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
-            }`}
+          title={`Actualizar ${
+            editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
+          }`}
         >
           <ProfileEditForm
             profile={profile}
@@ -609,10 +611,11 @@ export default function ProfileView({
                           {exp ? ` • Expira: ${exp.toLocaleDateString()}` : ""}
                         </div>
                         <div
-                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
+                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
+                            vigente
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
-                            }`}
+                          }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
                         </div>
