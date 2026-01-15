@@ -5,12 +5,13 @@ import {
   deleteCertAction,
   deleteCvAction,
   getSasUrlAction,
-  updatePersonalDataAction,
   updatePortfolioAction,
   uploadCertAction,
   uploadCvAction,
 } from "@/app/dashboard/profile/actions";
 import { useEffect, useState } from "react";
+import Modal from "../Modal";
+import ProfileEditForm from "./ProfileEditForm";
 
 export default function ProfileView({
   profile,
@@ -41,7 +42,7 @@ export default function ProfileView({
     file: null as File | null,
   });
 
-  const [isSavingData, setIsSavingData] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const openWithSas = async (blobUrl: string) => {
     const res = await getSasUrlAction(blobUrl);
@@ -284,9 +285,19 @@ export default function ProfileView({
       {/* 4.5 Datos adicionales + Redes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
         <div className="bg-white/40 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 shadow-sm">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-8">
-            Datos adicionales
-          </h4>
+          <div className="flex justify-between items-start mb-8">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
+              Datos adicionales
+            </h4>
+            {!isAdminViewing && (
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95 transition-all shadow-lg cursor-pointer"
+              >
+                Actualizar
+              </button>
+            )}
+          </div>
 
           <div className="space-y-5 text-[#252525]">
             <div>
@@ -361,83 +372,16 @@ export default function ProfileView({
       </div>
 
       {!isAdminViewing && (
-        <form
-          action={async (formData) => {
-            setIsSavingData(true);
-            const res = await updatePersonalDataAction(formData);
-            if (res?.error) alert(res.error);
-            setIsSavingData(false);
-          }}
-          className="mt-10 bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl p-10 space-y-8"
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          title="Actualizar Datos"
         >
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">
-            Datos de contacto y redes
-          </h4>
-
-          {/* CONTACTO */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <input
-              name="telefono"
-              defaultValue={profile.details?.telefono || ""}
-              placeholder="Teléfono"
-              className="styled-input"
-            />
-            <input
-              name="direccion"
-              defaultValue={profile.details?.direccion || ""}
-              placeholder="Dirección"
-              className="styled-input"
-            />
-            <input
-              name="ciudad"
-              defaultValue={profile.details?.city || ""}
-              placeholder="Ciudad"
-              className="styled-input"
-            />
-          </div>
-
-          {/* REDES */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input
-              name="linkedin"
-              defaultValue={profile.user.social.linkedin || ""}
-              placeholder="LinkedIn"
-              className="styled-input"
-            />
-            <input
-              name="github"
-              defaultValue={profile.user.social.github || ""}
-              placeholder="GitHub"
-              className="styled-input"
-            />
-            <input
-              name="website"
-              defaultValue={profile.user.social.website || ""}
-              placeholder="Website"
-              className="styled-input"
-            />
-            <input
-              name="instagram"
-              defaultValue={profile.user.social.instagram || ""}
-              placeholder="Instagram"
-              className="styled-input"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={isSavingData}
-              className={`btn-gold px-8 py-3 ${
-                isSavingData
-                  ? "opacity-50 cursor-not-allowed"
-                  : "cursor-pointer"
-              }`}
-            >
-              {isSavingData ? "Guardando..." : "Guardar cambios"}
-            </button>
-          </div>
-        </form>
+          <ProfileEditForm
+            profile={profile}
+            onSuccess={() => setIsEditModalOpen(false)}
+          />
+        </Modal>
       )}
 
       {/* 4.6 Documentación */}
