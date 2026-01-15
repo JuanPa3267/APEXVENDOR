@@ -4,6 +4,7 @@ import PfpEditor from "@/app/dashboard/profile/PfpEditor";
 import {
   deleteCertAction,
   deleteCvAction,
+  deleteMyAccountAction,
   getSasUrlAction,
   updatePortfolioAction,
   uploadCertAction,
@@ -13,6 +14,8 @@ import { useEffect, useState } from "react";
 import Modal from "../Modal";
 import ProfileEditForm from "./ProfileEditForm";
 
+import { useRouter } from "next/navigation";
+
 export default function ProfileView({
   profile,
   isAdminViewing = false,
@@ -20,6 +23,7 @@ export default function ProfileView({
   profile: any;
   isAdminViewing?: boolean;
 }) {
+  const router = useRouter();
   // Estado para el texto real y el texto que se muestra (efecto máquina)
   const [resumen, setResumen] = useState(
     profile.details?.portafolio_resumen || ""
@@ -43,6 +47,7 @@ export default function ProfileView({
   });
 
   const [editMode, setEditMode] = useState<"contact" | "social" | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const openWithSas = async (blobUrl: string) => {
     const res = await getSasUrlAction(blobUrl);
@@ -350,8 +355,6 @@ export default function ProfileView({
               </button>
             )}
           </div>
-
-          {/* TODO: Asegurarse de que se pueden visualizar los links, nada de localhost */}
           <div className="space-y-4">
             {[
               ["LinkedIn", profile.user.social?.linkedin],
@@ -652,14 +655,80 @@ export default function ProfileView({
         </div>
       </div>
 
+      {/* 5. Zona de Peligro (Eliminar Cuenta) */}
+      {!isAdminViewing && (
+        <div className="mt-12 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="text-[9px] font-black uppercase tracking-widest px-6 py-2 rounded-full border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+          >
+            Eliminar mi cuenta
+          </button>
+        </div>
+      )}
+
       {/* 5. Sello Inferior */}
-      <div className="mt-12 flex justify-center opacity-20">
+      <div className="mt-8 flex justify-center opacity-20">
         <div className="flex items-center gap-2 border border-[#252525] px-4 py-2 rounded-full">
           <span className="text-[10px] font-black uppercase tracking-widest text-[#252525]">
             Apex Intelligence Protocol © 2026
           </span>
         </div>
       </div>
+
+      {/* Modal de confirmación de eliminación */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="¿Estás completamente seguro?"
+      >
+        <div className="space-y-6">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4">
+            <p className="text-red-700 font-bold text-sm">
+              Esta acción es irreversible. Se eliminarán permanentemente:
+            </p>
+            <ul className="list-disc list-inside text-red-600 text-xs mt-2 space-y-1">
+              <li>Tu perfil de proveedor y todos tus datos.</li>
+              <li>Tu hoja de vida (CV) y certificaciones subidas.</li>
+              <li>Tu historial de acceso y configuración.</li>
+            </ul>
+          </div>
+
+          <p className="text-gray-600 text-sm">
+            Si procedes, tu sesión se cerrará y serás redirigido a la página de
+            inicio.
+          </p>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="px-4 py-2 rounded-xl text-gray-500 hover:bg-gray-100 text-xs font-bold uppercase tracking-widest transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                if (
+                  !confirm(
+                    "Última advertencia: ¿Deseas eliminar tu cuenta permanentemente?"
+                  )
+                )
+                  return;
+
+                const res = await deleteMyAccountAction();
+                if (res?.error) {
+                  alert(res.error);
+                } else {
+                  router.push("/");
+                }
+              }}
+              className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 text-xs font-bold uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+            >
+              Sí, eliminar mi cuenta
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

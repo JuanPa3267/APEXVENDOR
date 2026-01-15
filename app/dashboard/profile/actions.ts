@@ -1,17 +1,25 @@
 "use server";
 
+import {
+  deleteBlobByUrl,
+  getReadSasUrlFromBlobUrl,
+  uploadToAzureBlob,
+} from "@/lib/azureBlob";
 import { db } from "@/lib/db";
 import { updatePfp } from "@/services/profileService";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { uploadToAzureBlob, deleteBlobByUrl, getReadSasUrlFromBlobUrl } from "@/lib/azureBlob";
 
 function safeFileName(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9.-]+/g, "-").replace(/-+/g, "-");
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]+/g, "-")
+    .replace(/-+/g, "-");
 }
 
 function assertPdf(file: File) {
-  if (file.type !== "application/pdf") throw new Error("Solo se permiten PDFs.");
+  if (file.type !== "application/pdf")
+    throw new Error("Solo se permiten PDFs.");
 }
 
 async function getSessionUsername() {
@@ -44,15 +52,22 @@ export async function updatePersonalDataAction(formData: FormData) {
     const updateData: any = {};
 
     // Campos de contacto
-    if (formData.has("telefono")) updateData.telefono = (formData.get("telefono") as string) || null;
-    if (formData.has("direccion")) updateData.direccion = (formData.get("direccion") as string) || null;
-    if (formData.has("ciudad")) updateData.ciudad = (formData.get("ciudad") as string) || null;
+    if (formData.has("telefono"))
+      updateData.telefono = (formData.get("telefono") as string) || null;
+    if (formData.has("direccion"))
+      updateData.direccion = (formData.get("direccion") as string) || null;
+    if (formData.has("ciudad"))
+      updateData.ciudad = (formData.get("ciudad") as string) || null;
 
     // Campos de redes sociales
-    if (formData.has("linkedin")) updateData.linkedin = (formData.get("linkedin") as string) || null;
-    if (formData.has("github")) updateData.github = (formData.get("github") as string) || null;
-    if (formData.has("website")) updateData.website = (formData.get("website") as string) || null;
-    if (formData.has("instagram")) updateData.instagram = (formData.get("instagram") as string) || null;
+    if (formData.has("linkedin"))
+      updateData.linkedin = (formData.get("linkedin") as string) || null;
+    if (formData.has("github"))
+      updateData.github = (formData.get("github") as string) || null;
+    if (formData.has("website"))
+      updateData.website = (formData.get("website") as string) || null;
+    if (formData.has("instagram"))
+      updateData.instagram = (formData.get("instagram") as string) || null;
 
     await db.perfilProveedor.update({
       where: { id_proveedor: user.id_usuario },
@@ -111,7 +126,8 @@ export async function getSasUrlAction(blobUrl: string) {
       include: { roles: { include: { rol: true } } },
     });
 
-    const isAdmin = userWithRoles?.roles?.some((r: any) => r.rol.nombre === "Admin") ?? false;
+    const isAdmin =
+      userWithRoles?.roles?.some((r: any) => r.rol.nombre === "Admin") ?? false;
 
     // 2) Verificar que esa URL exista en la BD
     //    (así no se genera SAS para un archivo que no esté registrado)
@@ -145,7 +161,6 @@ export async function getSasUrlAction(blobUrl: string) {
   }
 }
 
-
 /** Subir CV (solo proveedor dueño) */
 export async function uploadCvAction(file: File) {
   const user = await getSessionUser();
@@ -162,7 +177,9 @@ export async function uploadCvAction(file: File) {
     if (!proveedor) return { error: "Solo proveedores pueden subir CV" };
 
     const container = process.env.AZURE_STORAGE_CV_CONTAINER || "cvs";
-    const blobName = `${user.id_usuario}/${Date.now()}-cv-${safeFileName(file.name)}`;
+    const blobName = `${user.id_usuario}/${Date.now()}-cv-${safeFileName(
+      file.name
+    )}`;
 
     const uploaded = await uploadToAzureBlob({
       containerName: container,
@@ -191,7 +208,9 @@ export async function deleteCvAction(id_hojavida: string) {
   if (!user) return { error: "No autorizado" };
 
   try {
-    const cv = await db.hoja_vida_proveedor.findUnique({ where: { id_hojavida } });
+    const cv = await db.hoja_vida_proveedor.findUnique({
+      where: { id_hojavida },
+    });
     if (!cv) return { error: "CV no encontrado" };
     if (cv.id_proveedor !== user.id_usuario) return { error: "No autorizado" };
 
@@ -216,7 +235,8 @@ export async function uploadCertAction(formData: FormData) {
     const proveedor = await db.perfilProveedor.findUnique({
       where: { id_proveedor: user.id_usuario },
     });
-    if (!proveedor) return { error: "Solo proveedores pueden agregar certificaciones" };
+    if (!proveedor)
+      return { error: "Solo proveedores pueden agregar certificaciones" };
 
     const nombre = (formData.get("nombre") as string) || "";
     const emisor = (formData.get("emisor") as string) || "";
@@ -231,8 +251,11 @@ export async function uploadCertAction(formData: FormData) {
     if (!file || file.size === 0) return { error: "Adjunta el PDF" };
     assertPdf(file);
 
-    const container = process.env.AZURE_STORAGE_CERTS_CONTAINER || "certificaciones";
-    const blobName = `${user.id_usuario}/${Date.now()}-cert-${safeFileName(file.name)}`;
+    const container =
+      process.env.AZURE_STORAGE_CERTS_CONTAINER || "certificaciones";
+    const blobName = `${user.id_usuario}/${Date.now()}-cert-${safeFileName(
+      file.name
+    )}`;
 
     const uploaded = await uploadToAzureBlob({
       containerName: container,
@@ -268,7 +291,8 @@ export async function deleteCertAction(id_cert: string) {
   try {
     const cert = await db.certificacion.findUnique({ where: { id_cert } });
     if (!cert) return { error: "Certificación no encontrada" };
-    if (cert.id_proveedor !== user.id_usuario) return { error: "No autorizado" };
+    if (cert.id_proveedor !== user.id_usuario)
+      return { error: "No autorizado" };
 
     await deleteBlobByUrl(cert.url_archivo);
     await db.certificacion.delete({ where: { id_cert } });
@@ -278,5 +302,67 @@ export async function deleteCertAction(id_cert: string) {
   } catch (e: any) {
     console.error(e);
     return { error: e?.message ?? "No se pudo eliminar la certificación" };
+  }
+}
+
+export async function deleteMyAccountAction() {
+  const username = await getSessionUsername();
+  if (!username) return { error: "No autorizado" };
+
+  try {
+    const user = await db.usuario.findUnique({
+      where: { username },
+      include: {
+        perfilProveedor: {
+          include: {
+            certificaciones: true,
+            hoja_vida_proveedor: true,
+          },
+        },
+      },
+    });
+
+    if (!user) return { error: "Usuario no encontrado" };
+
+    // 1. Eliminar blobs
+    const deletionPromises: Promise<any>[] = [];
+
+    if (user.perfilProveedor?.hoja_vida_proveedor) {
+      for (const cv of user.perfilProveedor.hoja_vida_proveedor) {
+        if (cv.url_pdf) deletionPromises.push(deleteBlobByUrl(cv.url_pdf));
+      }
+    }
+
+    if (user.perfilProveedor?.certificaciones) {
+      for (const cert of user.perfilProveedor.certificaciones) {
+        if (cert.url_archivo)
+          deletionPromises.push(deleteBlobByUrl(cert.url_archivo));
+      }
+    }
+
+    if (deletionPromises.length > 0) {
+      const results = await Promise.allSettled(deletionPromises);
+      results.forEach((res, i) => {
+        if (res.status === "rejected") {
+          console.error(`Failed to delete blob #${i}:`, res.reason);
+        }
+      });
+    }
+
+    // 2. Eliminar usuario de BD
+    await db.usuario.delete({
+      where: { id_usuario: user.id_usuario },
+    });
+
+    // 3. Limpiar cookies de sesión
+    const cookieStore = await cookies();
+    cookieStore.delete("session_id");
+    cookieStore.delete("username");
+    cookieStore.delete("user_role");
+
+    return { success: true };
+  } catch (e: any) {
+    console.error("Error deleting account:", e);
+    return { error: "No se pudo eliminar tu cuenta. Intenta de nuevo." };
   }
 }

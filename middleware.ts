@@ -6,16 +6,17 @@ export function middleware(request: NextRequest) {
   const username = request.cookies.get("username")?.value;
   const userRole = request.cookies.get("user_role")?.value;
 
+  const hasFullSession = !!(sessionId && username && userRole);
   const { pathname } = request.nextUrl;
 
-  // 1. Si no hay sesión, nadie entra al dashboard
-  if (pathname.startsWith("/dashboard") && (!sessionId || !username)) {
+  // 1. Si no hay sesión completa, nadie entra al dashboard
+  if (pathname.startsWith("/dashboard") && !hasFullSession) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 2. Si ya están logueados, no necesitan ver el login
-  if (pathname === "/login" && sessionId) {
-    // Redirección inteligente incluso desde el login
+  // 2. Si ya están logueados con sesión completa, no necesitan ver el login
+  if (pathname === "/login" && hasFullSession) {
+    // Redirección inteligente
     return userRole === "Admin"
       ? NextResponse.redirect(new URL("/dashboard/chat", request.url))
       : NextResponse.redirect(new URL("/dashboard/profile", request.url));

@@ -88,7 +88,8 @@ export function parseAzureBlobUrl(blobUrl: string) {
   const u = new URL(blobUrl);
   const parts = u.pathname.split("/").filter(Boolean); // [container, ...blobPath]
   const containerName = parts[0];
-  const blobName = parts.slice(1).join("/");
+  const rawBlobName = parts.slice(1).join("/");
+  const blobName = decodeURIComponent(rawBlobName);
   if (!containerName || !blobName) throw new Error("URL de blob inválida");
   return { containerName, blobName };
 }
