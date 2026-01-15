@@ -40,18 +40,23 @@ export async function updatePersonalDataAction(formData: FormData) {
     }
 
     // ✅ Ahora TODO (contacto + redes) se guarda en PerfilProveedor
+    // Construimos el objeto de actualización dinámicamente según lo que venga en el formData
+    const updateData: any = {};
+
+    // Campos de contacto
+    if (formData.has("telefono")) updateData.telefono = (formData.get("telefono") as string) || null;
+    if (formData.has("direccion")) updateData.direccion = (formData.get("direccion") as string) || null;
+    if (formData.has("ciudad")) updateData.ciudad = (formData.get("ciudad") as string) || null;
+
+    // Campos de redes sociales
+    if (formData.has("linkedin")) updateData.linkedin = (formData.get("linkedin") as string) || null;
+    if (formData.has("github")) updateData.github = (formData.get("github") as string) || null;
+    if (formData.has("website")) updateData.website = (formData.get("website") as string) || null;
+    if (formData.has("instagram")) updateData.instagram = (formData.get("instagram") as string) || null;
+
     await db.perfilProveedor.update({
       where: { id_proveedor: user.id_usuario },
-      data: {
-        telefono: (formData.get("telefono") as string) || null,
-        direccion: (formData.get("direccion") as string) || null,
-        ciudad: (formData.get("ciudad") as string) || null,
-
-        linkedin: (formData.get("linkedin") as string) || null,
-        github: (formData.get("github") as string) || null,
-        website: (formData.get("website") as string) || null,
-        instagram: (formData.get("instagram") as string) || null,
-      },
+      data: updateData,
     });
 
     revalidatePath("/dashboard/profile");

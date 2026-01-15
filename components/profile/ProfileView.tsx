@@ -42,7 +42,7 @@ export default function ProfileView({
     file: null as File | null,
   });
 
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState<"contact" | "social" | null>(null);
 
   const openWithSas = async (blobUrl: string) => {
     const res = await getSasUrlAction(blobUrl);
@@ -184,9 +184,9 @@ export default function ProfileView({
               <span className="text-[#252525] font-bold text-lg">
                 {profile.user.lastLogin
                   ? new Date(profile.user.lastLogin).toLocaleString("es-CO", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
                   : "Nunca"}
               </span>
             </div>
@@ -246,11 +246,10 @@ export default function ProfileView({
               <button
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
-                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${
-                  isSaving
+                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
                     ? "bg-green-500 text-white scale-95"
                     : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
-                }`}
+                  }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
               </button>
@@ -291,7 +290,7 @@ export default function ProfileView({
             </h4>
             {!isAdminViewing && (
               <button
-                onClick={() => setIsEditModalOpen(true)}
+                onClick={() => setEditMode("contact")}
                 className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95 transition-all shadow-lg cursor-pointer"
               >
                 Actualizar
@@ -337,9 +336,19 @@ export default function ProfileView({
         </div>
 
         <div className="bg-white/40 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 shadow-sm">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-8">
-            Redes sociales
-          </h4>
+          <div className="flex justify-between items-start mb-8">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-8">
+              Redes sociales
+            </h4>
+            {!isAdminViewing && (
+              <button
+                onClick={() => setEditMode("social")}
+                className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95 transition-all shadow-lg cursor-pointer"
+              >
+                Actualizar
+              </button>
+            )}
+          </div>
 
           {/* FIXME: Asegurarse de que se pueden visualizar los links, nada de localhost */}
           <div className="space-y-4">
@@ -373,13 +382,15 @@ export default function ProfileView({
 
       {!isAdminViewing && (
         <Modal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          title="Actualizar Datos"
+          isOpen={!!editMode}
+          onClose={() => setEditMode(null)}
+          title={`Actualizar ${editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
+            }`}
         >
           <ProfileEditForm
             profile={profile}
-            onSuccess={() => setIsEditModalOpen(false)}
+            onSuccess={() => setEditMode(null)}
+            mode={editMode || "contact"}
           />
         </Modal>
       )}
@@ -598,11 +609,10 @@ export default function ProfileView({
                           {exp ? ` • Expira: ${exp.toLocaleDateString()}` : ""}
                         </div>
                         <div
-                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
-                            vigente
+                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
-                          }`}
+                            }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
                         </div>
