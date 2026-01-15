@@ -443,7 +443,7 @@ export default function ProfileView({
               <div className="text-[9px] font-black text-[#bba955] uppercase tracking-widest">
                 Hoja de vida (CV)
               </div>
-
+{/* TODO: que cuando se suba un cv, si existe otro, se borre el anterior */}
               {!isAdminViewing && (
                 <label className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer">
                   {cvUploading ? "Subiendo..." : "Subir nuevo"}
