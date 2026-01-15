@@ -26,9 +26,7 @@ async function getSessionUser() {
 }
 
 export async function updatePersonalDataAction(formData: FormData) {
-  const cookieStore = await cookies();
-  const username = cookieStore.get("username")?.value;
-
+  const username = await getSessionUsername();
   if (!username) return { error: "No autorizado" };
 
   try {
@@ -41,24 +39,18 @@ export async function updatePersonalDataAction(formData: FormData) {
       return { error: "Perfil no encontrado" };
     }
 
-    // 1️⃣ Actualizar redes (Usuario)
-    await db.usuario.update({
-      where: { id_usuario: user.id_usuario },
-      data: {
-        linkedin: formData.get("linkedin") as string | null,
-        github: formData.get("github") as string | null,
-        website: formData.get("website") as string | null,
-        instagram: formData.get("instagram") as string | null,
-      },
-    });
-
-    // 2️⃣ Actualizar datos de contacto (PerfilProveedor)
+    // ✅ Ahora TODO (contacto + redes) se guarda en PerfilProveedor
     await db.perfilProveedor.update({
       where: { id_proveedor: user.id_usuario },
       data: {
-        telefono: formData.get("telefono") as string | null,
-        direccion: formData.get("direccion") as string | null,
-        ciudad: formData.get("ciudad") as string | null,
+        telefono: (formData.get("telefono") as string) || null,
+        direccion: (formData.get("direccion") as string) || null,
+        ciudad: (formData.get("ciudad") as string) || null,
+
+        linkedin: (formData.get("linkedin") as string) || null,
+        github: (formData.get("github") as string) || null,
+        website: (formData.get("website") as string) || null,
+        instagram: (formData.get("instagram") as string) || null,
       },
     });
 

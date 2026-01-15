@@ -50,11 +50,6 @@ export const userService = {
           username: data.username,
           correo: data.correo,
           passwordHash: data.passwordHash,
-
-          instagram: data.instagram ?? null,
-          linkedin: data.linkedin ?? null,
-          website: data.website ?? null,
-          github: data.github ?? null,
         },
       });
 
@@ -86,6 +81,11 @@ export const userService = {
             telefono: data.telefono ?? null,
             direccion: data.direccion ?? null,
             portafolio_resumen: data.portafolio_resumen ?? null,
+
+            instagram: data.instagram ?? null,
+            linkedin: data.linkedin ?? null,
+            website: data.website ?? null,
+            github: data.github ?? null,
           },
         });
       }

@@ -30,10 +30,10 @@ export async function getFullProfile(username: string) {
       status: data.estado_cuenta,
       lastLogin: data.ultimo_acceso,
       social: {
-        instagram: data.instagram,
-        linkedin: data.linkedin,
-        github: data.github,
-        website: data.website,
+        instagram: data.perfilProveedor?.instagram ?? null,
+        linkedin: data.perfilProveedor?.linkedin ?? null,
+        github: data.perfilProveedor?.github ?? null,
+        website: data.perfilProveedor?.website ?? null,
       },
     },
     details: data.perfilProveedor
