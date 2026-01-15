@@ -181,6 +181,23 @@ export async function uploadCvAction(file: File) {
       file.name
     )}`;
 
+    // 1. Buscar y eliminar CV anterior si existe
+    const existingCvs = await db.hoja_vida_proveedor.findMany({
+      where: { id_proveedor: user.id_usuario },
+    });
+
+    for (const oldCv of existingCvs) {
+      try {
+        await deleteBlobByUrl(oldCv.url_pdf);
+        await db.hoja_vida_proveedor.delete({
+          where: { id_hojavida: oldCv.id_hojavida },
+        });
+      } catch (err) {
+        console.error("Error deleting old CV:", err);
+      }
+    }
+
+    // 2. Subir nuevo CV
     const uploaded = await uploadToAzureBlob({
       containerName: container,
       blobName,

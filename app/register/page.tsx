@@ -60,6 +60,7 @@ export default function RegisterPage() {
 
   const passMismatch = confirm.length > 0 && password !== confirm;
   const isPasswordShort = password.length > 0 && password.length < 8;
+  const isPhoneShort = telefono.length > 0 && telefono.length < 10;
 
   const next = () => {
     if (step === 1) {
@@ -77,7 +78,7 @@ export default function RegisterPage() {
       if (!tipoProveedor) return;
     }
     if (step === 3) {
-      if (!name || !nit || !city) return;
+      if (!name || !nit || !city || isPhoneShort) return;
     }
     setStep((s) => Math.min(4, s + 1));
   };
@@ -300,6 +301,7 @@ export default function RegisterPage() {
                   placeholder="NIT / Cédula"
                   className="styled-input"
                   value={nit}
+                  type="number"
                   onChange={(e) => setNit(e.target.value)}
                   required
                 />
@@ -312,15 +314,23 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* TODO: Modificar longitud minima de telefono */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  placeholder="Teléfono (opcional)"
-                  className="styled-input"
-                  type="number"
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                />
+                <div className="flex flex-col gap-1">
+                  <input
+                    placeholder="Teléfono (opcional)"
+                    className={`styled-input ${
+                      isPhoneShort ? "border-red-400" : ""
+                    }`}
+                    type="number"
+                    value={telefono}
+                    onChange={(e) => setTelefono(e.target.value)}
+                  />
+                  {isPhoneShort && (
+                    <span className="text-[10px] text-red-500">
+                      Mínimo 10 caracteres.
+                    </span>
+                  )}
+                </div>
                 <input
                   placeholder="Dirección (opcional)"
                   className="styled-input"
@@ -379,7 +389,7 @@ export default function RegisterPage() {
                   type="button"
                   className="btn-gold flex-1 py-3"
                   onClick={next}
-                  disabled={!name || !nit || !city}
+                  disabled={!name || !nit || !city || isPhoneShort}
                 >
                   Siguiente
                 </button>

@@ -414,7 +414,7 @@ export default function ProfileView({
               <div className="text-[9px] font-black text-[#bba955] uppercase tracking-widest">
                 Hoja de vida (CV)
               </div>
-              {/* TODO: que cuando se suba un cv, si existe otro, se borre el anterior */}
+
               {!isAdminViewing && (
                 <label className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer">
                   {cvUploading ? "Subiendo..." : "Subir nuevo"}
@@ -542,16 +542,27 @@ export default function ProfileView({
                 </div>
 
                 <div className="flex items-center justify-between mt-4">
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(e) =>
-                      setCertForm((p) => ({
-                        ...p,
-                        file: e.target.files?.[0] ?? null,
-                      }))
-                    }
-                  />
+                  <div className="flex items-center gap-4">
+                    <label className="text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer hover:bg-black transition-all">
+                      {certForm.file ? "Cambiar Archivo" : "Seleccionar PDF"}
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={(e) =>
+                          setCertForm((p) => ({
+                            ...p,
+                            file: e.target.files?.[0] ?? null,
+                          }))
+                        }
+                      />
+                    </label>
+                    {certForm.file && (
+                      <span className="text-[10px] text-gray-400 font-bold uppercase truncate max-w-[150px]">
+                        📄 {certForm.file.name}
+                      </span>
+                    )}
+                  </div>
 
                   <button
                     disabled={certUploading}
@@ -579,7 +590,7 @@ export default function ProfileView({
                         file: null,
                       });
                     }}
-                    className="text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer"
+                    className="text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer hover:bg-black active:scale-95 transition-all shadow-lg shadow-[#e9d26a]/5"
                   >
                     {certUploading ? "Agregando..." : "+ Agregar"}
                   </button>
