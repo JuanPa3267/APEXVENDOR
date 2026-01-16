@@ -19,10 +19,8 @@ model Usuario {
   username               String?                  @unique
   contrato_participacion contrato_participacion[]
   evaluacion             evaluacion[]
-  perfilAdmin            PerfilAdmin?
   perfilProveedor        PerfilProveedor?
   pfps                   Pfps[]
-  resumen_participacion  resumen_participacion[]
   roles                  UsuarioRol[]
 
   @@map("usuario")
@@ -30,10 +28,9 @@ model Usuario {
 }
 
 model Rol {
-  id_rol      String       @id @default(dbgenerated("gen_random_uuid()")) @map("id_rol") @db.Uuid
-  nombre      String       @unique
-  descripcion String?
-  usuarios    UsuarioRol[]
+  id_rol   String       @id @default(dbgenerated("gen_random_uuid()")) @map("id_rol") @db.Uuid
+  nombre   String       @unique
+  usuarios UsuarioRol[]
 
   @@map("rol")
   @@schema("ApexVendor")
@@ -72,15 +69,6 @@ model PerfilProveedor {
 
   @@index([identificacion_nit], map: "idx_proveedor_identificacion")
   @@map("perfil_proveedor")
-  @@schema("ApexVendor")
-}
-
-model PerfilAdmin {
-  id_admin String  @id @map("id_admin") @db.Uuid
-  nombre   String
-  usuario  Usuario @relation(fields: [id_admin], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
-
-  @@map("perfil_admin")
   @@schema("ApexVendor")
 }
 
@@ -178,13 +166,10 @@ model participacion_proveedor {
   rol_en_proyecto        String
   inicio                 DateTime?                @db.Date
   fin                    DateTime?                @db.Date
-  resultado              String?
-  hitos_logrados         String?
   contrato_participacion contrato_participacion[]
   evaluacion             evaluacion[]
   perfil_proveedor       PerfilProveedor          @relation(fields: [id_proveedor], references: [id_proveedor], onDelete: Cascade, onUpdate: NoAction)
   proyecto               proyecto                 @relation(fields: [id_proyecto], references: [id_proyecto], onDelete: Cascade, onUpdate: NoAction)
-  resumen_participacion  resumen_participacion[]
 
   @@index([id_proveedor], map: "idx_participacion_proveedor")
   @@index([id_proyecto], map: "idx_participacion_proyecto")
@@ -202,18 +187,6 @@ model proyecto {
   fin                     DateTime?                 @db.Date
   estado                  String?
   participacion_proveedor participacion_proveedor[]
-
-  @@schema("ApexVendor")
-}
-
-model resumen_participacion {
-  id_resumen              String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  id_participacion        String                  @db.Uuid
-  texto_resumen           String?
-  fecha_registro          DateTime                @default(now()) @db.Timestamptz(6)
-  registrado_por          String                  @db.Uuid
-  participacion_proveedor participacion_proveedor @relation(fields: [id_participacion], references: [id_participacion], onDelete: Cascade, onUpdate: NoAction)
-  usuario                 Usuario                 @relation(fields: [registrado_por], references: [id_usuario], onUpdate: NoAction)
 
   @@schema("ApexVendor")
 }
