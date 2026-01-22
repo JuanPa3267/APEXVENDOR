@@ -1,0 +1,50 @@
+﻿diff --git a/app/dashboard/vendors/actions.ts b/app/dashboard/vendors/actions.ts
+index 288532f..f3730d3 100644
+--- a/app/dashboard/vendors/actions.ts
++++ b/app/dashboard/vendors/actions.ts
+@@ -51,13 +51,7 @@ export async function createAdminAction(formData: FormData) {
+         },
+       });
+ 
+-      // Crear PerfilAdmin
+-      await tx.perfilAdmin.create({
+-        data: {
+-          id_admin: user.id_usuario,
+-          nombre,
+-        },
+-      });
++      // (Eliminado) Ya no se crea PerfilAdmin
+ 
+       // Asignar rol Admin
+       const role = await tx.rol.findUnique({ where: { nombre: "Admin" } });
+diff --git a/components/profile/ProfileView.tsx b/components/profile/ProfileView.tsx
+index 5958637..4239131 100644
+--- a/components/profile/ProfileView.tsx
++++ b/components/profile/ProfileView.tsx
+@@ -671,7 +671,7 @@ export default function ProfileView({
+         <div className="mt-12 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
+           <button
+             onClick={() => setShowDeleteModal(true)}
+-            className="text-[9px] font-black uppercase tracking-widest px-6 py-2 rounded-full border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all"
++            className="text-[9px] font-black uppercase tracking-widest px-6 py-2 rounded-full border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+           >
+             Eliminar mi cuenta
+           </button>
+diff --git a/services/userService.ts b/services/userService.ts
+index 519abdf..2e67fae 100644
+--- a/services/userService.ts
++++ b/services/userService.ts
+@@ -55,12 +55,7 @@ export const userService = {
+ 
+       // 2) Crear Perfil seg├║n el tipo
+       if (data.is_admin) {
+-        await tx.perfilAdmin.create({
+-          data: {
+-            id_admin: user.id_usuario,
+-            nombre: data.name,
+-          },
+-        });
++        // Ya no creamos perfilAdmin
+       } else {
+         const isEmpresa = data.tipo_proveedor === "Empresa";
+ 

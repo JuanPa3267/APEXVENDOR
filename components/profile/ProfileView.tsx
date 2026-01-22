@@ -671,7 +671,7 @@ export default function ProfileView({
         <div className="mt-12 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="text-[9px] font-black uppercase tracking-widest px-6 py-2 rounded-full border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+            className="text-[9px] font-black uppercase tracking-widest px-6 py-2 rounded-full border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
           >
             Eliminar mi cuenta
           </button>

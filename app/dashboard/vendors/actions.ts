@@ -51,13 +51,7 @@ export async function createAdminAction(formData: FormData) {
         },
       });
 
-      // Crear PerfilAdmin
-      await tx.perfilAdmin.create({
-        data: {
-          id_admin: user.id_usuario,
-          nombre,
-        },
-      });
+      // (Eliminado) Ya no se crea PerfilAdmin
 
       // Asignar rol Admin
       const role = await tx.rol.findUnique({ where: { nombre: "Admin" } });

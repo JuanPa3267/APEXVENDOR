@@ -55,12 +55,7 @@ export const userService = {
 
       // 2) Crear Perfil según el tipo
       if (data.is_admin) {
-        await tx.perfilAdmin.create({
-          data: {
-            id_admin: user.id_usuario,
-            nombre: data.name,
-          },
-        });
+        // Ya no creamos perfilAdmin
       } else {
         const isEmpresa = data.tipo_proveedor === "Empresa";
 

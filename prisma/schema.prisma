@@ -19,9 +19,8 @@ model Usuario {
   username               String?                  @unique
   contrato_participacion contrato_participacion[]
   evaluacion             evaluacion[]
-  perfil_admin           perfil_admin?
+
   perfilProveedor        PerfilProveedor?
-  perfilAdmin            PerfilAdmin?
   pfps                   Pfps[]
   roles                  UsuarioRol[]
 
@@ -74,19 +73,11 @@ model PerfilProveedor {
   @@schema("ApexVendor")
 }
 
-model PerfilAdmin {
-  id_admin String @id @map("id_admin") @db.Uuid
-  nombre   String
 
-  usuario Usuario @relation(fields: [id_admin], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
-
-  @@map("perfil_admin")
-  @@schema("ApexVendor")
-}
 
 model Pfps {
   id           BigInt   @id @default(autoincrement())
-  username     String?
+  username     String?  @unique
   image_base64 String?  @map("image_base64")
   usuario      Usuario? @relation(fields: [username], references: [username], onDelete: Cascade, onUpdate: NoAction)
 
@@ -203,10 +194,4 @@ model proyecto {
   @@schema("ApexVendor")
 }
 
-model perfil_admin {
-  id_admin String  @id @db.Uuid
-  nombre   String
-  usuario  Usuario @relation(fields: [id_admin], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
 
-  @@schema("ApexVendor")
-}
