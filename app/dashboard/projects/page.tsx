@@ -1,8 +1,9 @@
-import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import ProjectCreateModal from "./ProjectCreateModal";
+import Link from "next/link";
+import { db } from "@/lib/db";
 import { projectService } from "@/services/projectService";
+import ProjectCreateModal from "./ProjectCreateModal";
 
 export default async function ProjectsPage() {
   const cookieStore = await cookies();
@@ -10,7 +11,7 @@ export default async function ProjectsPage() {
 
   if (!username) redirect("/login");
 
-  // Verificación de rol Admin (igual patrón que vendors)
+  // ✅ Validación Admin por DB (no por cookie)
   const user = await db.usuario.findUnique({
     where: { username },
     include: { roles: { include: { rol: true } } },
@@ -29,58 +30,66 @@ export default async function ProjectsPage() {
             Gestión de <span className="text-[#bba955]">Proyectos</span>
           </h2>
           <p className="text-gray-400 text-xs mt-3 uppercase tracking-widest font-bold">
-            Crear y administrar proyectos (MVP)
+            Registro y consulta (vista admin)
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="bg-[#252525] text-[#e9d26a] text-[10px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-xl border border-[#e9d26a]/20">
-            Total: {projects.length} Registros
+            Total: {projects.length}
           </div>
 
+          {/* ✅ Botón modal para crear */}
           <ProjectCreateModal />
         </div>
       </div>
 
-      {/* Lista mínima */}
+      {/* Listado */}
       {projects.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 border border-gray-100 text-gray-500">
+        <div className="bg-white rounded-2xl p-10 border border-gray-100 shadow-sm text-gray-500 font-bold">
           Aún no hay proyectos creados.
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-[#252525] text-[#e9d26a] text-[10px] uppercase tracking-widest">
-                <tr>
-                  <th className="text-left p-4">Cliente</th>
-                  <th className="text-left p-4">Proyecto</th>
-                  <th className="text-left p-4">Estado</th>
-                  <th className="text-left p-4">Inicio</th>
-                  <th className="text-left p-4">Fin</th>
-                </tr>
-              </thead>
-              <tbody>
-                {projects.map((p: any) => (
-                  <tr key={p.id_proyecto} className="border-t border-gray-100">
-                    <td className="p-4 font-bold text-[#252525]">{p.cliente}</td>
-                    <td className="p-4">{p.nombre}</td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-[10px] font-black uppercase tracking-widest">
-                        {p.estado || "planificado"}
-                      </span>
-                    </td>
-                    <td className="p-4 text-gray-600">
-                      {p.inicio ? new Date(p.inicio).toLocaleDateString("es-CO") : "—"}
-                    </td>
-                    <td className="p-4 text-gray-600">
-                      {p.fin ? new Date(p.fin).toLocaleDateString("es-CO") : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {projects.map((p: any) => (
+            <Link
+              key={p.id_proyecto}
+              href={`/dashboard/projects/${p.id_proyecto}`}
+              className="bg-white/70 backdrop-blur-md p-8 rounded-[2rem] border border-white/60 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">
+                    {p.cliente}
+                  </div>
+                  <div className="text-2xl font-black text-[#252525] mt-2 tracking-tighter">
+                    {p.nombre}
+                  </div>
+                </div>
+
+                <div className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-[#252525] text-[#e9d26a]">
+                  {p.estado || "sin estado"}
+                </div>
+              </div>
+
+              {p.descripcion && (
+                <p className="text-gray-600 mt-4 text-sm leading-relaxed line-clamp-3">
+                  {p.descripcion}
+                </p>
+              )}
+
+              <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold text-gray-500">
+                <span>
+                  Inicio:{" "}
+                  {p.inicio ? new Date(p.inicio).toLocaleDateString("es-CO") : "N/A"}
+                </span>
+                <span>•</span>
+                <span>
+                  Fin: {p.fin ? new Date(p.fin).toLocaleDateString("es-CO") : "N/A"}
+                </span>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>
