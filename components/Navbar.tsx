@@ -1,6 +1,7 @@
 "use client";
 
 import { logoutAction } from "@/app/logout/action";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,16 +15,20 @@ export default function Navbar({ username, role }: NavbarProps) {
   const isAdmin = role === "Admin";
   const isProveedor = role === "Proveedor";
 
-  // Componente del Punto Radar para reutilizar
+  // Componente del Punto Radar para reutilizar con animación sliding
   const ActiveIndicator = () => (
-    <div className="relative flex h-2 w-2 mr-2">
+    <motion.div
+      layoutId="active-dot"
+      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+      className="relative flex h-2 w-2 mr-2"
+    >
       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e9d26a] opacity-75"></span>
       <span className="relative inline-flex rounded-full h-2 w-2 bg-[#e9d26a] shadow-[0_0_10px_#e9d26a]"></span>
-    </div>
+    </motion.div>
   );
 
   return (
-    <nav className="bg-[#1a1a1a] border-b border-[#e9d26a]/40 py-4 px-8 flex justify-between items-center shadow-2xl sticky top-0 z-50">
+    <nav className="bg-[#1a1a1a] py-4 px-8 flex justify-between items-center shadow-2xl sticky top-0 z-50">
       <div className="flex items-center gap-10">
         {/* Logo */}
         <Link
@@ -39,11 +44,19 @@ export default function Navbar({ username, role }: NavbarProps) {
           {isProveedor && (
             <Link
               href="/dashboard/profile"
-              className={`nav-link flex items-center ${pathname === "/dashboard/profile" ? "active-gold" : ""
-                }`}
+              className={`nav-link flex items-center ${
+                pathname === "/dashboard/profile" ? "active-gold" : ""
+              }`}
             >
               {pathname === "/dashboard/profile" && <ActiveIndicator />}
               Mi Perfil
+              {pathname === "/dashboard/profile" && (
+                <motion.div
+                  layoutId="active-underline"
+                  className="absolute bottom-[-16px] left-0 right-0 h-[2.5px] bg-[#e9d26a] shadow-[0_0_15px_rgba(233,210,106,0.8)]"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
             </Link>
           )}
 
@@ -52,31 +65,59 @@ export default function Navbar({ username, role }: NavbarProps) {
             <>
               <Link
                 href="/dashboard/chat"
-                className={`nav-link flex items-center ${pathname === "/dashboard/chat" ? "active-gold" : ""
-                  }`}
+                className={`nav-link flex items-center ${
+                  pathname === "/dashboard/chat" ? "active-gold" : ""
+                }`}
               >
                 {pathname === "/dashboard/chat" && <ActiveIndicator />}
                 Intelligence Chat
+                {pathname === "/dashboard/chat" && (
+                  <motion.div
+                    layoutId="active-underline"
+                    className="absolute bottom-[-16px] left-0 right-0 h-[2.5px] bg-[#e9d26a] shadow-[0_0_15px_rgba(233,210,106,0.8)]"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
               </Link>
 
               <Link
                 href="/dashboard/projects"
-                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/projects") ? "active-gold" : ""
-                  }`}
+                className={`nav-link flex items-center ${
+                  pathname.startsWith("/dashboard/projects")
+                    ? "active-gold"
+                    : ""
+                }`}
               >
-                {pathname.startsWith("/dashboard/projects") && <ActiveIndicator />}
+                {pathname.startsWith("/dashboard/projects") && (
+                  <ActiveIndicator />
+                )}
                 Proyectos
+                {pathname.startsWith("/dashboard/projects") && (
+                  <motion.div
+                    layoutId="active-underline"
+                    className="absolute bottom-[-16px] left-0 right-0 h-[2.5px] bg-[#e9d26a] shadow-[0_0_15px_rgba(233,210,106,0.8)]"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
               </Link>
 
               <Link
                 href="/dashboard/vendors"
-                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/vendors") ? "active-gold" : ""
-                  }`}
+                className={`nav-link flex items-center ${
+                  pathname.startsWith("/dashboard/vendors") ? "active-gold" : ""
+                }`}
               >
                 {pathname.startsWith("/dashboard/vendors") && (
                   <ActiveIndicator />
                 )}
                 Directorio Vendors
+                {pathname.startsWith("/dashboard/vendors") && (
+                  <motion.div
+                    layoutId="active-underline"
+                    className="absolute bottom-[-16px] left-0 right-0 h-[2.5px] bg-[#e9d26a] shadow-[0_0_15px_rgba(233,210,106,0.8)]"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
               </Link>
             </>
           )}
@@ -121,7 +162,6 @@ export default function Navbar({ username, role }: NavbarProps) {
           </button>
         </form>
       </div>
-
       <style jsx>{`
         .nav-link {
           color: #f4f4f4;
@@ -141,16 +181,6 @@ export default function Navbar({ username, role }: NavbarProps) {
         .active-gold {
           color: #e9d26a !important;
           opacity: 1;
-        }
-        .active-gold::after {
-          content: "";
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 2px;
-          background-color: #e9d26a;
-          box-shadow: 0 0 12px rgba(233, 210, 106, 0.6);
         }
       `}</style>
     </nav>

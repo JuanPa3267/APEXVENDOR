@@ -16,7 +16,7 @@ export default async function DashboardLayout({
       <Navbar username={username} role={role} />
 
       {/* Aquí es donde se "inyecta" tu ChatPage */}
-      <main className="flex-1 bg-[#f4f4f4]">{children}</main>
+      <main className="flex-1 bg-[#fafae6]">{children}</main>
     </div>
   );
 }

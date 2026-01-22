@@ -1,23 +1,32 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useActionState } from "react";
 import { loginAction } from "./actions";
 
 export default function LoginPage() {
-  // useActionState recibe (acción, estadoInicial)
-  // Devuelve [estadoActual, disparadorDeAcción, esPendiente]
   const [state, formAction, pending] = useActionState(loginAction, null);
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4">
-      <div className="form_div">
-        {" "}
-        {/* Clase de tu CSS original */}
+    <div className="flex items-center justify-center min-h-screen px-4 bg-[#f8f9fa]">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="form-div" // Corregido de form_div a form-div
+      >
         <div className="text-center mb-10">
-          <h2 className="text-4xl font-black text-[#252525] tracking-tighter uppercase">
+          <motion.h2
+            layoutId="logo"
+            className="text-4xl font-black text-[#252525] tracking-tighter uppercase"
+          >
             ApexVendor
-          </h2>
-          <div className="h-1.5 w-16 bg-[#e9d26a] mx-auto mt-2 rounded-full"></div>
+          </motion.h2>
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.5 }}
+            className="h-1.5 w-16 bg-[#e9d26a] mx-auto mt-2 rounded-full"
+          ></motion.div>
         </div>
         <form action={formAction} className="flex flex-col gap-4">
           {state?.error && <div className="error">{state.error}</div>}
@@ -56,7 +65,7 @@ export default function LoginPage() {
             Regístrate aquí
           </a>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

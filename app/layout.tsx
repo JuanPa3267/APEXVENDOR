@@ -35,6 +35,7 @@ export default function RootLayout({
         suppressHydrationWarning={true} // <--- Añade esto aquí
         className={`${geistSans.variable} ${geistMono.variable} antialiased no-scrollbar`}
       >
+        <div className="scanline" />
         {children}
       </body>
     </html>

@@ -1,8 +1,8 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import Link from "next/link";
 import { db } from "@/lib/db";
 import { projectService } from "@/services/projectService";
+import { cookies } from "next/headers";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import ProjectCreateModal from "./ProjectCreateModal";
 
 export default async function ProjectsPage() {
@@ -23,7 +23,7 @@ export default async function ProjectsPage() {
   const projects = await projectService.listProjects();
 
   return (
-    <div className="p-8 lg:p-12 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-700">
+    <div className="p-8 lg:p-12 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-700 bg-[#fafae6]">
       <div className="mb-10 flex justify-between items-end">
         <div>
           <h2 className="text-[#252525] font-black text-4xl uppercase tracking-tighter m-0 leading-none">
@@ -81,11 +81,14 @@ export default async function ProjectsPage() {
               <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold text-gray-500">
                 <span>
                   Inicio:{" "}
-                  {p.inicio ? new Date(p.inicio).toLocaleDateString("es-CO") : "N/A"}
+                  {p.inicio
+                    ? new Date(p.inicio).toLocaleDateString("es-CO")
+                    : "N/A"}
                 </span>
                 <span>•</span>
                 <span>
-                  Fin: {p.fin ? new Date(p.fin).toLocaleDateString("es-CO") : "N/A"}
+                  Fin:{" "}
+                  {p.fin ? new Date(p.fin).toLocaleDateString("es-CO") : "N/A"}
                 </span>
               </div>
             </Link>
