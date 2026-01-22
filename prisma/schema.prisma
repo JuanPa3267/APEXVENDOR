@@ -19,6 +19,7 @@ model Usuario {
   username               String?                  @unique
   contrato_participacion contrato_participacion[]
   evaluacion             evaluacion[]
+  perfil_admin           perfil_admin?
   perfilProveedor        PerfilProveedor?
   pfps                   Pfps[]
   roles                  UsuarioRol[]
@@ -187,6 +188,14 @@ model proyecto {
   fin                     DateTime?                 @db.Date
   estado                  String?
   participacion_proveedor participacion_proveedor[]
+
+  @@schema("ApexVendor")
+}
+
+model perfil_admin {
+  id_admin String  @id @db.Uuid
+  nombre   String
+  usuario  Usuario @relation(fields: [id_admin], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
 
   @@schema("ApexVendor")
 }
