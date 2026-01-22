@@ -39,9 +39,8 @@ export default function Navbar({ username, role }: NavbarProps) {
           {isProveedor && (
             <Link
               href="/dashboard/profile"
-              className={`nav-link flex items-center ${
-                pathname === "/dashboard/profile" ? "active-gold" : ""
-              }`}
+              className={`nav-link flex items-center ${pathname === "/dashboard/profile" ? "active-gold" : ""
+                }`}
             >
               {pathname === "/dashboard/profile" && <ActiveIndicator />}
               Mi Perfil
@@ -53,19 +52,26 @@ export default function Navbar({ username, role }: NavbarProps) {
             <>
               <Link
                 href="/dashboard/chat"
-                className={`nav-link flex items-center ${
-                  pathname === "/dashboard/chat" ? "active-gold" : ""
-                }`}
+                className={`nav-link flex items-center ${pathname === "/dashboard/chat" ? "active-gold" : ""
+                  }`}
               >
                 {pathname === "/dashboard/chat" && <ActiveIndicator />}
                 Intelligence Chat
               </Link>
 
               <Link
+                href="/dashboard/projects"
+                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/projects") ? "active-gold" : ""
+                  }`}
+              >
+                {pathname.startsWith("/dashboard/projects") && <ActiveIndicator />}
+                Proyectos
+              </Link>
+
+              <Link
                 href="/dashboard/vendors"
-                className={`nav-link flex items-center ${
-                  pathname.startsWith("/dashboard/vendors") ? "active-gold" : ""
-                }`}
+                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/vendors") ? "active-gold" : ""
+                  }`}
               >
                 {pathname.startsWith("/dashboard/vendors") && (
                   <ActiveIndicator />
@@ -106,7 +112,7 @@ export default function Navbar({ username, role }: NavbarProps) {
                 localStorage.removeItem("apex_chat_history");
               }
             }}
-            className="group relative overflow-hidden bg-transparent border border-red-500/50 hover:border-red-500 py-2 px-6 rounded-xl transition-all duration-300"
+            className="group relative overflow-hidden bg-transparent border border-red-500/50 hover:border-red-500 py-2 px-6 rounded-xl transition-all cursor-pointer duration-300"
           >
             <span className="relative z-10 text-red-500 group-hover:text-white text-[10px] font-black uppercase tracking-widest">
               Salir
