@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 
 export async function getFullProfile(username: string) {
-
   if (!username) return null;
   const data = await db.usuario.findUnique({
     where: { username },
@@ -12,7 +11,6 @@ export async function getFullProfile(username: string) {
           hoja_vida_proveedor: true,
         },
       },
-      perfilAdmin: true,
       roles: { include: { rol: true } },
       pfps: true,
     },
@@ -38,25 +36,25 @@ export async function getFullProfile(username: string) {
     },
     details: data.perfilProveedor
       ? {
-        fullName: data.perfilProveedor.nombres_apellidos, // NO tocamos por ahora
-        city: data.perfilProveedor.ciudad,
-        nit: data.perfilProveedor.identificacion_nit,
-        score: data.perfilProveedor.score,
-        portafolio_resumen: data.perfilProveedor.portafolio_resumen,
-        telefono: data.perfilProveedor.telefono,
-        direccion: data.perfilProveedor.direccion,
-        tipo_proveedor: data.perfilProveedor.tipo_proveedor,
-      }
+          fullName: data.perfilProveedor.nombres_apellidos, // NO tocamos por ahora
+          city: data.perfilProveedor.ciudad,
+          nit: data.perfilProveedor.identificacion_nit,
+          score: data.perfilProveedor.score,
+          portafolio_resumen: data.perfilProveedor.portafolio_resumen,
+          telefono: data.perfilProveedor.telefono,
+          direccion: data.perfilProveedor.direccion,
+          tipo_proveedor: data.perfilProveedor.tipo_proveedor,
+        }
       : null,
     documents: data.perfilProveedor
       ? {
-        cvs: data.perfilProveedor.hoja_vida_proveedor
-          .slice()
-          .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
-        certificaciones: data.perfilProveedor.certificaciones
-          .slice()
-          .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
-      }
+          cvs: data.perfilProveedor.hoja_vida_proveedor
+            .slice()
+            .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
+          certificaciones: data.perfilProveedor.certificaciones
+            .slice()
+            .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
+        }
       : { cvs: [], certificaciones: [] },
     roles: data.roles.map((r: any) => r.rol.nombre),
     avatar: pfpData?.image_base64 || null,
