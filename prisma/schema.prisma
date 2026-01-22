@@ -20,6 +20,7 @@ model Usuario {
   contrato_participacion contrato_participacion[]
   evaluacion             evaluacion[]
   perfilProveedor        PerfilProveedor?
+  perfilAdmin            PerfilAdmin?
   pfps                   Pfps[]
   roles                  UsuarioRol[]
 
@@ -69,6 +70,16 @@ model PerfilProveedor {
 
   @@index([identificacion_nit], map: "idx_proveedor_identificacion")
   @@map("perfil_proveedor")
+  @@schema("ApexVendor")
+}
+
+model PerfilAdmin {
+  id_admin String @id @map("id_admin") @db.Uuid
+  nombre   String
+
+  usuario Usuario @relation(fields: [id_admin], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("perfil_admin")
   @@schema("ApexVendor")
 }
 
