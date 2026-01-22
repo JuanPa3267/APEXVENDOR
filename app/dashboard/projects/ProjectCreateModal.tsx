@@ -103,7 +103,7 @@ export default function ProjectCreateModal() {
 
                             <select name="estado" className="styled-input" defaultValue="planificado">
                                 <option value="planificado">Planificado</option>
-                                <option value="en_ejecucion">En ejecución</option>
+                                <option value="en curso">En curso</option>
                                 <option value="pausado">Pausado</option>
                                 <option value="completado">Completado</option>
                                 <option value="cancelado">Cancelado</option>

@@ -56,7 +56,7 @@ export async function createProjectAction(prevState: any, formData: FormData) {
             nombre: nombre.trim(),
             descripcion: descripcion.trim() || null,
             tecnologia_stack: tecnologia_stack.trim() || null,
-            inicio: inicio || null,
+            inicio: inicio,
             fin: fin || null,
             estado: estado || "planificado",
         });
@@ -67,4 +67,28 @@ export async function createProjectAction(prevState: any, formData: FormData) {
         console.error("Error creating project:", e);
         return { error: e?.message ?? "No se pudo crear el proyecto" };
     }
+}
+
+export async function updateProjectStatusAction(prevState: any, formData: FormData) {
+  const username = await getSessionUsername();
+  if (!username) return { error: "No autorizado" };
+
+  const { isAdmin } = await assertAdminByUsername(username);
+  if (!isAdmin) return { error: "No autorizado (solo Admin)" };
+
+  const id_proyecto = (formData.get("id_proyecto") as string) || "";
+  const estado = (formData.get("estado") as string) as any;
+
+  if (!id_proyecto) return { error: "Proyecto inválido" };
+  if (!estado) return { error: "Estado inválido" };
+
+  try {
+    await projectService.updateProjectStatus(id_proyecto, estado);
+    revalidatePath("/dashboard/projects");
+    revalidatePath(`/dashboard/projects/${id_proyecto}`);
+    return { success: true };
+  } catch (e: any) {
+    console.error("Error updating status:", e);
+    return { error: e?.message ?? "No se pudo actualizar el estado" };
+  }
 }

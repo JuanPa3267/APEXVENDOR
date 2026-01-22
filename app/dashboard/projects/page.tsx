@@ -30,7 +30,7 @@ export default async function ProjectsPage() {
             Gestión de <span className="text-[#bba955]">Proyectos</span>
           </h2>
           <p className="text-gray-400 text-xs mt-3 uppercase tracking-widest font-bold">
-            Registro y consulta (vista admin)
+            Registro y consulta
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export default async function ProjectsPage() {
                   </div>
                 </div>
 
-                <div className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-[#252525] text-[#e9d26a]">
+                <div className="text-[10px] flex-none font-black uppercase tracking-widest px-3 py-1 rounded-full bg-[#252525] text-[#e9d26a]">
                   {p.estado || "sin estado"}
                 </div>
               </div>
