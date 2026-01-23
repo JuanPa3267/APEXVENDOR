@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   isOpen: boolean;
@@ -15,7 +16,12 @@ export default function Modal({
   title,
   children,
 }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -28,11 +34,11 @@ export default function Modal({
     }
   }, [isOpen]);
 
-  if (!visible && !isOpen) return null;
+  if (!mounted || (!visible && !isOpen)) return null;
 
-  return (
+  return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${
         isOpen
           ? "bg-black/60 backdrop-blur-sm opacity-100"
           : "bg-transparent opacity-0 pointer-events-none"
@@ -75,6 +81,7 @@ export default function Modal({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

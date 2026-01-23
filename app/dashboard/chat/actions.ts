@@ -49,6 +49,7 @@ export async function sendMessageAction(message: string, history: any[]) {
     // 1. Obtener los proveedores actuales de la DB
     const proveedores = await db.perfilProveedor.findMany({
       select: {
+        id_proveedor: true,
         nombres_apellidos: true,
         nombre_legal: true,
         tipo_proveedor: true,
@@ -63,13 +64,49 @@ export async function sendMessageAction(message: string, history: any[]) {
       },
     });
 
+    const participaciones = await db.participacion_proveedor.findMany({
+      select: {
+        id_participacion: true,
+        id_proveedor: true,
+        id_proyecto: true,
+      },
+    });
+
     const proyectos = await db.proyecto.findMany({
       select: {
+        id_proyecto: true,
         nombre: true,
         cliente: true,
         estado: true,
         descripcion: true,
         tecnologia_stack: true,
+      },
+    });
+
+    const evaluaciones = await db.evaluacion.findMany({
+      select: {
+        id_evaluacion: true,
+        id_participacion: true,
+        fecha: true,
+        comentario_cualitativo: true,
+        calificacion_global: true,
+      },
+    });
+
+    const evaluacion_detalle = await db.evaluacion_detalle.findMany({
+      select: {
+        id_eval_detalle: true,
+        id_eval: true,
+        id_metrica: true,
+        valor_numerico: true,
+      },
+    });
+
+    const metricas = await db.metrica.findMany({
+      select: {
+        id_metrica: true,
+        nombre: true,
+        notas: true,
       },
     });
 
@@ -84,6 +121,18 @@ export async function sendMessageAction(message: string, history: any[]) {
 
       CONOCIMIENTO ACTUAL DE PROYECTOS:
       ${JSON.stringify(proyectos)}
+
+      PARA ESTOS PROVEEDORES Y PROYECTOS, SUS EVALUACIONES REALIZADAS SON:
+      ${JSON.stringify(evaluaciones)}
+
+      PARA ESTOS PROVEEDORES Y PROYECTOS, SUS DETALLES DE EVALUACION SON:
+      ${JSON.stringify(evaluacion_detalle)}
+
+      CONOCIMIENTO ACTUAL DE PARTICIPACIONES EN PROYECTOS:
+      ${JSON.stringify(participaciones)}
+
+      CONOCIMIENTO ACTUAL DE METRICAS (PRIORIZAR JUNTO CON SCORE NORMAL):
+      ${JSON.stringify(metricas)}
       
       INSTRUCCIONES:
       - Si el usuario pregunta por recomendaciones, usa los datos anteriores.
