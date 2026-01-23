@@ -19,9 +19,8 @@ model Usuario {
   username               String?                  @unique
   contrato_participacion contrato_participacion[]
   evaluacion             evaluacion[]
-
   perfilProveedor        PerfilProveedor?
-  pfps                   Pfps[]
+  pfps                   Pfps?
   roles                  UsuarioRol[]
 
   @@map("usuario")
@@ -72,8 +71,6 @@ model PerfilProveedor {
   @@map("perfil_proveedor")
   @@schema("ApexVendor")
 }
-
-
 
 model Pfps {
   id           BigInt   @id @default(autoincrement())
@@ -192,5 +189,3 @@ model proyecto {
 
   @@schema("ApexVendor")
 }
-
-
