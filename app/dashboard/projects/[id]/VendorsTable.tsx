@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { removeVendorAction, assignVendorAction, updateProjectAssignmentAction } from "./actions";
 import AssignVendorModal from "./AssignVendorModal";
 import EditVendorAssignmentModal from "./EditVendorAssignmentModal";
@@ -97,7 +98,18 @@ export default function VendorsTable({
             className="flex items-center justify-between p-4 rounded-2xl bg-white/30 border border-white/50"
           >
             <div className="pr-3">
-              <div className="font-black text-[#252525]">{displayName}</div>
+              <div className="font-black text-[#252525]">
+                {username && username !== "—" ? (
+                  <Link
+                    href={`/dashboard/vendors/${username}`}
+                    className="hover:underline hover:text-[#bba955] transition-colors"
+                  >
+                    {displayName}
+                  </Link>
+                ) : (
+                  displayName
+                )}
+              </div>
               <div className="text-xs text-gray-500">
                 @{username} • Rol: <strong>{x.rol_en_proyecto}</strong>
               </div>
