@@ -1,17 +1,18 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
+import { Pool as PgPool } from "pg";
 
 const prismaClientSingleton = () => {
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+  const connectionString = process.env.DATABASE_URL;
+
+  const pool = new PgPool({
+    connectionString,
     ssl: { rejectUnauthorized: false },
-    // Agregamos esto para forzar a la conexión a mirar tu esquema
     options: "-c search_path=ApexVendor,public",
   });
 
   const adapter = new PrismaPg(pool);
-  return new PrismaClient({ adapter });
+  return new PrismaClient({ adapter, log: ["query", "error", "warn"] });
 };
 
 declare global {
