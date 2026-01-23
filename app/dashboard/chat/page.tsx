@@ -3,12 +3,17 @@ import { redirect } from "next/navigation";
 import ChatContainer from "./ChatContainer";
 
 import CreateMetricModal from "./CreateMetricModal";
+import { db } from "@/lib/db";
 
 export default async function ChatPage() {
   const cookieStore = await cookies();
   const username = cookieStore.get("username")?.value;
 
   if (!username) redirect("/login");
+
+  const metrics = await db.metrica.findMany({
+    orderBy: { nombre: "asc" },
+  });
 
   return (
     // Quitamos p-10 y usamos h-full para que no haya márgenes que recorten el scroll
@@ -23,7 +28,7 @@ export default async function ChatPage() {
             Soporte de decisiones para licitaciones
           </p>
         </div>
-        <CreateMetricModal />
+        <CreateMetricModal initialMetrics={metrics} />
       </div>
 
       {/* Contenedor del Chat - Ocupa todo el resto del alto */}

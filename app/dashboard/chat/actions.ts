@@ -28,6 +28,22 @@ export async function createMetricAction(formData: FormData) {
   }
 }
 
+export async function deleteMetricAction(id: string) {
+  try {
+    await db.metrica.delete({
+      where: {
+        id_metrica: id,
+      },
+    });
+
+    revalidatePath("/dashboard/chat");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting metric:", error);
+    return { error: "Error al eliminar la métrica" };
+  }
+}
+
 export async function sendMessageAction(message: string, history: any[]) {
   try {
     // 1. Obtener los proveedores actuales de la DB
