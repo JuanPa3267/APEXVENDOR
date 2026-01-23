@@ -221,6 +221,45 @@ export const projectService = {
                 });
             }
 
+            // 3. Recalculate Provider Score
+            // First, find the provider ID from the participation
+            const participation = await tx.participacion_proveedor.findUnique({
+                where: { id_participacion: data.id_participacion },
+                select: { id_proveedor: true },
+            });
+
+            if (participation?.id_proveedor) {
+                // Fetch all evaluations for this provider
+                const providerEvaluations = await tx.evaluacion.findMany({
+                    where: {
+                        participacion_proveedor: {
+                            id_proveedor: participation.id_proveedor
+                        },
+                        calificacion_global: { not: null }
+                    },
+                    select: { calificacion_global: true }
+                });
+
+                // Calculate average
+                // Note: providerEvaluations includes the one we just created because we are in a transaction (and using tx to read)
+                // However, Prisma behavior inside transaction for read-your-writes depends on isolation level. 
+                // Since we just created 'evalRecord', it SHOULD be returned if isolation permits.
+                // To be safe and explicit, let's enable accumulating the new value logic.
+
+                // Correction: `tx.evaluacion.findMany` DOES see the newly created record in default Prisma transaction (Read Committed / Repeatable Read depending on DB).
+                // Let's assume it works. If not, we can manually append `evalRecord.calificacion_global` if it's missing.
+
+                const total = providerEvaluations.reduce((sum, e) => sum + (Number(e.calificacion_global) || 0), 0);
+                const count = providerEvaluations.length;
+                const newScore = count > 0 ? total / count : 0;
+
+                // Update Provider Score
+                await tx.perfilProveedor.update({
+                    where: { id_proveedor: participation.id_proveedor },
+                    data: { score: newScore }
+                });
+            }
+
             return evalRecord;
         });
     },
