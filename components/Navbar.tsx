@@ -119,6 +119,26 @@ export default function Navbar({ username, role }: NavbarProps) {
                   />
                 )}
               </Link>
+              <Link
+                href="/dashboard/rankings"
+                className={`nav-link flex items-center ${
+                  pathname.startsWith("/dashboard/rankings")
+                    ? "active-gold"
+                    : ""
+                }`}
+              >
+                {pathname.startsWith("/dashboard/rankings") && (
+                  <ActiveIndicator />
+                )}
+                Rankings
+                {pathname.startsWith("/dashboard/rankings") && (
+                  <motion.div
+                    layoutId="active-underline"
+                    className="absolute bottom-[-16px] left-0 right-0 h-[2.5px] bg-[#e9d26a] shadow-[0_0_15px_rgba(233,210,106,0.8)]"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </Link>
             </>
           )}
         </div>

@@ -63,6 +63,16 @@ export async function sendMessageAction(message: string, history: any[]) {
       },
     });
 
+    const proyectos = await db.proyecto.findMany({
+      select: {
+        nombre: true,
+        cliente: true,
+        estado: true,
+        descripcion: true,
+        tecnologia_stack: true,
+      },
+    });
+
     // 2. Crear un "System Instruction" que le dé identidad a la IA
     // Se lo pasamos como el primer mensaje si el historial está vacío o como contexto adicional
     const baseContext = `
@@ -71,6 +81,9 @@ export async function sendMessageAction(message: string, history: any[]) {
       
       CONOCIMIENTO ACTUAL DE PROVEEDORES:
       ${JSON.stringify(proveedores)}
+
+      CONOCIMIENTO ACTUAL DE PROYECTOS:
+      ${JSON.stringify(proyectos)}
       
       INSTRUCCIONES:
       - Si el usuario pregunta por recomendaciones, usa los datos anteriores.
@@ -80,6 +93,9 @@ export async function sendMessageAction(message: string, history: any[]) {
       - IMPORTANTE: Cuando menciones a un proveedor específico, DEBES crear un enlace a su perfil usando Markdown así: 
         [Nombre del Proveedor](/dashboard/vendors/USERNAME)
         (Usa el 'username' que viene en el objeto 'usuario').
+      - IMPORTANTE: Cuando menciones a un proyecto específico, DEBES crear un enlace a su perfil usando Markdown así: 
+        [Nombre del Proyecto](/dashboard/projects/PROJECT_ID)
+        (Usa el 'id_proyecto' que viene en el objeto 'usuario').
     `;
 
     // 3. Enviamos el mensaje inyectando el contexto al principio del prompt
