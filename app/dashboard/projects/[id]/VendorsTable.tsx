@@ -2,8 +2,9 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { removeVendorAction, assignVendorAction } from "./actions";
+import { removeVendorAction, assignVendorAction, updateProjectAssignmentAction } from "./actions";
 import AssignVendorModal from "./AssignVendorModal";
+import EditVendorAssignmentModal from "./EditVendorAssignmentModal";
 
 type ActionState = { success?: boolean; error?: string } | null;
 
@@ -21,19 +22,25 @@ export default function VendorsTable({
   const [openAssign, setOpenAssign] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // Estado para edición
+  const [editingAssignment, setEditingAssignment] = useState<any>(null);
+
   const [removeState, removeAction, removePending] = useActionState<ActionState, FormData>(
     removeVendorAction,
     null
   );
 
-  // 👉 Cuando se asigna un proveedor, el modal lo cierra por success,
-  // pero además queremos refrescar y hacer scroll al final
   const handleAssigned = () => {
     setOpenAssign(false);
     router.refresh();
     setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }, 350);
+  };
+
+  const handleEdited = () => {
+    setEditingAssignment(null);
+    router.refresh();
   };
 
   // Botón reusable
@@ -104,21 +111,30 @@ export default function VendorsTable({
               {/* FUTURO: aquí iría gestión de contrato por proveedor (blob azure) */}
             </div>
 
-            <form action={removeAction} className="flex gap-2">
-              <input type="hidden" name="id_proyecto" value={projectId} />
-              <input type="hidden" name="id_participacion" value={x.id_participacion} />
-
+            <div className="flex items-center gap-2">
               <button
-                type="submit"
-                disabled={removePending}
-                onClick={(e) => {
-                  if (!confirm("¿Quitar este proveedor del proyecto?")) e.preventDefault();
-                }}
-                className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white cursor-pointer hover:bg-red-700 active:scale-95 transition-all disabled:opacity-60"
+                onClick={() => setEditingAssignment(x)}
+                className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 cursor-pointer transition-all"
               >
-                Quitar
+                Editar
               </button>
-            </form>
+
+              <form action={removeAction}>
+                <input type="hidden" name="id_proyecto" value={projectId} />
+                <input type="hidden" name="id_participacion" value={x.id_participacion} />
+
+                <button
+                  type="submit"
+                  disabled={removePending}
+                  onClick={(e) => {
+                    if (!confirm("¿Quitar este proveedor del proyecto?")) e.preventDefault();
+                  }}
+                  className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white cursor-pointer hover:bg-red-700 active:scale-95 transition-all disabled:opacity-60"
+                >
+                  Quitar
+                </button>
+              </form>
+            </div>
           </div>
         );
       })}
@@ -138,6 +154,16 @@ export default function VendorsTable({
         providers={providers}
         assignAction={assignVendorAction}
       />
+
+      <EditVendorAssignmentModal
+        open={!!editingAssignment}
+        onClose={() => setEditingAssignment(null)}
+        onSuccess={handleEdited}
+        assignment={editingAssignment}
+        projectId={projectId}
+        updateAction={updateProjectAssignmentAction}
+      />
     </div>
   );
 }
+

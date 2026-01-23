@@ -135,6 +135,22 @@ export const projectService = {
         });
     },
 
+    async updateVendorAssignment(params: {
+        id_participacion: string;
+        rol_en_proyecto: string;
+        inicio?: string | null;
+        fin?: string | null;
+    }) {
+        return await db.participacion_proveedor.update({
+            where: { id_participacion: params.id_participacion },
+            data: {
+                rol_en_proyecto: params.rol_en_proyecto,
+                inicio: params.inicio ? new Date(params.inicio) : null,
+                fin: params.fin ? new Date(params.fin) : null,
+            },
+        });
+    },
+
     async assignVendorToProject(params: {
         id_proyecto: string;
         id_proveedor: string;

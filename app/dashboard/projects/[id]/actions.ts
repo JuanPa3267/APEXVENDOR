@@ -138,3 +138,30 @@ export async function deleteProjectAction(prev: any, formData: FormData) {
     return { error: e?.message || "No se pudo eliminar el proyecto" };
   }
 }
+export async function updateProjectAssignmentAction(prev: any, formData: FormData) {
+  try {
+    await assertAdmin();
+
+    const id_participacion = String(formData.get("id_participacion") || "");
+    const id_proyecto = String(formData.get("id_proyecto") || "");
+    const rol_en_proyecto = String(formData.get("rol_en_proyecto") || "");
+    const inicio = (formData.get("inicio") as string) || "";
+    const fin = (formData.get("fin") as string) || "";
+
+    if (!id_participacion || !id_proyecto || !rol_en_proyecto) {
+      return { error: "Datos incompletos" };
+    }
+
+    await projectService.updateVendorAssignment({
+      id_participacion,
+      rol_en_proyecto,
+      inicio: inicio || null,
+      fin: fin || null,
+    });
+
+    revalidatePath(`/dashboard/projects/${id_proyecto}`);
+    return { success: true };
+  } catch (e: any) {
+    return { error: e?.message || "No se pudo actualizar la asignación" };
+  }
+}
