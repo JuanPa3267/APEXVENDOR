@@ -15,7 +15,7 @@ export default function VendorsTable({
   const handleDelete = async (username: string) => {
     if (
       !confirm(
-        `¿Estás seguro de que deseas eliminar permanentemente al proveedor @${username}?`
+        `¿Estás seguro de que deseas eliminar permanentemente al proveedor @${username}?`,
       )
     ) {
       return;
@@ -34,10 +34,12 @@ export default function VendorsTable({
   const filtered = vendors.filter((v) => {
     const lowQuery = query.toLowerCase();
     const name = (v?.nombres_apellidos || "").toLowerCase();
+    const legalName = (v?.nombre_legal || "").toLowerCase();
     const nit = (v?.identificacion_nit || "").toLowerCase();
     const user = (v?.usuario?.username || "").toLowerCase();
     return (
       name.includes(lowQuery) ||
+      legalName.includes(lowQuery) ||
       nit.includes(lowQuery) ||
       user.includes(lowQuery)
     );
@@ -79,7 +81,9 @@ export default function VendorsTable({
                   <td className="px-8 py-5">
                     <div className="flex flex-col">
                       <span className="font-bold text-[#252525] text-base">
-                        {v.nombres_apellidos || "Nombre no disponible"}
+                        {v.nombres_apellidos ||
+                          v.nombre_legal ||
+                          "Nombre no disponible"}
                       </span>
                       <span className="text-[10px] text-[#bba955] font-black uppercase tracking-tighter">
                         @{v.usuario?.username || "sin-usuario"}

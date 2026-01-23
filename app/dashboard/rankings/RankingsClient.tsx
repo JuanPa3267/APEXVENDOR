@@ -103,8 +103,8 @@ export default function RankingsClient({
                       ${isFirst ? "text-white group-hover/name:text-[#e9d26a]" : "text-[#252525] group-hover/name:text-[#bba955]"}
                     `}
                     >
-                      {vendor.nombre_legal ||
-                        vendor.nombres_apellidos ||
+                      {vendor.nombres_apellidos ||
+                        vendor.nombre_legal ||
                         vendor.usuario.username}
                     </h3>
                   </Link>
@@ -199,7 +199,7 @@ export default function RankingsClient({
                           className="group/listlink"
                         >
                           <div className="font-black text-[#252525] tracking-tight group-hover/listlink:text-[#bba955] transition-colors">
-                            {vendor.nombre_legal || vendor.nombres_apellidos}
+                            {vendor.nombres_apellidos || vendor.nombre_legal}
                           </div>
                         </Link>
                         <div className="text-[10px] font-bold text-gray-400 uppercase">
