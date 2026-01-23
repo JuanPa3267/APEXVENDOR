@@ -189,9 +189,9 @@ export default function ProfileView({
               <span className="text-[#252525] font-bold text-lg">
                 {profile.user.lastLogin
                   ? new Date(profile.user.lastLogin).toLocaleString("es-CO", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
                   : "Nunca"}
               </span>
             </div>
@@ -251,11 +251,10 @@ export default function ProfileView({
               <button
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
-                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${
-                  isSaving
+                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
                     ? "bg-green-500 text-white scale-95"
                     : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
-                }`}
+                  }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
               </button>
@@ -388,9 +387,8 @@ export default function ProfileView({
         <Modal
           isOpen={!!editMode}
           onClose={() => setEditMode(null)}
-          title={`Actualizar ${
-            editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
-          }`}
+          title={`Actualizar ${editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
+            }`}
         >
           <ProfileEditForm
             profile={profile}
@@ -399,6 +397,67 @@ export default function ProfileView({
           />
         </Modal>
       )}
+
+      {/* 4.5.5 Proyectos Asignados (NUEVO) */}
+      <div className="w-full mt-8">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] flex items-center gap-3 mb-6">
+          <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full animate-pulse"></span>
+          Proyectos Asignados
+        </h4>
+
+        {(!profile.projects || profile.projects.length === 0) ? (
+          <div className="bg-white/30 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 text-center">
+            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
+              No estás asignado a ningún proyecto activo.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {profile.projects.map((proj: any) => (
+              <div key={proj.id} className="bg-white/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/50 shadow-sm hover:shadow-lg transition-all group">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-black text-[#252525] uppercase tracking-tighter leading-none mb-1">
+                      {proj.project.name}
+                    </h3>
+                    <p className="text-[10px] font-bold text-[#bba955] uppercase tracking-widest">
+                      {proj.project.client}
+                    </p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${proj.project.status === 'en curso' ? 'bg-green-100 text-green-700' :
+                      proj.project.status === 'completado' ? 'bg-blue-100 text-blue-700' :
+                        'bg-gray-100 text-gray-600'
+                    }`}>
+                    {proj.project.status || 'Definido'}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Rol asignado</p>
+                    <p className="font-bold text-[#252525]">{proj.role}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Inicio</p>
+                      <p className="font-bold text-[#252525] text-sm">
+                        {proj.startDate ? new Date(proj.startDate).toLocaleDateString() : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Fin</p>
+                      <p className="font-bold text-[#252525] text-sm">
+                        {proj.endDate ? new Date(proj.endDate).toLocaleDateString() : '—'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* 4.6 Documentación */}
       <div className="w-full bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl overflow-hidden transition-all mt-8">
@@ -625,11 +684,10 @@ export default function ProfileView({
                           {exp ? ` • Expira: ${exp.toLocaleDateString()}` : ""}
                         </div>
                         <div
-                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
-                            vigente
+                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
-                          }`}
+                            }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
                         </div>
