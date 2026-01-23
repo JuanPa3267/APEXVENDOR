@@ -72,3 +72,37 @@ export async function createAdminAction(formData: FormData) {
     return { error: e.message || "Error creando administrador" };
   }
 }
+
+import { projectService } from "@/services/projectService";
+
+export async function assignVendorFromProfileAction(prev: any, formData: FormData) {
+  try {
+    const cookieStore = await cookies();
+    const username = cookieStore.get("username")?.value;
+    if (!username) return { error: "No autorizado" };
+
+    const id_proyecto = String(formData.get("id_proyecto") || "");
+    const id_proveedor = String(formData.get("id_proveedor") || "");
+    const rol_en_proyecto = String(formData.get("rol_en_proyecto") || "");
+    const inicio = (formData.get("inicio") as string) || "";
+    const fin = (formData.get("fin") as string) || "";
+    const currentPath = (formData.get("currentPath") as string) || ""; // Para revalidar
+
+    if (!id_proyecto || !id_proveedor || !rol_en_proyecto) {
+      return { error: "Proyecto, proveedor y rol son obligatorios" };
+    }
+
+    await projectService.assignVendorToProject({
+      id_proyecto,
+      id_proveedor,
+      rol_en_proyecto,
+      inicio: inicio || null,
+      fin: fin || null,
+    });
+
+    if (currentPath) revalidatePath(currentPath);
+    return { success: true };
+  } catch (e: any) {
+    return { error: e?.message || "Error al asignar proyecto" };
+  }
+}

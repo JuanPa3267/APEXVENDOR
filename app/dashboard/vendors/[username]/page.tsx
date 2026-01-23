@@ -1,5 +1,6 @@
 import ProfileView from "@/components/profile/ProfileView";
 import { getFullProfile } from "@/services/profileService";
+import { projectService } from "@/services/projectService";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -31,6 +32,8 @@ export default async function VendorDetailPage({
   const profile = await getFullProfile(vendorUsername);
   if (!profile) redirect("/dashboard/vendors?error=notfound");
 
+  const availableProjects = await projectService.listProjects();
+
   return (
     <div className="animate-in slide-in-from-right duration-500 p-8 lg:p-12">
       <div className="max-w-7xl mx-auto">
@@ -41,7 +44,11 @@ export default async function VendorDetailPage({
           <span className="text-lg">←</span> Volver al listado
         </Link>
 
-        <ProfileView profile={profile} isAdminViewing={true} />
+        <ProfileView
+          profile={profile}
+          isAdminViewing={true}
+          availableProjects={availableProjects}
+        />
       </div>
     </div>
   );

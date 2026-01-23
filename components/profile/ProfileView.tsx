@@ -16,12 +16,17 @@ import ProfileEditForm from "./ProfileEditForm";
 
 import { useRouter } from "next/navigation";
 
+import { assignVendorFromProfileAction } from "@/app/dashboard/vendors/actions";
+import AssignToProjectModal from "./AssignToProjectModal";
+
 export default function ProfileView({
   profile,
   isAdminViewing = false,
+  availableProjects = [],
 }: {
   profile: any;
   isAdminViewing?: boolean;
+  availableProjects?: any[];
 }) {
   const router = useRouter();
   // Estado para el texto real y el texto que se muestra (efecto máquina)
@@ -36,6 +41,9 @@ export default function ProfileView({
 
   const [cvUploading, setCvUploading] = useState(false);
   const [certUploading, setCertUploading] = useState(false);
+
+  // Modal Asignar Proyecto
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   const [certForm, setCertForm] = useState({
     nombre: "",
@@ -252,8 +260,8 @@ export default function ProfileView({
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
                 className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
-                    ? "bg-green-500 text-white scale-95"
-                    : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
+                  ? "bg-green-500 text-white scale-95"
+                  : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
                   }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
@@ -400,11 +408,21 @@ export default function ProfileView({
 
       {/* 4.5.5 Proyectos Asignados (NUEVO) */}
       <div className="w-full mt-8">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] flex items-center gap-3 mb-6">
-          <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full animate-pulse"></span>
-          Proyectos Asignados
-        </h4>
+        <div className="flex justify-between items-center mb-6">
+          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] flex items-center gap-3">
+            <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full animate-pulse"></span>
+            Proyectos Asignados
+          </h4>
 
+          {isAdminViewing && (
+            <button
+              onClick={() => setShowAssignModal(true)}
+              className="bg-[#252525] text-[#e9d26a] text-[9px] font-black px-4 py-2 rounded-full uppercase tracking-widest hover:bg-black transition cursor-pointer"
+            >
+              + Asignar
+            </button>
+          )}
+        </div>
         {(!profile.projects || profile.projects.length === 0) ? (
           <div className="bg-white/30 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 text-center">
             <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
@@ -424,9 +442,9 @@ export default function ProfileView({
                       {proj.project.client}
                     </p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${proj.project.status === 'en curso' ? 'bg-green-100 text-green-700' :
-                      proj.project.status === 'completado' ? 'bg-blue-100 text-blue-700' :
-                        'bg-gray-100 text-gray-600'
+                  <span className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${proj.project.status === 'en curso' ? 'bg-green-100 text-green-700' :
+                    proj.project.status === 'completado' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-600'
                     }`}>
                     {proj.project.status || 'Definido'}
                   </span>
@@ -685,8 +703,8 @@ export default function ProfileView({
                         </div>
                         <div
                           className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
                             }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
@@ -798,6 +816,18 @@ export default function ProfileView({
           </div>
         </div>
       </Modal>
+
+      <AssignToProjectModal
+        open={showAssignModal}
+        onClose={() => setShowAssignModal(false)}
+        onSuccess={() => {
+          setShowAssignModal(false);
+          router.refresh();
+        }}
+        userId={profile.user.id}
+        availableProjects={availableProjects}
+        assignAction={assignVendorFromProfileAction}
+      />
     </div>
   );
 }
