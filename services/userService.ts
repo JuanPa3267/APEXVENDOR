@@ -7,7 +7,7 @@ type RegisterUserInput = {
   correo: string;
   passwordHash: string;
 
-  name: string;
+  name?: string;
   tipo_proveedor: "Persona" | "Empresa";
   nit: string;
   city: string;
@@ -68,8 +68,8 @@ export const userService = {
             // Tu regla en BD:
             // Empresa -> nombre_legal obligatorio
             // Persona -> nombres_apellidos obligatorio
-            nombre_legal: isEmpresa ? data.name : null,
-            nombres_apellidos: !isEmpresa ? data.name : null,
+            nombre_legal: isEmpresa ? (data.name ?? null) : null,
+            nombres_apellidos: !isEmpresa ? (data.name ?? null) : null,
 
             ciudad: data.city,
 

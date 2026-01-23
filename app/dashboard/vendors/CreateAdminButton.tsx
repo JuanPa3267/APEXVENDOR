@@ -58,12 +58,7 @@ export default function CreateAdminButton() {
               }}
               className="space-y-4"
             >
-              <input
-                name="nombre"
-                className="styled-input"
-                placeholder="Nombre completo"
-                required
-              />
+
               <input
                 name="correo"
                 type="email"
@@ -101,9 +96,8 @@ export default function CreateAdminButton() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`bg-[#252525] text-[#e9d26a] text-[10px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-xl hover:bg-black transition cursor-pointer ${
-                    loading ? "opacity-60 cursor-not-allowed" : ""
-                  }`}
+                  className={`bg-[#252525] text-[#e9d26a] text-[10px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-xl hover:bg-black transition cursor-pointer ${loading ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
                 >
                   {loading ? "Creando..." : "Crear"}
                 </button>

@@ -22,12 +22,11 @@ export async function createAdminAction(formData: FormData) {
   if (!isAdmin) return { error: "No autorizado" };
 
   // 2) Datos del formulario
-  const nombre = (formData.get("nombre") as string)?.trim();
   const correo = (formData.get("correo") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
   const confirm = formData.get("confirm") as string;
 
-  if (!nombre || !correo || !password || !confirm) {
+  if (!correo || !password || !confirm) {
     return { error: "Completa todos los campos" };
   }
   if (password !== confirm) {
@@ -37,7 +36,8 @@ export async function createAdminAction(formData: FormData) {
     return { error: "La contraseña debe tener mínimo 8 caracteres" };
   }
 
-  const username = generateUsername(nombre, "a");
+  // Usamos "admin" como nombre base para generar el username
+  const username = generateUsername("admin", "a");
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
