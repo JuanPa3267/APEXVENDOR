@@ -12,7 +12,7 @@ const prismaClientSingleton = () => {
   });
 
   const adapter = new PrismaPg(pool);
-  return new PrismaClient({ adapter, log: ["query", "error", "warn"] });
+  return new PrismaClient({ adapter, log: ["error", "warn"] });
 };
 
 declare global {
