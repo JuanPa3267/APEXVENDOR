@@ -10,7 +10,7 @@ export async function getFullProfile(username: string) {
           certificaciones: true,
           hoja_vida_proveedor: true,
           participacion_proveedor: {
-            include: { proyecto: true }
+            include: { proyecto: true },
           },
         },
       },
@@ -39,38 +39,40 @@ export async function getFullProfile(username: string) {
     },
     details: data.perfilProveedor
       ? {
-        fullName: data.perfilProveedor.nombres_apellidos, // NO tocamos por ahora
-        city: data.perfilProveedor.ciudad,
-        nit: data.perfilProveedor.identificacion_nit,
-        score: data.perfilProveedor.score,
-        portafolio_resumen: data.perfilProveedor.portafolio_resumen,
-        telefono: data.perfilProveedor.telefono,
-        direccion: data.perfilProveedor.direccion,
-        tipo_proveedor: data.perfilProveedor.tipo_proveedor,
-      }
+          fullName: data.perfilProveedor.nombres_apellidos,
+          legalName: data.perfilProveedor.nombre_legal,
+          city: data.perfilProveedor.ciudad,
+          nit: data.perfilProveedor.identificacion_nit,
+          score: data.perfilProveedor.score,
+          portafolio_resumen: data.perfilProveedor.portafolio_resumen,
+          telefono: data.perfilProveedor.telefono,
+          direccion: data.perfilProveedor.direccion,
+          tipo_proveedor: data.perfilProveedor.tipo_proveedor,
+        }
       : null,
     documents: data.perfilProveedor
       ? {
-        cvs: data.perfilProveedor.hoja_vida_proveedor
-          .slice()
-          .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
-        certificaciones: data.perfilProveedor.certificaciones
-          .slice()
-          .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
-      }
+          cvs: data.perfilProveedor.hoja_vida_proveedor
+            .slice()
+            .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
+          certificaciones: data.perfilProveedor.certificaciones
+            .slice()
+            .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
+        }
       : { cvs: [], certificaciones: [] },
-    projects: data.perfilProveedor?.participacion_proveedor.map((p) => ({
-      id: p.id_participacion,
-      role: p.rol_en_proyecto,
-      startDate: p.inicio,
-      endDate: p.fin,
-      project: {
-        id: p.proyecto.id_proyecto,
-        name: p.proyecto.nombre,
-        client: p.proyecto.cliente,
-        status: p.proyecto.estado,
-      },
-    })) || [],
+    projects:
+      data.perfilProveedor?.participacion_proveedor.map((p) => ({
+        id: p.id_participacion,
+        role: p.rol_en_proyecto,
+        startDate: p.inicio,
+        endDate: p.fin,
+        project: {
+          id: p.proyecto.id_proyecto,
+          name: p.proyecto.nombre,
+          client: p.proyecto.cliente,
+          status: p.proyecto.estado,
+        },
+      })) || [],
     roles: data.roles.map((r: any) => r.rol.nombre),
     avatar: pfpData?.image_base64 || null,
   };

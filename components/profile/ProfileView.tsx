@@ -31,7 +31,7 @@ export default function ProfileView({
   const router = useRouter();
   // Estado para el texto real y el texto que se muestra (efecto máquina)
   const [resumen, setResumen] = useState(
-    profile.details?.portafolio_resumen || ""
+    profile.details?.portafolio_resumen || "",
   );
   const [displayedText, setDisplayedText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -146,7 +146,9 @@ export default function ProfileView({
         </div>
 
         <h3 className="text-5xl font-black text-[#252525] mt-10 mb-2 tracking-tighter uppercase text-center">
-          {profile.details?.fullName || "Nombre no configurado"}
+          {profile.details?.fullName ||
+            profile.details?.legalName ||
+            "Nombre no configurado"}
         </h3>
         <div className="flex items-center gap-3">
           <span className="h-[1px] w-8 bg-[#e9d26a]"></span>
@@ -197,9 +199,9 @@ export default function ProfileView({
               <span className="text-[#252525] font-bold text-lg">
                 {profile.user.lastLogin
                   ? new Date(profile.user.lastLogin).toLocaleString("es-CO", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
                   : "Nunca"}
               </span>
             </div>
@@ -259,10 +261,11 @@ export default function ProfileView({
               <button
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
-                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
-                  ? "bg-green-500 text-white scale-95"
-                  : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
-                  }`}
+                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${
+                  isSaving
+                    ? "bg-green-500 text-white scale-95"
+                    : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
+                }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
               </button>
@@ -395,8 +398,9 @@ export default function ProfileView({
         <Modal
           isOpen={!!editMode}
           onClose={() => setEditMode(null)}
-          title={`Actualizar ${editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
-            }`}
+          title={`Actualizar ${
+            editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
+          }`}
         >
           <ProfileEditForm
             profile={profile}
@@ -423,7 +427,7 @@ export default function ProfileView({
             </button>
           )}
         </div>
-        {(!profile.projects || profile.projects.length === 0) ? (
+        {!profile.projects || profile.projects.length === 0 ? (
           <div className="bg-white/30 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 text-center">
             <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
               No estás asignado a ningún proyecto activo.
@@ -432,7 +436,10 @@ export default function ProfileView({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {profile.projects.map((proj: any) => (
-              <div key={proj.id} className="bg-white/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/50 shadow-sm hover:shadow-lg transition-all group">
+              <div
+                key={proj.id}
+                className="bg-white/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/50 shadow-sm hover:shadow-lg transition-all group"
+              >
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-black text-[#252525] uppercase tracking-tighter leading-none mb-1">
@@ -442,31 +449,46 @@ export default function ProfileView({
                       {proj.project.client}
                     </p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${proj.project.status === 'en curso' ? 'bg-green-100 text-green-700' :
-                    proj.project.status === 'completado' ? 'bg-blue-100 text-blue-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                    {proj.project.status || 'Definido'}
+                  <span
+                    className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${
+                      proj.project.status === "en curso"
+                        ? "bg-green-100 text-green-700"
+                        : proj.project.status === "completado"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {proj.project.status || "Definido"}
                   </span>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Rol asignado</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                      Rol asignado
+                    </p>
                     <p className="font-bold text-[#252525]">{proj.role}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Inicio</p>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                        Inicio
+                      </p>
                       <p className="font-bold text-[#252525] text-sm">
-                        {proj.startDate ? new Date(proj.startDate).toLocaleDateString() : '—'}
+                        {proj.startDate
+                          ? new Date(proj.startDate).toLocaleDateString()
+                          : "—"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Fin</p>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                        Fin
+                      </p>
                       <p className="font-bold text-[#252525] text-sm">
-                        {proj.endDate ? new Date(proj.endDate).toLocaleDateString() : '—'}
+                        {proj.endDate
+                          ? new Date(proj.endDate).toLocaleDateString()
+                          : "—"}
                       </p>
                     </div>
                   </div>
@@ -702,10 +724,11 @@ export default function ProfileView({
                           {exp ? ` • Expira: ${exp.toLocaleDateString()}` : ""}
                         </div>
                         <div
-                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                            }`}
+                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
+                            vigente
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
                         </div>
@@ -797,7 +820,7 @@ export default function ProfileView({
               onClick={async () => {
                 if (
                   !confirm(
-                    "Última advertencia: ¿Deseas eliminar tu cuenta permanentemente?"
+                    "Última advertencia: ¿Deseas eliminar tu cuenta permanentemente?",
                   )
                 )
                   return;
