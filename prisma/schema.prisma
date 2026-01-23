@@ -135,7 +135,6 @@ model evaluacion_detalle {
   id_eval         String     @db.Uuid
   id_metrica      String     @db.Uuid
   valor_numerico  Decimal?   @db.Decimal(12, 4)
-  evidencia       String?
   evaluacion      evaluacion @relation(fields: [id_eval], references: [id_evaluacion], onDelete: Cascade, onUpdate: NoAction)
   metrica         metrica    @relation(fields: [id_metrica], references: [id_metrica], onUpdate: NoAction)
 

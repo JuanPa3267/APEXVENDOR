@@ -35,6 +35,11 @@ export default async function ProjectDetailPage({
     const participants = await projectService.listProjectParticipants(project.id_proyecto);
     const providersForAssign = await projectService.listProvidersForAssign(project.id_proyecto);
 
+    // Obtener métricas para evaluación
+    const metrics = await db.metrica.findMany({
+        orderBy: { nombre: 'asc' }
+    });
+
     return (
         <div className="animate-in slide-in-from-right duration-500 p-8 lg:p-12">
             <div className="max-w-7xl mx-auto">
@@ -110,6 +115,9 @@ export default async function ProjectDetailPage({
                                 projectId={project.id_proyecto}
                                 participants={participants}
                                 providers={providersForAssign}
+                                projectStatus={project.estado || undefined}
+                                metrics={metrics}
+                                currentUserId={user?.id_usuario || ""}
                             />
 
                         </div>

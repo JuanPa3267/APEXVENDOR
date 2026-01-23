@@ -6,6 +6,7 @@ import Link from "next/link";
 import { removeVendorAction, assignVendorAction, updateProjectAssignmentAction } from "./actions";
 import AssignVendorModal from "./AssignVendorModal";
 import EditVendorAssignmentModal from "./EditVendorAssignmentModal";
+import EvaluateVendorModal from "./EvaluateVendorModal";
 
 type ActionState = { success?: boolean; error?: string } | null;
 
@@ -13,18 +14,26 @@ export default function VendorsTable({
   projectId,
   participants,
   providers,
+  projectStatus,
+  metrics,
+  currentUserId,
 }: {
   projectId: string;
   participants: any[];
   providers: any[];
+  projectStatus?: string;
+  metrics: any[];
+  currentUserId: string;
 }) {
   const router = useRouter();
 
   const [openAssign, setOpenAssign] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Estado para edición
   const [editingAssignment, setEditingAssignment] = useState<any>(null);
+
+  // Estado para evaluación
+  const [evaluatingParticipant, setEvaluatingParticipant] = useState<any>(null);
 
   const [removeState, removeAction, removePending] = useActionState<ActionState, FormData>(
     removeVendorAction,
@@ -44,7 +53,6 @@ export default function VendorsTable({
     router.refresh();
   };
 
-  // Botón reusable
   const AssignButton = ({ className = "" }: { className?: string }) => (
     <button
       onClick={() => setOpenAssign(true)}
@@ -56,16 +64,23 @@ export default function VendorsTable({
     </button>
   );
 
-  // Si no hay participantes: botón arriba + mensaje
+  // Helper para saber si se puede evaluar
+  const canEvaluate = (participant: any) => {
+    const isProjectCompleted = projectStatus?.toLowerCase() === "completado";
+    const isParticipationEnded = participant.fin && new Date(participant.fin) < new Date();
+    // También verificar si ya fue evaluado (si la relación 'evaluacion' existe y tiene elementos)
+    const alreadyEvaluated = participant.evaluacion && participant.evaluacion.length > 0;
+
+    return (isProjectCompleted || isParticipationEnded) && !alreadyEvaluated;
+  };
+
   if (!participants?.length) {
     return (
       <div className="space-y-4">
         <AssignButton />
-
         <div className="text-gray-500 font-bold">
           Aún no hay proveedores asignados a este proyecto.
         </div>
-
         <AssignVendorModal
           open={openAssign}
           onClose={() => setOpenAssign(false)}
@@ -78,7 +93,6 @@ export default function VendorsTable({
     );
   }
 
-  // Si ya hay participantes: lista + botón al final (debajo del último)
   return (
     <div className="space-y-3">
       {removeState?.error && (
@@ -91,6 +105,8 @@ export default function VendorsTable({
         const p = x.perfil_proveedor;
         const displayName = p?.nombres_apellidos || p?.nombre_legal || "Proveedor";
         const username = p?.usuario?.username || "—";
+        const showEvaluate = canEvaluate(x);
+        const alreadyEvaluated = x.evaluacion && x.evaluacion.length > 0;
 
         return (
           <div
@@ -119,11 +135,24 @@ export default function VendorsTable({
                 {x.inicio ? new Date(x.inicio).toLocaleDateString("es-CO") : "—"} • Fin:{" "}
                 {x.fin ? new Date(x.fin).toLocaleDateString("es-CO") : "—"}
               </div>
-
-              {/* FUTURO: aquí iría gestión de contrato por proveedor (blob azure) */}
             </div>
 
             <div className="flex items-center gap-2">
+              {showEvaluate && (
+                <button
+                  onClick={() => setEvaluatingParticipant(x)}
+                  className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#bba955] text-white cursor-pointer hover:bg-[#a39040] shadow-md transition-all active:scale-95 animate-in zoom-in"
+                >
+                  Evaluar
+                </button>
+              )}
+
+              {alreadyEvaluated && (
+                <div className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full border border-green-200 bg-green-50 text-green-700 select-none">
+                  Evaluado
+                </div>
+              )}
+
               <button
                 onClick={() => setEditingAssignment(x)}
                 className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 cursor-pointer transition-all"
@@ -134,7 +163,6 @@ export default function VendorsTable({
               <form action={removeAction}>
                 <input type="hidden" name="id_proyecto" value={projectId} />
                 <input type="hidden" name="id_participacion" value={x.id_participacion} />
-
                 <button
                   type="submit"
                   disabled={removePending}
@@ -151,7 +179,6 @@ export default function VendorsTable({
         );
       })}
 
-      {/* botón al final (como tu imagen) */}
       <div className="pt-2">
         <AssignButton />
       </div>
@@ -175,7 +202,20 @@ export default function VendorsTable({
         projectId={projectId}
         updateAction={updateProjectAssignmentAction}
       />
+
+      {/* Modal de Evaluación */}
+      {evaluatingParticipant && (
+        <EvaluateVendorModal
+          isOpen={!!evaluatingParticipant}
+          onClose={() => {
+            setEvaluatingParticipant(null);
+            router.refresh();
+          }}
+          participationId={evaluatingParticipant.id_participacion}
+          evaluatorId={currentUserId}
+          metrics={metrics}
+        />
+      )}
     </div>
   );
 }
-

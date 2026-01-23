@@ -188,4 +188,40 @@ export const projectService = {
             where: { id_proyecto },
         });
     },
+
+    async saveEvaluation(data: {
+        id_participacion: string;
+        evaluador: string; // id_usuario
+        comentario_cualitativo: string;
+        calificacion_global?: number;
+        detalles: {
+            id_metrica: string;
+            valor_numerico: number;
+        }[];
+    }) {
+        return await db.$transaction(async (tx) => {
+            // 1. Create the evaluation header
+            const evalRecord = await tx.evaluacion.create({
+                data: {
+                    id_participacion: data.id_participacion,
+                    evaluador: data.evaluador,
+                    comentario_cualitativo: data.comentario_cualitativo,
+                    calificacion_global: data.calificacion_global,
+                },
+            });
+
+            // 2. Create the details
+            if (data.detalles.length > 0) {
+                await tx.evaluacion_detalle.createMany({
+                    data: data.detalles.map((d) => ({
+                        id_eval: evalRecord.id_evaluacion,
+                        id_metrica: d.id_metrica,
+                        valor_numerico: d.valor_numerico,
+                    })),
+                });
+            }
+
+            return evalRecord;
+        });
+    },
 };

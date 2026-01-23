@@ -165,3 +165,62 @@ export async function updateProjectAssignmentAction(prev: any, formData: FormDat
     return { error: e?.message || "No se pudo actualizar la asignación" };
   }
 }
+
+export async function saveEvaluationAction(prev: any, formData: FormData) {
+  try {
+    const { user } = await assertAdmin();
+
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    const id_participacion = String(formData.get("id_participacion") || "");
+    const id_evaluador = String(formData.get("id_evaluador") || "");
+    const comentario = String(formData.get("comentario") || "");
+
+    if (!id_participacion || !id_evaluador || !comentario) {
+      return { error: "Faltan datos obligatorios" };
+    }
+
+    // Extract metrics from formData. Keys are like "metric_<uuid>"
+    const detalles: { id_metrica: string; valor_numerico: number }[] = [];
+    let totalScore = 0;
+    let count = 0;
+
+    for (const [key, value] of Array.from(formData.entries())) {
+      if (key.startsWith("metric_")) {
+        const id_metrica = key.replace("metric_", "");
+        const valor = Number(value);
+        if (id_metrica && !isNaN(valor)) {
+          detalles.push({ id_metrica, valor_numerico: valor });
+          totalScore += valor;
+          count++;
+        }
+      }
+    }
+
+    const calificacion_global = count > 0 ? totalScore / count : 0;
+
+    await projectService.saveEvaluation({
+      id_participacion,
+      evaluador: user.id_usuario,
+      comentario_cualitativo: comentario,
+      calificacion_global,
+      detalles,
+    });
+
+    // Revalidate project page
+    const participation = await db.participacion_proveedor.findUnique({
+      where: { id_participacion },
+      select: { id_proyecto: true }
+    });
+
+    if (participation?.id_proyecto) {
+      revalidatePath(`/dashboard/projects/${participation.id_proyecto}`);
+    }
+
+    return { success: true };
+  } catch (e: any) {
+    return { error: e?.message || "Error al guardar evaluación" };
+  }
+}
