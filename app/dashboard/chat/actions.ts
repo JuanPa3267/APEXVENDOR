@@ -2,6 +2,31 @@
 
 import { db } from "@/lib/db";
 import { askGemini, getPdfText } from "@/lib/gemini";
+import { revalidatePath } from "next/cache";
+
+export async function createMetricAction(formData: FormData) {
+  const nombre = formData.get("nombre") as string;
+  const notas = formData.get("notas") as string;
+
+  if (!nombre) {
+    return { error: "El nombre es requerido" };
+  }
+
+  try {
+    await db.metrica.create({
+      data: {
+        nombre,
+        notas,
+      },
+    });
+
+    revalidatePath("/dashboard/chat");
+    return { success: true };
+  } catch (error) {
+    console.error("Error creating metric:", error);
+    return { error: "Error al crear la métrica" };
+  }
+}
 
 export async function sendMessageAction(message: string, history: any[]) {
   try {
