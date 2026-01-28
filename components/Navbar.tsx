@@ -178,7 +178,7 @@ export default function Navbar({ username, role }: NavbarProps) {
             <span className="relative z-10 text-red-500 group-hover:text-white text-[10px] font-black uppercase tracking-widest">
               Salir
             </span>
-            <div className="absolute inset-0 bg-red-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <div className="absolute inset-0 bg-[#EB2328] translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
           </button>
         </form>
       </div>

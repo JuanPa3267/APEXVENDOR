@@ -567,7 +567,7 @@ export default function ProfileView({
                             const res = await deleteCvAction(cv.id_hojavida);
                             if (res?.error) alert(res.error);
                           }}
-                          className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white cursor-pointer"
+                          className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#EB2328] text-white cursor-pointer"
                         >
                           Eliminar
                         </button>
@@ -750,7 +750,7 @@ export default function ProfileView({
                               const res = await deleteCertAction(c.id_cert);
                               if (res?.error) alert(res.error);
                             }}
-                            className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white cursor-pointer"
+                            className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#EB2328] text-white cursor-pointer"
                           >
                             Eliminar
                           </button>
@@ -832,7 +832,7 @@ export default function ProfileView({
                   router.push("/");
                 }
               }}
-              className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 text-xs font-bold uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+              className="px-4 py-2 rounded-xl bg-[#EB2328] text-white hover:bg-[#FF3C39] text-xs font-bold uppercase tracking-widest shadow-lg active:scale-95 transition-all"
             >
               Sí, eliminar mi cuenta
             </button>

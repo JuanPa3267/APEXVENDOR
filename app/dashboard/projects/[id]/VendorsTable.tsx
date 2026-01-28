@@ -1,9 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { removeVendorAction, assignVendorAction, updateProjectAssignmentAction } from "./actions";
+import { useRouter } from "next/navigation";
+import { useActionState, useRef, useState } from "react";
+import {
+  assignVendorAction,
+  removeVendorAction,
+  updateProjectAssignmentAction,
+} from "./actions";
 import AssignVendorModal from "./AssignVendorModal";
 import EditVendorAssignmentModal from "./EditVendorAssignmentModal";
 import EvaluateVendorModal from "./EvaluateVendorModal";
@@ -35,10 +39,10 @@ export default function VendorsTable({
   // Estado para evaluación
   const [evaluatingParticipant, setEvaluatingParticipant] = useState<any>(null);
 
-  const [removeState, removeAction, removePending] = useActionState<ActionState, FormData>(
-    removeVendorAction,
-    null
-  );
+  const [removeState, removeAction, removePending] = useActionState<
+    ActionState,
+    FormData
+  >(removeVendorAction, null);
 
   const handleAssigned = () => {
     setOpenAssign(false);
@@ -58,7 +62,11 @@ export default function VendorsTable({
       onClick={() => setOpenAssign(true)}
       disabled={!providers?.length}
       className={`bg-[#252525] text-[#e9d26a] text-[10px] font-black px-5 py-3 rounded-2xl uppercase tracking-tighter shadow-xl border border-[#e9d26a]/20 hover:bg-black transition-all active:scale-95 cursor-pointer disabled:opacity-60 ${className}`}
-      title={!providers?.length ? "No hay proveedores disponibles para asignar" : "Asignar proveedor"}
+      title={
+        !providers?.length
+          ? "No hay proveedores disponibles para asignar"
+          : "Asignar proveedor"
+      }
     >
       + Asignar proveedor
     </button>
@@ -67,9 +75,11 @@ export default function VendorsTable({
   // Helper para saber si se puede evaluar
   const canEvaluate = (participant: any) => {
     const isProjectCompleted = projectStatus?.toLowerCase() === "completado";
-    const isParticipationEnded = participant.fin && new Date(participant.fin) < new Date();
+    const isParticipationEnded =
+      participant.fin && new Date(participant.fin) < new Date();
     // También verificar si ya fue evaluado (si la relación 'evaluacion' existe y tiene elementos)
-    const alreadyEvaluated = participant.evaluacion && participant.evaluacion.length > 0;
+    const alreadyEvaluated =
+      participant.evaluacion && participant.evaluacion.length > 0;
 
     return (isProjectCompleted || isParticipationEnded) && !alreadyEvaluated;
   };
@@ -103,7 +113,8 @@ export default function VendorsTable({
 
       {participants.map((x: any) => {
         const p = x.perfil_proveedor;
-        const displayName = p?.nombres_apellidos || p?.nombre_legal || "Proveedor";
+        const displayName =
+          p?.nombres_apellidos || p?.nombre_legal || "Proveedor";
         const username = p?.usuario?.username || "—";
         const showEvaluate = canEvaluate(x);
         const alreadyEvaluated = x.evaluacion && x.evaluacion.length > 0;
@@ -132,7 +143,10 @@ export default function VendorsTable({
 
               <div className="text-xs text-gray-500 mt-1">
                 Inicio:{" "}
-                {x.inicio ? new Date(x.inicio).toLocaleDateString("es-CO") : "—"} • Fin:{" "}
+                {x.inicio
+                  ? new Date(x.inicio).toLocaleDateString("es-CO")
+                  : "—"}{" "}
+                • Fin:{" "}
                 {x.fin ? new Date(x.fin).toLocaleDateString("es-CO") : "—"}
               </div>
             </div>
@@ -162,14 +176,19 @@ export default function VendorsTable({
 
               <form action={removeAction}>
                 <input type="hidden" name="id_proyecto" value={projectId} />
-                <input type="hidden" name="id_participacion" value={x.id_participacion} />
+                <input
+                  type="hidden"
+                  name="id_participacion"
+                  value={x.id_participacion}
+                />
                 <button
                   type="submit"
                   disabled={removePending}
                   onClick={(e) => {
-                    if (!confirm("¿Quitar este proveedor del proyecto?")) e.preventDefault();
+                    if (!confirm("¿Quitar este proveedor del proyecto?"))
+                      e.preventDefault();
                   }}
-                  className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-red-600 text-white cursor-pointer hover:bg-red-700 active:scale-95 transition-all disabled:opacity-60"
+                  className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#EB2328] text-white cursor-pointer hover:bg-[#FF3C39] active:scale-95 transition-all disabled:opacity-60"
                 >
                   Quitar
                 </button>

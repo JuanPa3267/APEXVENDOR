@@ -27,7 +27,7 @@ export default function RegisterPage() {
 
   // Paso 2
   const [tipoProveedor, setTipoProveedor] = useState<"Persona" | "Empresa">(
-    "Persona"
+    "Persona",
   );
 
   // Paso 3 (datos + redes)
@@ -105,7 +105,7 @@ export default function RegisterPage() {
 
   const updateCert = (i: number, patch: Partial<CertUI>) => {
     setCerts((prev) =>
-      prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c))
+      prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)),
     );
   };
 
@@ -258,7 +258,7 @@ export default function RegisterPage() {
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
-                  className="btn-secondary flex-1 py-3"
+                  className="btn-secondary flex-1 py-3 cursor-pointer"
                   onClick={back}
                 >
                   Atrás
@@ -380,7 +380,7 @@ export default function RegisterPage() {
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
-                  className="btn-secondary flex-1 py-3"
+                  className="btn-secondary flex-1 py-3 cursor-pointer"
                   onClick={back}
                 >
                   Atrás
@@ -409,7 +409,7 @@ export default function RegisterPage() {
                 type="file"
                 name="hoja_vida_pdf"
                 accept="application/pdf"
-                className="styled-input"
+                className="styled-input cursor-pointer file:cursor-pointer"
                 onChange={(e) => setCv(e.target.files?.[0] ?? null)}
               />
 
@@ -501,7 +501,7 @@ export default function RegisterPage() {
                       type="file"
                       name="cert_file[]"
                       accept="application/pdf"
-                      className="styled-input"
+                      className="styled-input cursor-pointer file:cursor-pointer"
                       onChange={(e) =>
                         updateCert(idx, { file: e.target.files?.[0] ?? null })
                       }
@@ -513,7 +513,7 @@ export default function RegisterPage() {
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
-                  className="btn-secondary flex-1 py-3"
+                  className="btn-secondary flex-1 py-3 cursor-pointer"
                   onClick={back}
                 >
                   Atrás

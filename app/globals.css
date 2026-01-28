@@ -70,9 +70,13 @@
     border: 2px solid #f0f0f0;
     background-color: var(--Color11) !important; /* Evita transparencia */
     color: var(--Color8);
-    font-size: 1rem;
     outline: none;
     transition: all 0.2s ease;
+  }
+
+  input[type="file"].styled-input,
+  input[type="file"].styled-input::file-selector-button {
+    cursor: pointer !important;
   }
 
   .styled-input:focus {
@@ -111,6 +115,28 @@
     background-color: var(--Color3) !important;
     box-shadow: 0 6px 20px rgba(187, 169, 85, 0.4);
     transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background-color: white !important;
+    color: var(--Color7);
+    padding: 0.8rem 1.5rem;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    cursor: pointer !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: #f9f9f9 !important;
+    border-color: #ddd;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   }
 
   .btn-delete {

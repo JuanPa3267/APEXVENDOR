@@ -52,14 +52,14 @@ export default function ProjectActions({
           onClick={() => setOpenEdit(true)}
           className="flex-none whitespace-nowrap bg-white text-[#252525] text-[10px] font-black px-4 py-3 rounded-2xl uppercase tracking-tighter shadow-sm border border-gray-200 hover:border-[#e9d26a]/60 hover:shadow-md transition-all active:scale-95 cursor-pointer"
         >
-          ✎ Editar
+          Editar
         </button>
 
         <button
           onClick={() => setOpenDelete(true)}
-          className="flex-none whitespace-nowrap bg-red-600 text-white text-[10px] font-black px-4 py-3 rounded-2xl uppercase tracking-tighter shadow-xl border border-red-700/20 hover:bg-red-700 transition-all active:scale-95 cursor-pointer"
+          className="flex-none whitespace-nowrap bg-[#EB2328] text-white text-[10px] font-black px-4 py-3 rounded-2xl uppercase tracking-tighter shadow-xl border border-[#FF695E] hover:bg-[#FF3C39] transition-all active:scale-95 cursor-pointer"
         >
-          🗑 Eliminar
+          Eliminar
         </button>
       </div>
 
@@ -233,7 +233,7 @@ export default function ProjectActions({
             <button
               type="submit"
               disabled={deletePending}
-              className={`bg-red-600 text-white text-[10px] font-black px-8 py-2 rounded-full uppercase tracking-widest shadow-lg hover:bg-red-700 active:scale-95 cursor-pointer ${
+              className={`bg-[#EB2328] text-white text-[10px] font-black px-8 py-2 rounded-full uppercase tracking-widest shadow-lg hover:bg-[#FF3C39] active:scale-95 cursor-pointer ${
                 deletePending ? "opacity-60" : ""
               }`}
             >
