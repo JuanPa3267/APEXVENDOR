@@ -235,7 +235,7 @@ export default function RegisterPage() {
                 Tipo de proveedor
               </label>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="flex items-center gap-2 p-3 rounded-xl border cursor-pointer">
                   <input
                     type="radio"
