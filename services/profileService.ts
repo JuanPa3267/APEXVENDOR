@@ -42,12 +42,15 @@ export async function getFullProfile(username: string) {
           fullName: data.perfilProveedor.nombres_apellidos,
           legalName: data.perfilProveedor.nombre_legal,
           city: data.perfilProveedor.ciudad,
+          tarifa_hora: data.perfilProveedor.tarifa_hora,
           nit: data.perfilProveedor.identificacion_nit,
           score: data.perfilProveedor.score,
           portafolio_resumen: data.perfilProveedor.portafolio_resumen,
           telefono: data.perfilProveedor.telefono,
           direccion: data.perfilProveedor.direccion,
           tipo_proveedor: data.perfilProveedor.tipo_proveedor,
+          dias_disponibles: data.perfilProveedor.dias_disponibles,
+          horas_disponibles: data.perfilProveedor.horas_disponibles,
         }
       : null,
     documents: data.perfilProveedor

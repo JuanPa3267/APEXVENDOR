@@ -58,6 +58,9 @@ model PerfilProveedor {
   direccion               String?
   portafolio_resumen      String?                   @map("portafolio_resumen")
   ciudad                  String?
+  dias_disponibles        String[]                  @map("dias_disponibles")
+  horas_disponibles       String[]                  @map("horas_disponibles")
+  tarifa_hora             Float?                    @map("tarifa_hora")
   score                   Float?
   instagram               String?
   linkedin                String?

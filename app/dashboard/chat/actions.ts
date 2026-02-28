@@ -61,6 +61,9 @@ export async function sendMessageAction(message: string, history: any[]) {
             username: true,
           },
         },
+        tarifa_hora: true,
+        dias_disponibles: true,
+        horas_disponibles: true,
       },
     });
 

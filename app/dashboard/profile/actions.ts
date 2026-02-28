@@ -58,6 +58,18 @@ export async function updatePersonalDataAction(formData: FormData) {
       updateData.direccion = (formData.get("direccion") as string) || null;
     if (formData.has("ciudad"))
       updateData.ciudad = (formData.get("ciudad") as string) || null;
+    if (formData.has("tarifa_hora")) {
+      const val = formData.get("tarifa_hora") as string;
+      updateData.tarifa_hora = val ? parseFloat(val) : null;
+    }
+    if (formData.has("dias_disponibles")) {
+      const val = formData.get("dias_disponibles") as string;
+      updateData.dias_disponibles = val ? JSON.parse(val) : [];
+    }
+    if (formData.has("horas_disponibles")) {
+      const val = formData.get("horas_disponibles") as string;
+      updateData.horas_disponibles = val ? JSON.parse(val) : [];
+    }
 
     // Campos de redes sociales
     if (formData.has("linkedin"))
@@ -178,7 +190,7 @@ export async function uploadCvAction(file: File) {
 
     const container = process.env.AZURE_STORAGE_CV_CONTAINER || "cvs";
     const blobName = `${user.id_usuario}/${Date.now()}-cv-${safeFileName(
-      file.name
+      file.name,
     )}`;
 
     // 1. Buscar y eliminar CV anterior si existe
@@ -271,7 +283,7 @@ export async function uploadCertAction(formData: FormData) {
     const container =
       process.env.AZURE_STORAGE_CERTS_CONTAINER || "certificaciones";
     const blobName = `${user.id_usuario}/${Date.now()}-cert-${safeFileName(
-      file.name
+      file.name,
     )}`;
 
     const uploaded = await uploadToAzureBlob({

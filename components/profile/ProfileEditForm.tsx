@@ -17,6 +17,46 @@ export default function ProfileEditForm({
   const [isSavingData, setIsSavingData] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  const DAYS_OF_WEEK = [
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+    "Domingo",
+  ];
+  const [selectedDays, setSelectedDays] = useState<string[]>(
+    profile.details?.dias_disponibles || [],
+  );
+
+  // Extraemos inicio y fin del array horas_disponibles [start, end]
+  const [startTime, setStartTime] = useState(
+    profile.details?.horas_disponibles?.[0] || "08:00",
+  );
+  const [endTime, setEndTime] = useState(
+    profile.details?.horas_disponibles?.[1] || "17:00",
+  );
+
+  const toggleDay = (day: string) => {
+    setSelectedDays((prev) => {
+      const next = prev.includes(day)
+        ? prev.filter((d) => d !== day)
+        : [...prev, day];
+      return next.sort(
+        (a, b) => DAYS_OF_WEEK.indexOf(a) - DAYS_OF_WEEK.indexOf(b),
+      );
+    });
+  };
+
+  const format12h = (time: string) => {
+    if (!time) return "--:--";
+    const [h, m] = time.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+  };
+
   const validateSocialLinks = (formData: FormData) => {
     const newErrors: { [key: string]: string } = {};
     const linkedin = formData.get("linkedin") as string;
@@ -49,11 +89,96 @@ export default function ProfileEditForm({
     return newErrors;
   };
 
+  const TimeSelector = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: string;
+    onChange: (val: string) => void;
+  }) => {
+    const [h, m] = value.split(":");
+    const hour24 = parseInt(h);
+    const ampm = hour24 >= 12 ? "PM" : "AM";
+    const hour12 = hour24 % 12 || 12;
+
+    const handleHourChange = (newH12: number) => {
+      let newH24 = newH12;
+      if (ampm === "PM" && newH12 < 12) newH24 += 12;
+      if (ampm === "AM" && newH12 === 12) newH24 = 0;
+      onChange(`${newH24.toString().padStart(2, "0")}:${m}`);
+    };
+
+    const handleMinuteChange = (newM: string) => {
+      onChange(`${h}:${newM}`);
+    };
+
+    const toggleAMPM = () => {
+      let newH24 = hour24;
+      if (ampm === "AM") {
+        newH24 = (hour24 + 12) % 24;
+      } else {
+        newH24 = (hour24 - 12 + 24) % 24;
+      }
+      onChange(`${newH24.toString().padStart(2, "0")}:${m}`);
+    };
+
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-[9px] font-black text-[#bba955] uppercase tracking-widest">
+          {label}
+        </p>
+        <div className="flex items-center gap-2 bg-[#fcfcfc] border border-gray-100 rounded-2xl p-2 px-4 shadow-sm focus-within:border-[#e9d26a] transition-all group">
+          <select
+            value={hour12}
+            onChange={(e) => handleHourChange(parseInt(e.target.value))}
+            className="bg-transparent text-sm font-black outline-none cursor-pointer p-1 appearance-none hover:text-[#bba955] transition-colors"
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
+              <option key={num} value={num}>
+                {num.toString().padStart(2, "0")}
+              </option>
+            ))}
+          </select>
+          <span className="text-gray-300 font-bold">:</span>
+          <select
+            value={m}
+            onChange={(e) => handleMinuteChange(e.target.value)}
+            className="bg-transparent text-sm font-black outline-none cursor-pointer p-1 appearance-none hover:text-[#bba955] transition-colors"
+          >
+            {Array.from({ length: 60 }, (_, i) => i).map((min) => (
+              <option key={min} value={min.toString().padStart(2, "0")}>
+                {min.toString().padStart(2, "0")}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={toggleAMPM}
+            className="ml-auto bg-[#252525] text-[#e9d26a] text-[10px] font-black px-4 py-2 rounded-xl active:scale-95 transition-all hover:bg-black hover:shadow-lg uppercase tracking-widest"
+          >
+            {ampm}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <form
       action={async (formData) => {
         setIsSavingData(true);
         setErrors({});
+
+        if (mode === "contact") {
+          formData.set("dias_disponibles", JSON.stringify(selectedDays));
+          // Guardamos como [start, end] para fácil lectura
+          formData.set(
+            "horas_disponibles",
+            JSON.stringify([startTime, endTime]),
+          );
+        }
 
         if (mode === "social") {
           const validationErrors = validateSocialLinks(formData);
@@ -96,8 +221,62 @@ export default function ProfileEditForm({
               name="ciudad"
               defaultValue={profile.details?.city || ""}
               placeholder="Ciudad"
-              className="styled-input md:col-span-2"
+              className="styled-input"
             />
+            <input
+              name="tarifa_hora"
+              type="number"
+              step="0.01"
+              defaultValue={profile.details?.tarifa_hora || ""}
+              placeholder="Tarifa por hora ($)"
+              className="styled-input"
+            />
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-4 mt-6">
+              Días de Disponibilidad
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {DAYS_OF_WEEK.map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => toggleDay(day)}
+                  className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all border ${
+                    selectedDays.includes(day)
+                      ? "bg-[#e9d26a] text-[#252525] border-[#e9d26a] shadow-lg"
+                      : "bg-transparent text-gray-400 border-gray-200 hover:border-[#e9d26a] hover:text-[#252525]"
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-4 mt-6">
+              Horario de Disponibilidad
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TimeSelector
+                label="Desde"
+                value={startTime}
+                onChange={setStartTime}
+              />
+              <TimeSelector
+                label="Hasta"
+                value={endTime}
+                onChange={setEndTime}
+              />
+            </div>
+            <p className="text-[9px] text-gray-400 font-bold uppercase mt-3">
+              Rango actual:{" "}
+              <span className="text-[#252525] font-black whitespace-nowrap">
+                {format12h(startTime)} — {format12h(endTime)}
+              </span>
+            </p>
           </div>
         </div>
       )}

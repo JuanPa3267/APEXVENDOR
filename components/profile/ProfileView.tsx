@@ -19,6 +19,14 @@ import { useRouter } from "next/navigation";
 import { assignVendorFromProfileAction } from "@/app/dashboard/vendors/actions";
 import AssignToProjectModal from "./AssignToProjectModal";
 
+const format12h = (time: string) => {
+  if (!time) return "--:--";
+  const [h, m] = time.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+};
+
 export default function ProfileView({
   profile,
   isAdminViewing = false,
@@ -297,6 +305,128 @@ export default function ProfileView({
         </div>
       </div>
 
+      {/* 4.1. Tarifa por hora (Extra Card) */}
+      <div className="w-full bg-gradient-to-r from-white/40 to-[#e9d26a]/10 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl overflow-hidden transition-all mt-8 group hover:shadow-2xl">
+        <div className="p-10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(233,210,106,0.2)] group-hover:scale-110 transition-transform">
+              <span className="text-[#e9d26a] text-2xl font-black">$</span>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] flex items-center gap-3 mb-2">
+                Tarifa Base
+              </h4>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-black text-[#252525] tracking-tighter">
+                  {profile.details?.tarifa_hora
+                    ? `$${profile.details.tarifa_hora}`
+                    : "No definida"}
+                </span>
+                {profile.details?.tarifa_hora && (
+                  <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">
+                    / hora
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {!isAdminViewing && (
+            <button
+              onClick={() => setEditMode("contact")}
+              className="text-[9px] font-black uppercase tracking-widest px-6 py-3 rounded-full bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95 transition-all shadow-lg shrink-0 whitespace-nowrap"
+            >
+              Actualizar Tarifa
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 4.2. Disponibilidad (Extra Card) */}
+      <div className="w-full bg-gradient-to-r from-white/40 to-blue-500/10 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl overflow-hidden transition-all mt-8 group hover:shadow-2xl">
+        <div className="p-10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-start gap-6 w-full">
+            <div className="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(59,130,246,0.2)] group-hover:scale-110 transition-transform">
+              <span className="text-blue-400 text-2xl font-black">📅</span>
+            </div>
+            <div className="flex-1 w-full">
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] flex items-center gap-3 mb-4">
+                Disponibilidad
+              </h4>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                {/* Días */}
+                <div>
+                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2">
+                    Días habilitados
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.details?.dias_disponibles?.length > 0 ? (
+                      [...profile.details.dias_disponibles]
+                        .sort((a, b) => {
+                          const order = [
+                            "Lunes",
+                            "Martes",
+                            "Miércoles",
+                            "Jueves",
+                            "Viernes",
+                            "Sábado",
+                            "Domingo",
+                          ];
+                          return order.indexOf(a) - order.indexOf(b);
+                        })
+                        .map((day: string) => (
+                          <span
+                            key={day}
+                            className="bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-blue-200"
+                          >
+                            {day}
+                          </span>
+                        ))
+                    ) : (
+                      <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">
+                        No definidos
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2">
+                    Horario de servicio
+                  </p>
+                  <div className="flex items-center">
+                    {profile.details?.horas_disponibles?.length >= 2 ? (
+                      <div className="flex items-center gap-3 bg-[#252525] text-blue-400 text-base md:text-lg font-black tracking-tighter md:tracking-widest px-6 py-2 rounded-full border border-gray-700 shadow-inner">
+                        <span className="whitespace-nowrap">
+                          {format12h(profile.details.horas_disponibles[0])}
+                        </span>
+                        <span className="text-gray-600 opacity-50">—</span>
+                        <span className="whitespace-nowrap">
+                          {format12h(profile.details.horas_disponibles[1])}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">
+                        No definido
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {!isAdminViewing && (
+            <button
+              onClick={() => setEditMode("contact")}
+              className="text-[9px] font-black uppercase tracking-widest px-6 py-3 rounded-full bg-[#252525] text-blue-400 hover:bg-black active:scale-95 transition-all shadow-lg shrink-0 whitespace-nowrap"
+            >
+              Actualizar Horarios
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* 4.5 Datos adicionales + Redes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
         <div className="bg-white/40 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 shadow-sm">
@@ -477,7 +607,7 @@ export default function ProfileView({
                       </p>
                       <p className="font-bold text-[#252525] text-sm">
                         {proj.startDate
-                          ? new Date(proj.startDate).toLocaleDateString()
+                          ? new Date(proj.startDate).toLocaleDateString("en-US")
                           : "—"}
                       </p>
                     </div>
@@ -487,7 +617,7 @@ export default function ProfileView({
                       </p>
                       <p className="font-bold text-[#252525] text-sm">
                         {proj.endDate
-                          ? new Date(proj.endDate).toLocaleDateString()
+                          ? new Date(proj.endDate).toLocaleDateString("en-US")
                           : "—"}
                       </p>
                     </div>
@@ -548,7 +678,8 @@ export default function ProfileView({
                     <div>
                       <div className="font-bold text-[#252525]">CV</div>
                       <div className="text-xs text-gray-500">
-                        Subido: {new Date(cv.fecha_carga).toLocaleString()}
+                        Subido:{" "}
+                        {new Date(cv.fecha_carga).toLocaleString("en-US")}
                       </div>
                     </div>
 
@@ -720,8 +851,12 @@ export default function ProfileView({
                         </div>
                         <div className="text-xs text-gray-500">
                           {c.emisor} • Emitida:{" "}
-                          {new Date(c.fecha_emision).toLocaleDateString()}
-                          {exp ? ` • Expira: ${exp.toLocaleDateString()}` : ""}
+                          {new Date(c.fecha_emision).toLocaleDateString(
+                            "en-US",
+                          )}
+                          {exp
+                            ? ` • Expira: ${exp.toLocaleDateString("en-US")}`
+                            : ""}
                         </div>
                         <div
                           className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
