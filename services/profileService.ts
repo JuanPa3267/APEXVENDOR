@@ -10,7 +10,10 @@ export async function getFullProfile(username: string) {
           certificaciones: true,
           hoja_vida_proveedor: true,
           participacion_proveedor: {
-            include: { proyecto: true },
+            include: {
+              proyecto: true,
+              contrato_participacion: true
+            },
           },
         },
       },
@@ -39,43 +42,53 @@ export async function getFullProfile(username: string) {
     },
     details: data.perfilProveedor
       ? {
-          fullName: data.perfilProveedor.nombres_apellidos,
-          legalName: data.perfilProveedor.nombre_legal,
-          city: data.perfilProveedor.ciudad,
-          tarifa_hora: data.perfilProveedor.tarifa_hora,
-          nit: data.perfilProveedor.identificacion_nit,
-          score: data.perfilProveedor.score,
-          portafolio_resumen: data.perfilProveedor.portafolio_resumen,
-          telefono: data.perfilProveedor.telefono,
-          direccion: data.perfilProveedor.direccion,
-          tipo_proveedor: data.perfilProveedor.tipo_proveedor,
-          dias_disponibles: data.perfilProveedor.dias_disponibles,
-          horas_disponibles: data.perfilProveedor.horas_disponibles,
-        }
+        fullName: data.perfilProveedor.nombres_apellidos,
+        legalName: data.perfilProveedor.nombre_legal,
+        city: data.perfilProveedor.ciudad,
+        tarifa_hora: data.perfilProveedor.tarifa_hora,
+        nit: data.perfilProveedor.identificacion_nit,
+        score: data.perfilProveedor.score,
+        portafolio_resumen: data.perfilProveedor.portafolio_resumen,
+        telefono: data.perfilProveedor.telefono,
+        direccion: data.perfilProveedor.direccion,
+        tipo_proveedor: data.perfilProveedor.tipo_proveedor,
+        dias_disponibles: data.perfilProveedor.dias_disponibles,
+        horas_disponibles: data.perfilProveedor.horas_disponibles,
+      }
       : null,
     documents: data.perfilProveedor
       ? {
-          cvs: data.perfilProveedor.hoja_vida_proveedor
-            .slice()
-            .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
-          certificaciones: data.perfilProveedor.certificaciones
-            .slice()
-            .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
-        }
+        cvs: data.perfilProveedor.hoja_vida_proveedor
+          .slice()
+          .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
+        certificaciones: data.perfilProveedor.certificaciones
+          .slice()
+          .sort((a, b) => b.fecha_carga.getTime() - a.fecha_carga.getTime()),
+      }
       : { cvs: [], certificaciones: [] },
     projects:
-      data.perfilProveedor?.participacion_proveedor.map((p) => ({
-        id: p.id_participacion,
-        role: p.rol_en_proyecto,
-        startDate: p.inicio,
-        endDate: p.fin,
-        project: {
-          id: p.proyecto.id_proyecto,
-          name: p.proyecto.nombre,
-          client: p.proyecto.cliente,
-          status: p.proyecto.estado,
-        },
-      })) || [],
+      data.perfilProveedor?.participacion_proveedor.map((p) => {
+        const contract = p.contrato_participacion && p.contrato_participacion.length > 0
+          ? p.contrato_participacion[0]
+          : null;
+        return {
+          id: p.id_participacion,
+          role: p.rol_en_proyecto,
+          startDate: p.inicio,
+          endDate: p.fin,
+          project: {
+            id: p.proyecto.id_proyecto,
+            name: p.proyecto.nombre,
+            client: p.proyecto.cliente,
+            status: p.proyecto.estado,
+          },
+          contract: contract ? {
+            url: contract.url_archivo,
+            name: contract.nombre_archivo,
+            uploadedBy: contract.cargado_por
+          } : null,
+        };
+      }) || [],
     roles: data.roles.map((r: any) => r.rol.nombre),
     avatar: pfpData?.image_base64 || null,
   };

@@ -153,7 +153,16 @@ export async function getSasUrlAction(blobUrl: string) {
       select: { id_proveedor: true },
     });
 
-    const ownerId = cvRecord?.id_proveedor ?? certRecord?.id_proveedor ?? null;
+    const contractRecord = await db.contrato_participacion.findFirst({
+      where: { url_archivo: blobUrl },
+      include: {
+        participacion_proveedor: {
+          select: { id_proveedor: true }
+        }
+      }
+    });
+
+    const ownerId = cvRecord?.id_proveedor ?? certRecord?.id_proveedor ?? contractRecord?.participacion_proveedor?.id_proveedor ?? null;
 
     if (!ownerId) {
       return { error: "Documento no encontrado en la base de datos" };

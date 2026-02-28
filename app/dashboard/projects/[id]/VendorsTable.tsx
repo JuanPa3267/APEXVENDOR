@@ -11,6 +11,7 @@ import {
 import AssignVendorModal from "./AssignVendorModal";
 import EditVendorAssignmentModal from "./EditVendorAssignmentModal";
 import EvaluateVendorModal from "./EvaluateVendorModal";
+import { getSasUrlAction } from "@/app/dashboard/profile/actions";
 
 type ActionState = { success?: boolean; error?: string } | null;
 
@@ -43,6 +44,12 @@ export default function VendorsTable({
     ActionState,
     FormData
   >(removeVendorAction, null);
+
+  const openWithSas = async (blobUrl: string) => {
+    const res = await getSasUrlAction(blobUrl);
+    if (res?.error) return alert(res.error);
+    if (res?.url) window.open(res.url, "_blank");
+  };
 
   const handleAssigned = () => {
     setOpenAssign(false);
@@ -149,6 +156,18 @@ export default function VendorsTable({
                 • Fin:{" "}
                 {x.fin ? new Date(x.fin).toLocaleDateString("es-CO") : "—"}
               </div>
+
+              {x.contrato_participacion && x.contrato_participacion.length > 0 && (
+                <div className="mt-2 text-xs font-bold text-gray-500 flex items-center gap-2">
+                  <span className="text-black">📄 Contrato adjunto:</span>
+                  <button
+                    onClick={() => openWithSas(x.contrato_participacion[0].url_archivo)}
+                    className="text-[#bba955] hover:text-[#a39040] underline hover:no-underline transition-colors"
+                  >
+                    Ver Documento
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">

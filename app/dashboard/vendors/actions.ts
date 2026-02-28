@@ -81,6 +81,12 @@ export async function assignVendorFromProfileAction(prev: any, formData: FormDat
     const username = cookieStore.get("username")?.value;
     if (!username) return { error: "No autorizado" };
 
+    const user = await db.usuario.findUnique({
+      where: { username },
+    });
+
+    if (!user) return { error: "Usuario no encontrado" };
+
     const id_proyecto = String(formData.get("id_proyecto") || "");
     const id_proveedor = String(formData.get("id_proveedor") || "");
     const rol_en_proyecto = String(formData.get("rol_en_proyecto") || "");
@@ -98,6 +104,7 @@ export async function assignVendorFromProfileAction(prev: any, formData: FormDat
       rol_en_proyecto,
       inicio: inicio || null,
       fin: fin || null,
+      cargado_por: user.id_usuario,
     });
 
     if (currentPath) revalidatePath(currentPath);

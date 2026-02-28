@@ -78,13 +78,15 @@ export async function updateProjectStatusAction(prev: any, formData: FormData) {
 
 export async function assignVendorAction(prev: any, formData: FormData) {
   try {
-    await assertAdmin();
+    const { user } = await assertAdmin();
+    if (!user) throw new Error("Usuario no encontrado");
 
     const id_proyecto = String(formData.get("id_proyecto") || "");
     const id_proveedor = String(formData.get("id_proveedor") || "");
     const rol_en_proyecto = String(formData.get("rol_en_proyecto") || "");
     const inicio = (formData.get("inicio") as string) || "";
     const fin = (formData.get("fin") as string) || "";
+    const contratoFile = formData.get("contrato") as File | null;
 
     if (!id_proyecto || !id_proveedor || !rol_en_proyecto) {
       return { error: "Proyecto, proveedor y rol son obligatorios" };
@@ -96,6 +98,8 @@ export async function assignVendorAction(prev: any, formData: FormData) {
       rol_en_proyecto,
       inicio: inicio || null,
       fin: fin || null,
+      contrato: contratoFile,
+      cargado_por: user.id_usuario,
     });
 
     revalidatePath(`/dashboard/projects/${id_proyecto}`);

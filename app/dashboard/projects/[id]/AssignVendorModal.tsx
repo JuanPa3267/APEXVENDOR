@@ -160,6 +160,18 @@ export default function AssignVendorModal({
           </div>
         </div>
 
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] uppercase font-bold text-gray-400 ml-2">
+            Contrato (PDF, opcional)
+          </label>
+          <input
+            name="contrato"
+            type="file"
+            accept="application/pdf"
+            className="styled-input w-full file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#fafae6] file:text-[#bba955] hover:file:bg-[#f5f5d3] cursor-pointer"
+          />
+        </div>
+
         <div className="pt-2 flex justify-end gap-3">
           <button
             type="button"

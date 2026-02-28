@@ -207,9 +207,9 @@ export default function ProfileView({
               <span className="text-[#252525] font-bold text-lg">
                 {profile.user.lastLogin
                   ? new Date(profile.user.lastLogin).toLocaleString("es-CO", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
                   : "Nunca"}
               </span>
             </div>
@@ -269,11 +269,10 @@ export default function ProfileView({
               <button
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
-                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${
-                  isSaving
+                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
                     ? "bg-green-500 text-white scale-95"
                     : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
-                }`}
+                  }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
               </button>
@@ -528,9 +527,8 @@ export default function ProfileView({
         <Modal
           isOpen={!!editMode}
           onClose={() => setEditMode(null)}
-          title={`Actualizar ${
-            editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
-          }`}
+          title={`Actualizar ${editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
+            }`}
         >
           <ProfileEditForm
             profile={profile}
@@ -580,13 +578,12 @@ export default function ProfileView({
                     </p>
                   </div>
                   <span
-                    className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${
-                      proj.project.status === "en curso"
+                    className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${proj.project.status === "en curso"
                         ? "bg-green-100 text-green-700"
                         : proj.project.status === "completado"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-gray-100 text-gray-600"
-                    }`}
+                      }`}
                   >
                     {proj.project.status || "Definido"}
                   </span>
@@ -622,6 +619,25 @@ export default function ProfileView({
                       </p>
                     </div>
                   </div>
+
+                  {proj.contract && (
+                    <div className="pt-3 flex items-center justify-between border-t border-gray-100/50 mt-4">
+                      <div>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                          Documento Contractual
+                        </p>
+                        <p className="text-[#252525] text-xs font-bold truncate max-w-[150px]">
+                          {proj.contract.name || "Contrato"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => openWithSas(proj.contract.url)}
+                        className="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-[#252525] text-[#e9d26a] cursor-pointer hover:bg-black transition-all"
+                      >
+                        Ver Documento
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -859,11 +875,10 @@ export default function ProfileView({
                             : ""}
                         </div>
                         <div
-                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
-                            vigente
+                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
-                          }`}
+                            }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
                         </div>

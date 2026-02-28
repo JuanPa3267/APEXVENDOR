@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { uploadToAzureBlob } from "@/lib/azureBlob";
 
 export type ProjectStatus =
   | "planificado"
@@ -75,6 +76,7 @@ export const projectService = {
           },
         },
         evaluacion: true,
+        contrato_participacion: true,
       },
       orderBy: [{ inicio: "desc" }],
     });
@@ -135,8 +137,7 @@ export const projectService = {
 
     if (!allowed.includes(nextStatus)) {
       throw new Error(
-        `Transición inválida: ${current} → ${nextStatus}. Permitidas: ${
-          allowed.join(", ") || "ninguna"
+        `Transición inválida: ${current} → ${nextStatus}. Permitidas: ${allowed.join(", ") || "ninguna"
         }`,
       );
     }
@@ -153,6 +154,26 @@ export const projectService = {
     inicio?: string | null;
     fin?: string | null;
   }) {
+    // Validar fechas contra el proyecto
+    const participacionOriginal = await db.participacion_proveedor.findUnique({
+      where: { id_participacion: params.id_participacion },
+      include: { proyecto: true }
+    });
+
+    if (!participacionOriginal) throw new Error("Participación no encontrada");
+
+    const proyecto = participacionOriginal.proyecto;
+    if (params.inicio && proyecto.inicio) {
+      if (new Date(params.inicio) < new Date(proyecto.inicio)) {
+        throw new Error("La participación no puede iniciar antes del proyecto.");
+      }
+    }
+    if (params.fin && proyecto.fin) {
+      if (new Date(params.fin) > new Date(proyecto.fin)) {
+        throw new Error("La participación no puede terminar después del proyecto.");
+      }
+    }
+
     return await db.participacion_proveedor.update({
       where: { id_participacion: params.id_participacion },
       data: {
@@ -169,6 +190,8 @@ export const projectService = {
     rol_en_proyecto: string;
     inicio?: string | null; // YYYY-MM-DD
     fin?: string | null; // YYYY-MM-DD
+    contrato?: File | null;
+    cargado_por: string;
   }) {
     // Evitar duplicados
     const existing = await db.participacion_proveedor.findFirst({
@@ -180,14 +203,58 @@ export const projectService = {
     if (existing)
       throw new Error("Este proveedor ya está asignado al proyecto.");
 
-    return await db.participacion_proveedor.create({
-      data: {
-        id_proyecto: params.id_proyecto,
-        id_proveedor: params.id_proveedor,
-        rol_en_proyecto: params.rol_en_proyecto,
-        inicio: params.inicio ? new Date(params.inicio) : null,
-        fin: params.fin ? new Date(params.fin) : null,
-      },
+    // Validar fechas
+    const proyecto = await db.proyecto.findUnique({
+      where: { id_proyecto: params.id_proyecto }
+    });
+    if (!proyecto) throw new Error("Proyecto no encontrado");
+
+    if (params.inicio && proyecto.inicio) {
+      if (new Date(params.inicio) < new Date(proyecto.inicio)) {
+        throw new Error("La participación no puede iniciar antes del proyecto.");
+      }
+    }
+    if (params.fin && proyecto.fin) {
+      if (new Date(params.fin) > new Date(proyecto.fin)) {
+        throw new Error("La participación no puede terminar después del proyecto.");
+      }
+    }
+
+    return await db.$transaction(async (tx) => {
+      const participacion = await tx.participacion_proveedor.create({
+        data: {
+          id_proyecto: params.id_proyecto,
+          id_proveedor: params.id_proveedor,
+          rol_en_proyecto: params.rol_en_proyecto,
+          inicio: params.inicio ? new Date(params.inicio) : null,
+          fin: params.fin ? new Date(params.fin) : null,
+        },
+      });
+
+      if (params.contrato) {
+        // Upload to Azure Blob Storage
+        const containerName = process.env.AZURE_STORAGE_CONTRACT_CONTAINER || "contratos";
+        const fileExt = params.contrato.name.split(".").pop() || "pdf";
+        const blobName = `${params.id_proyecto}-${params.id_proveedor}-${Date.now()}.${fileExt}`;
+
+        const uploadResult = await uploadToAzureBlob({
+          containerName,
+          blobName,
+          file: params.contrato,
+        });
+
+        // Create the contract record
+        await tx.contrato_participacion.create({
+          data: {
+            id_participacion: participacion.id_participacion,
+            nombre_archivo: params.contrato.name,
+            url_archivo: uploadResult.url,
+            cargado_por: params.cargado_por,
+          },
+        });
+      }
+
+      return participacion;
     });
   },
 
