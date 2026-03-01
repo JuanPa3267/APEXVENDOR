@@ -213,6 +213,19 @@ export default function ProfileView({
                   : "Nunca"}
               </span>
             </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black text-[#bba955] uppercase tracking-widest mb-1">
+                Última actualización
+              </span>
+              <span className="text-[#252525] font-bold text-lg">
+                {profile.user.lastUpdated
+                  ? new Date(profile.user.lastUpdated).toLocaleString("es-CO", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
+                  : "Desconocida"}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -270,8 +283,8 @@ export default function ProfileView({
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
                 className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
-                    ? "bg-green-500 text-white scale-95"
-                    : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
+                  ? "bg-green-500 text-white scale-95"
+                  : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
                   }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
@@ -579,10 +592,10 @@ export default function ProfileView({
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${proj.project.status === "en curso"
-                        ? "bg-green-100 text-green-700"
-                        : proj.project.status === "completado"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-600"
+                      ? "bg-green-100 text-green-700"
+                      : proj.project.status === "completado"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-600"
                       }`}
                   >
                     {proj.project.status || "Definido"}
@@ -876,8 +889,8 @@ export default function ProfileView({
                         </div>
                         <div
                           className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
                             }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}

@@ -33,6 +33,7 @@ export async function getFullProfile(username: string) {
       email: data.correo,
       status: data.estado_cuenta,
       lastLogin: data.ultimo_acceso,
+      lastUpdated: data.actualizado_en,
       social: {
         instagram: data.perfilProveedor?.instagram ?? null,
         linkedin: data.perfilProveedor?.linkedin ?? null,
