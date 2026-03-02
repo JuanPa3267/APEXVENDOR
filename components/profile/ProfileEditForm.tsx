@@ -1,12 +1,12 @@
 "use client";
 
-import { updatePersonalDataAction } from "@/app/dashboard/profile/actions";
+import { updatePersonalDataAction, updateEmailAction, updatePasswordAction } from "@/app/dashboard/profile/actions";
 import { useState } from "react";
 
 interface ProfileEditFormProps {
   profile: any;
   onSuccess: () => void;
-  mode: "contact" | "social";
+  mode: "contact" | "social" | "settings";
 }
 
 export default function ProfileEditForm({
@@ -189,6 +189,37 @@ export default function ProfileEditForm({
           }
         }
 
+        if (mode === "settings") {
+          const newEmail = formData.get("correo") as string;
+          const currentPassword = formData.get("currentPassword") as string;
+          const newPassword = formData.get("newPassword") as string;
+
+          if (newEmail && newEmail !== profile.user.email) {
+            const emailRes = await updateEmailAction(newEmail);
+            if (emailRes?.error) {
+              alert(emailRes.error);
+              setIsSavingData(false);
+              return;
+            }
+          }
+
+          if (currentPassword && newPassword) {
+            const passRes = await updatePasswordAction(
+              currentPassword,
+              newPassword
+            );
+            if (passRes?.error) {
+              alert(passRes.error);
+              setIsSavingData(false);
+              return;
+            }
+          }
+
+          onSuccess();
+          setIsSavingData(false);
+          return;
+        }
+
         const res = await updatePersonalDataAction(formData);
         if (res?.error) {
           alert(res.error);
@@ -243,11 +274,10 @@ export default function ProfileEditForm({
                   key={day}
                   type="button"
                   onClick={() => toggleDay(day)}
-                  className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all border ${
-                    selectedDays.includes(day)
-                      ? "bg-[#e9d26a] text-[#252525] border-[#e9d26a] shadow-lg"
-                      : "bg-transparent text-gray-400 border-gray-200 hover:border-[#e9d26a] hover:text-[#252525]"
-                  }`}
+                  className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all border ${selectedDays.includes(day)
+                    ? "bg-[#e9d26a] text-[#252525] border-[#e9d26a] shadow-lg"
+                    : "bg-transparent text-gray-400 border-gray-200 hover:border-[#e9d26a] hover:text-[#252525]"
+                    }`}
                 >
                   {day}
                 </button>
@@ -292,9 +322,8 @@ export default function ProfileEditForm({
                 name="linkedin"
                 defaultValue={profile.user.social.linkedin || ""}
                 placeholder="LinkedIn"
-                className={`styled-input w-full ${
-                  errors.linkedin ? "border-red-500" : ""
-                }`}
+                className={`styled-input w-full ${errors.linkedin ? "border-red-500" : ""
+                  }`}
               />
               {errors.linkedin && (
                 <p className="text-red-500 text-xs mt-1">{errors.linkedin}</p>
@@ -305,9 +334,8 @@ export default function ProfileEditForm({
                 name="github"
                 defaultValue={profile.user.social.github || ""}
                 placeholder="GitHub"
-                className={`styled-input w-full ${
-                  errors.github ? "border-red-500" : ""
-                }`}
+                className={`styled-input w-full ${errors.github ? "border-red-500" : ""
+                  }`}
               />
               {errors.github && (
                 <p className="text-red-500 text-xs mt-1">{errors.github}</p>
@@ -318,9 +346,8 @@ export default function ProfileEditForm({
                 name="website"
                 defaultValue={profile.user.social.website || ""}
                 placeholder="Website"
-                className={`styled-input w-full ${
-                  errors.website ? "border-red-500" : ""
-                }`}
+                className={`styled-input w-full ${errors.website ? "border-red-500" : ""
+                  }`}
               />
               {errors.website && (
                 <p className="text-red-500 text-xs mt-1">{errors.website}</p>
@@ -331,9 +358,8 @@ export default function ProfileEditForm({
                 name="instagram"
                 defaultValue={profile.user.social.instagram || ""}
                 placeholder="Instagram"
-                className={`styled-input w-full ${
-                  errors.instagram ? "border-red-500" : ""
-                }`}
+                className={`styled-input w-full ${errors.instagram ? "border-red-500" : ""
+                  }`}
               />
               {errors.instagram && (
                 <p className="text-red-500 text-xs mt-1">{errors.instagram}</p>
@@ -343,13 +369,62 @@ export default function ProfileEditForm({
         </div>
       )}
 
+      {mode === "settings" && (
+        <div className="space-y-6">
+          <div className="bg-[#fafae6] p-6 rounded-3xl border border-[#e9d26a]/30 shadow-sm">
+            <h4 className="text-[10px] font-black text-[#bba955] uppercase tracking-[0.4em] mb-4">
+              Cambiar Correo Electrónico
+            </h4>
+            <div className="flex flex-col gap-2">
+              <input
+                name="correo"
+                type="email"
+                defaultValue={profile.user.email}
+                placeholder="Nuevo correo electrónico"
+                className="styled-input lowercase"
+                onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  e.target.value = e.target.value.toLowerCase().replace(/\s/g, '');
+                }}
+              />
+              <span className="text-[9px] text-gray-500 font-bold px-2">
+                Sin espacios, todo en minúsculas.
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-red-50/50 p-6 rounded-3xl border border-red-100 shadow-sm">
+            <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] mb-4">
+              Cambiar Contraseña
+            </h4>
+            <div className="grid grid-cols-1 gap-4">
+              <input
+                name="currentPassword"
+                type="password"
+                placeholder="Contraseña Actual"
+                className="styled-input"
+              />
+              <input
+                name="newPassword"
+                type="password"
+                placeholder="Nueva Contraseña"
+                className="styled-input"
+              />
+              <span className="text-[9px] text-gray-500 font-bold px-2 -mt-1">
+                Déjalo en blanco si no deseas cambiar la contraseña. Mínimo 8 caracteres.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end pt-4">
         <button
           type="submit"
           disabled={isSavingData}
-          className={`btn-gold px-8 py-3 w-full md:w-auto ${
-            isSavingData ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-          }`}
+          className={`btn-gold px-8 py-3 w-full md:w-auto ${isSavingData
+            ? "opacity-50 cursor-not-allowed"
+            : "cursor-pointer"
+            }`}
         >
           {isSavingData ? "Guardando..." : "Guardar cambios"}
         </button>

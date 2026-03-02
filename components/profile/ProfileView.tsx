@@ -62,7 +62,7 @@ export default function ProfileView({
     file: null as File | null,
   });
 
-  const [editMode, setEditMode] = useState<"contact" | "social" | null>(null);
+  const [editMode, setEditMode] = useState<"contact" | "social" | "settings" | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const openWithSas = async (blobUrl: string) => {
@@ -540,8 +540,13 @@ export default function ProfileView({
         <Modal
           isOpen={!!editMode}
           onClose={() => setEditMode(null)}
-          title={`Actualizar ${editMode === "contact" ? "Datos de Contacto" : "Redes Sociales"
-            }`}
+          title={
+            editMode === "contact"
+              ? "Actualizar Datos de Contacto"
+              : editMode === "social"
+                ? "Actualizar Redes Sociales"
+                : "Configuración de Cuenta"
+          }
         >
           <ProfileEditForm
             profile={profile}
@@ -980,15 +985,33 @@ export default function ProfileView({
         </div>
       </div>
 
-      {/* 5. Zona de Peligro (Eliminar Cuenta) */}
+      {/* 5. Zona de Peligro & Configuración (NUEVO) */}
       {!isAdminViewing && (
-        <div className="mt-12 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="text-[9px] font-black uppercase tracking-widest px-6 py-2 rounded-full border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
-          >
-            Eliminar mi cuenta
-          </button>
+        <div className="mt-16 pt-8 border-t border-gray-200/50 flex flex-col items-center justify-center gap-6">
+          <div className="text-center space-y-2 mb-2">
+            <h4 className="text-[10px] font-black text-gray-800 uppercase tracking-[0.4em]">
+              Opciones de Cuenta
+            </h4>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest max-w-sm mx-auto">
+              Gestiona tus credenciales de acceso o elimina tu cuenta de manera permanente.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <button
+              onClick={() => setEditMode("settings")}
+              className="text-[9px] font-black uppercase tracking-widest px-6 py-3 rounded-full bg-[#f0f0f0] border border-gray-300 text-gray-700 hover:bg-gray-200 transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              ⚙️ Cambiar Correo/Contraseña
+            </button>
+
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="text-[9px] font-black uppercase tracking-widest px-6 py-3 rounded-full border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              Eliminar mi cuenta
+            </button>
+          </div>
         </div>
       )}
 
@@ -1066,6 +1089,6 @@ export default function ProfileView({
         availableProjects={availableProjects}
         assignAction={assignVendorFromProfileAction}
       />
-    </div>
+    </div >
   );
 }

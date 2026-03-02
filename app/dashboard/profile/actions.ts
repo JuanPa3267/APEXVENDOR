@@ -404,3 +404,73 @@ export async function deleteMyAccountAction() {
     return { error: "No se pudo eliminar tu cuenta. Intenta de nuevo." };
   }
 }
+
+import bcrypt from "bcryptjs";
+
+export async function updateEmailAction(newEmail: string) {
+  const username = await getSessionUsername();
+  if (!username) return { error: "No autorizado" };
+
+  try {
+    const email = newEmail.trim().toLowerCase().replace(/\s/g, "");
+    if (!email) return { error: "Correo inválido" };
+
+    const existingUser = await db.usuario.findUnique({
+      where: { correo: email },
+    });
+
+    if (existingUser && existingUser.username !== username) {
+      return { error: "El correo ya está en uso por otro usuario" };
+    }
+
+    await db.usuario.update({
+      where: { username },
+      data: { correo: email },
+    });
+
+    revalidatePath("/dashboard/profile");
+    return { success: true };
+  } catch (e) {
+    console.error("Error updating email:", e);
+    return { error: "Error al actualizar el correo" };
+  }
+}
+
+export async function updatePasswordAction(
+  currentPassword: string,
+  newPassword: string
+) {
+  const username = await getSessionUsername();
+  if (!username) return { error: "No autorizado" };
+
+  if (newPassword.length < 8) {
+    return { error: "La nueva contraseña debe tener al menos 8 caracteres" };
+  }
+
+  try {
+    const user = await db.usuario.findUnique({
+      where: { username },
+    });
+
+    if (!user || !user.passwordHash) {
+      return { error: "Usuario no encontrado" };
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValid) {
+      return { error: "La contraseña actual es incorrecta" };
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.usuario.update({
+      where: { username },
+      data: { passwordHash: newHashedPassword },
+    });
+
+    return { success: true };
+  } catch (e) {
+    console.error("Error updating password:", e);
+    return { error: "Error al actualizar la contraseña" };
+  }
+}
