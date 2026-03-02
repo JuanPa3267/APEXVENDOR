@@ -22,13 +22,22 @@ export async function createAdminAction(formData: FormData) {
   if (!isAdmin) return { error: "No autorizado" };
 
   // 2) Datos del formulario
-  const correo = (formData.get("correo") as string)?.trim().toLowerCase();
+  const rawUsername = formData.get("username") as string;
+  const rawCorreo = formData.get("correo") as string;
+  const correo = rawCorreo ? rawCorreo.toLowerCase().replace(/\s/g, '') : "";
   const password = formData.get("password") as string;
   const confirm = formData.get("confirm") as string;
 
-  if (!correo || !password || !confirm) {
+  if (!rawUsername || !correo || !password || !confirm) {
     return { error: "Completa todos los campos" };
   }
+
+  const username = rawUsername.trim().toLowerCase().replace(/\s/g, '');
+
+  if (username.length > 20) {
+    return { error: "El username no puede tener más de 20 caracteres" };
+  }
+
   if (password !== confirm) {
     return { error: "Las contraseñas no coinciden" };
   }
@@ -36,8 +45,15 @@ export async function createAdminAction(formData: FormData) {
     return { error: "La contraseña debe tener mínimo 8 caracteres" };
   }
 
-  // Usamos "admin" como nombre base para generar el username
-  const username = generateUsername("admin", "a");
+  // Verificar si el username ya está en uso
+  const existingUsername = await db.usuario.findUnique({
+    where: { username },
+  });
+
+  if (existingUsername) {
+    return { error: "Este username ya está en uso, elige otro." };
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {

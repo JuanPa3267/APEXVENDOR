@@ -3,8 +3,10 @@ import bcrypt from "bcryptjs";
 
 export const authService = {
   async authenticateUser(username: string, password: string) {
+    const normalizedUsername = username ? username.trim().toLowerCase() : "";
+
     const user = await db.usuario.findUnique({
-      where: { correo: username || undefined },
+      where: { correo: normalizedUsername || undefined },
     });
 
     if (!user || !user.passwordHash) {

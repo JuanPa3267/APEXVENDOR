@@ -59,11 +59,33 @@ export default function CreateAdminButton() {
               className="space-y-4"
             >
 
+              <div className="flex flex-col gap-1">
+                <input
+                  name="username"
+                  type="text"
+                  className="styled-input lowercase"
+                  placeholder="Username (ej. nombreapellido o nombre_apellido)"
+                  maxLength={20}
+                  pattern="^\S+$"
+                  title="El username no puede contener espacios"
+                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    e.target.value = e.target.value.toLowerCase().replace(/\s/g, '');
+                  }}
+                  required
+                />
+                <span className="text-[9px] text-gray-500 font-bold px-2">
+                  Máximo 20 caracteres, sin espacios, minúsculas
+                </span>
+              </div>
+
               <input
                 name="correo"
                 type="email"
-                className="styled-input"
+                className="styled-input lowercase"
                 placeholder="Correo"
+                onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  e.target.value = e.target.value.toLowerCase().replace(/\s/g, '');
+                }}
                 required
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

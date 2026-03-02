@@ -12,7 +12,17 @@ export async function getFullProfile(username: string) {
           participacion_proveedor: {
             include: {
               proyecto: true,
-              contrato_participacion: true
+              contrato_participacion: true,
+              evaluacion: {
+                include: {
+                  usuario: true,
+                  evaluacion_detalle: {
+                    include: {
+                      metrica: true
+                    }
+                  }
+                }
+              }
             },
           },
         },
@@ -87,6 +97,17 @@ export async function getFullProfile(username: string) {
             url: contract.url_archivo,
             name: contract.nombre_archivo,
             uploadedBy: contract.cargado_por
+          } : null,
+          evaluation: p.evaluacion && p.evaluacion.length > 0 ? {
+            globalRating: Number(p.evaluacion[0].calificacion_global),
+            qualitativeComment: p.evaluacion[0].comentario_cualitativo,
+            date: p.evaluacion[0].fecha,
+            evaluatorUsername: p.evaluacion[0].usuario?.username,
+            details: p.evaluacion[0].evaluacion_detalle.map((d: any) => ({
+              metricName: d.metrica.nombre,
+              value: Number(d.valor_numerico),
+              notes: d.metrica.notas
+            }))
           } : null,
         };
       }) || [],

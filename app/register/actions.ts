@@ -22,7 +22,8 @@ function assertPdf(file: File) {
 }
 
 export async function registerAction(prevState: any, formData: FormData) {
-  const email = (formData.get("correo") as string) || "";
+  const rawEmail = (formData.get("correo") as string) || "";
+  const email = rawEmail.trim().toLowerCase();
   const password = (formData.get("password") as string) || "";
 
   const name = (formData.get("name") as string) || "";

@@ -590,16 +590,26 @@ export default function ProfileView({
                       {proj.project.client}
                     </p>
                   </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${proj.project.status === "en curso"
-                      ? "bg-green-100 text-green-700"
-                      : proj.project.status === "completado"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-600"
-                      }`}
-                  >
-                    {proj.project.status || "Definido"}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${proj.project.status === "en curso"
+                        ? "bg-green-100 text-green-700"
+                        : proj.project.status === "completado"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-600"
+                        }`}
+                    >
+                      {proj.project.status || "Definido"}
+                    </span>
+                    {isAdminViewing && (
+                      <button
+                        onClick={() => router.push(`/dashboard/projects/${proj.project.id}`)}
+                        className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-[#252525] text-[#e9d26a] hover:bg-black transition-all shadow-md whitespace-nowrap cursor-pointer"
+                      >
+                        Ver Proyecto ↗
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -649,6 +659,48 @@ export default function ProfileView({
                       >
                         Ver Documento
                       </button>
+                    </div>
+                  )}
+
+                  {isAdminViewing && proj.evaluation && (
+                    <div className="pt-4 mt-4 border-t border-dashed border-[#e9d26a]/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="text-[9px] font-black text-[#bba955] uppercase tracking-widest flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full"></span>
+                          Evaluación de Desempeño
+                        </h5>
+                        <div className="flex flex-col items-end">
+                          <span className="bg-[#e9d26a]/20 text-[#bba955] px-2 py-0.5 rounded-full text-[10px] font-black">
+                            ⭐ {proj.evaluation.globalRating.toFixed(1)} / 5.0
+                          </span>
+                          {proj.evaluation.evaluatorUsername && (
+                            <span className="text-[8px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">
+                              Por: @{proj.evaluation.evaluatorUsername}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {proj.evaluation.qualitativeComment && (
+                        <p className="text-xs text-[#252525] italic mb-4 bg-[#fafae6] p-3 rounded-xl border border-[#e9d26a]/20">
+                          "{proj.evaluation.qualitativeComment}"
+                        </p>
+                      )}
+
+                      {proj.evaluation.details && proj.evaluation.details.length > 0 && (
+                        <div className="grid grid-cols-1 gap-2">
+                          {proj.evaluation.details.map((detail: any, idx: number) => (
+                            <div key={idx} className="flex justify-between items-center text-[10px] bg-white/40 p-2.5 rounded-xl border border-white/50 hover:bg-white/60 transition-colors">
+                              <span className="font-bold text-gray-600 truncate mr-2" title={detail.metricName}>
+                                {detail.metricName}
+                              </span>
+                              <div className="flex flex-col items-end shrink-0">
+                                <span className="font-black text-[#252525]">{Number(detail.value).toFixed(1)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
