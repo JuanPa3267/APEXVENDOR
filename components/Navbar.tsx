@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import UpdatePasswordModal from "./UpdatePasswordModal";
 
 interface NavbarProps {
   username: string;
@@ -16,6 +17,7 @@ export default function Navbar({ username, role }: NavbarProps) {
   const isAdmin = role === "Admin";
   const isProveedor = role === "Proveedor";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   // Componente del Punto Radar para reutilizar con animación sliding
   const ActiveIndicator = () => (
@@ -46,9 +48,8 @@ export default function Navbar({ username, role }: NavbarProps) {
           {isProveedor && (
             <Link
               href="/dashboard/profile"
-              className={`nav-link flex items-center ${
-                pathname === "/dashboard/profile" ? "active-gold" : ""
-              }`}
+              className={`nav-link flex items-center ${pathname === "/dashboard/profile" ? "active-gold" : ""
+                }`}
             >
               {pathname === "/dashboard/profile" && <ActiveIndicator />}
               Mi Perfil
@@ -67,9 +68,8 @@ export default function Navbar({ username, role }: NavbarProps) {
             <>
               <Link
                 href="/dashboard/chat"
-                className={`nav-link flex items-center ${
-                  pathname === "/dashboard/chat" ? "active-gold" : ""
-                }`}
+                className={`nav-link flex items-center ${pathname === "/dashboard/chat" ? "active-gold" : ""
+                  }`}
               >
                 {pathname === "/dashboard/chat" && <ActiveIndicator />}
                 Intelligence Chat
@@ -84,11 +84,10 @@ export default function Navbar({ username, role }: NavbarProps) {
 
               <Link
                 href="/dashboard/projects"
-                className={`nav-link flex items-center ${
-                  pathname.startsWith("/dashboard/projects")
-                    ? "active-gold"
-                    : ""
-                }`}
+                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/projects")
+                  ? "active-gold"
+                  : ""
+                  }`}
               >
                 {pathname.startsWith("/dashboard/projects") && (
                   <ActiveIndicator />
@@ -105,9 +104,8 @@ export default function Navbar({ username, role }: NavbarProps) {
 
               <Link
                 href="/dashboard/vendors"
-                className={`nav-link flex items-center ${
-                  pathname.startsWith("/dashboard/vendors") ? "active-gold" : ""
-                }`}
+                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/vendors") ? "active-gold" : ""
+                  }`}
               >
                 {pathname.startsWith("/dashboard/vendors") && (
                   <ActiveIndicator />
@@ -123,11 +121,10 @@ export default function Navbar({ username, role }: NavbarProps) {
               </Link>
               <Link
                 href="/dashboard/rankings"
-                className={`nav-link flex items-center ${
-                  pathname.startsWith("/dashboard/rankings")
-                    ? "active-gold"
-                    : ""
-                }`}
+                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/rankings")
+                  ? "active-gold"
+                  : ""
+                  }`}
               >
                 {pathname.startsWith("/dashboard/rankings") && (
                   <ActiveIndicator />
@@ -154,6 +151,12 @@ export default function Navbar({ username, role }: NavbarProps) {
               Sesión Activa
             </p>
             <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={() => setIsPasswordModalOpen(true)}
+                className="text-[10px] font-bold text-gray-400 hover:text-[#e9d26a] uppercase transition-colors tracking-widest mr-2 cursor-pointer"
+              >
+                Actualizar Contraseña
+              </button>
               {isAdmin && (
                 <span className="bg-[#e9d26a] text-black text-[9px] font-black px-2 py-0.5 rounded-sm shadow-sm">
                   ADMIN
@@ -293,19 +296,27 @@ export default function Navbar({ username, role }: NavbarProps) {
                 </p>
               </div>
 
-              <form action={logoutAction}>
+              <div className="flex flex-col items-end gap-2">
                 <button
-                  type="submit"
-                  onClick={() => {
-                    if (typeof window !== "undefined") {
-                      localStorage.removeItem("apex_chat_history");
-                    }
-                  }}
-                  className="text-red-500 font-bold uppercase text-xs hover:text-red-400 transition-colors"
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="text-[#e9d26a] font-bold uppercase text-xs hover:text-white transition-colors cursor-pointer"
                 >
-                  Cerrar Sesión
+                  Actualizar Contraseña
                 </button>
-              </form>
+                <form action={logoutAction}>
+                  <button
+                    type="submit"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        localStorage.removeItem("apex_chat_history");
+                      }
+                    }}
+                    className="text-red-500 font-bold uppercase text-xs hover:text-red-400 transition-colors"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </form>
+              </div>
             </div>
           </motion.div>
         )}
@@ -345,6 +356,11 @@ export default function Navbar({ username, role }: NavbarProps) {
           padding-left: 10px;
         }
       `}</style>
+
+      <UpdatePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+      />
     </nav>
   );
 }
