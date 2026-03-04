@@ -6,12 +6,13 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function loginAction(prevState: any, formData: FormData) {
-  const usernameInput = formData.get("username") as string;
+  const rawUsernameInput = formData.get("username") as string;
+  const usernameInput = rawUsernameInput.trim().toLowerCase();
   const passwordInput = formData.get("password") as string;
 
   const result = await authService.authenticateUser(
     usernameInput,
-    passwordInput
+    passwordInput,
   );
 
   // Validación de seguridad para TypeScript
@@ -35,7 +36,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   // Verificamos si es "Admin" (Coincidiendo con tu tabla 'rol')
   const isAdmin = userWithRoles?.roles.some(
-    (r: any) => r.rol.nombre === "Admin"
+    (r: any) => r.rol.nombre === "Admin",
   );
 
   const cookieStore = await cookies();
