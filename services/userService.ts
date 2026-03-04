@@ -1,6 +1,6 @@
 // services/userService.ts
-import { db } from "@/lib/db";
 import { deleteFromAzureBlob, extractBlobNameFromUrl } from "@/lib/azureBlob";
+import { db } from "@/lib/db";
 
 type RegisterUserInput = {
   username: string;
@@ -104,7 +104,7 @@ export const userService = {
       try {
         const fs = require("fs");
         const path = require("path");
-        const imagePath = path.join(process.cwd(), "img", "tak_logo.png");
+        const imagePath = path.join(process.cwd(), "img", "TAK_Main_Logo.png");
 
         if (fs.existsSync(imagePath)) {
           const imageBuffer = fs.readFileSync(imagePath);
@@ -184,7 +184,10 @@ export const userService = {
 
       // Certificaciones
       for (const cert of user.perfilProveedor.certificaciones) {
-        const blobName = extractBlobNameFromUrl(cert.url_archivo, certContainer);
+        const blobName = extractBlobNameFromUrl(
+          cert.url_archivo,
+          certContainer,
+        );
         if (blobName) {
           await deleteFromAzureBlob(certContainer, blobName);
         }
