@@ -103,7 +103,7 @@ export default function ChatContainer() {
       {/* AREA DE MENSAJES: Corregido el centrado vertical absoluto */}
       <div
         ref={scrollRef}
-        className={`flex-1 overflow-y-auto px-6 custom-scrollbar ${
+        className={`flex-1 overflow-y-auto px-4 md:px-6 custom-scrollbar ${
           isInitialState
             ? "flex flex-col items-center justify-center -mt-20"
             : "pt-4 pb-40"
@@ -234,10 +234,10 @@ export default function ChatContainer() {
       {/* INPUT FIJO SOLO CUANDO HAY MENSAJES */}
       {!isInitialState && (
         <>
-          <div className="absolute bottom-0 left-0 w-full p-8 bg-[#fafae6]/40 backdrop-blur-xl border-t border-black/5 z-10 animate-in fade-in slide-in-from-bottom-10 duration-700">
+          <div className="absolute bottom-0 left-0 w-full p-4 md:p-8 bg-[#fafae6]/40 backdrop-blur-xl border-t border-black/5 z-10 animate-in fade-in slide-in-from-bottom-10 duration-700">
             <form
               onSubmit={handleSubmit}
-              className="prompt_row shadow-2xl items-center bg-white border border-gray-200 py-2.5 px-4 mx-auto max-w-5xl"
+              className="prompt_row shadow-2xl items-center bg-white border border-gray-100 py-2 md:py-2.5 px-3 md:px-4 mx-auto max-w-5xl"
             >
               <button
                 type="button"

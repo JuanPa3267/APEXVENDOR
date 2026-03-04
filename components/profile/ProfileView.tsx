@@ -43,6 +43,11 @@ export default function ProfileView({
   );
   const [displayedText, setDisplayedText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const cvs = profile.documents?.cvs || [];
   const certs = profile.documents?.certificaciones || [];
@@ -62,7 +67,9 @@ export default function ProfileView({
     file: null as File | null,
   });
 
-  const [editMode, setEditMode] = useState<"contact" | "social" | "settings" | null>(null);
+  const [editMode, setEditMode] = useState<
+    "contact" | "social" | "settings" | null
+  >(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const openWithSas = async (blobUrl: string) => {
@@ -116,7 +123,7 @@ export default function ProfileView({
   };
 
   return (
-    <div className="max-w-4xl mx-auto animate-in fade-in zoom-in duration-500 pb-20">
+    <div className="max-w-4xl mx-auto animate-in fade-in zoom-in duration-500 pb-20 px-4 md:px-0">
       {/* 1. Banner de Modo Auditoría */}
       {isAdminViewing && (
         <div className="mb-10 bg-[#252525] border-l-4 border-[#e9d26a] p-5 rounded-r-2xl shadow-2xl">
@@ -153,7 +160,7 @@ export default function ProfileView({
           </div>
         </div>
 
-        <h3 className="text-5xl font-black text-[#252525] mt-10 mb-2 tracking-tighter uppercase text-center">
+        <h3 className="text-3xl md:text-5xl font-black text-[#252525] mt-10 mb-2 tracking-tighter uppercase text-center">
           {profile.details?.fullName ||
             profile.details?.legalName ||
             "Nombre no configurado"}
@@ -170,7 +177,7 @@ export default function ProfileView({
       {/* 3. Grid de Información (Cards de Datos y Score) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         {/* Card 1: Datos */}
-        <div className="bg-white/40 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white/40 backdrop-blur-md p-6 md:p-10 rounded-[3rem] border border-white/50 shadow-sm hover:shadow-md transition-all">
           <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
             <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full"></span>
             Credenciales de Proveedor
@@ -205,12 +212,14 @@ export default function ProfileView({
                 Último acceso
               </span>
               <span className="text-[#252525] font-bold text-lg">
-                {profile.user.lastLogin
+                {hasMounted && profile.user.lastLogin
                   ? new Date(profile.user.lastLogin).toLocaleString("es-CO", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })
-                  : "Nunca"}
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
+                  : profile.user.lastLogin
+                    ? "..."
+                    : "Nunca"}
               </span>
             </div>
             <div className="flex flex-col">
@@ -218,19 +227,21 @@ export default function ProfileView({
                 Última actualización
               </span>
               <span className="text-[#252525] font-bold text-lg">
-                {profile.user.lastUpdated
+                {hasMounted && profile.user.lastUpdated
                   ? new Date(profile.user.lastUpdated).toLocaleString("es-CO", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })
-                  : "Desconocida"}
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
+                  : profile.user.lastUpdated
+                    ? "..."
+                    : "Desconocida"}
               </span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Calificación */}
-        <div className="bg-[#252525] p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group border border-black">
+        <div className="bg-[#252525] p-6 md:p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group border border-black">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#e9d26a]/10 rounded-full blur-3xl transition-all group-hover:bg-[#e9d26a]/20"></div>
 
           <h4 className="text-[10px] font-black text-[#e9d26a] uppercase tracking-[0.3em] mb-10 flex items-center gap-3">
@@ -271,7 +282,7 @@ export default function ProfileView({
 
       {/* 4. SECCIÓN PORTAFOLIO RESUMEN (Ancho Completo) */}
       <div className="w-full bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl overflow-hidden transition-all">
-        <div className="p-10">
+        <div className="p-6 md:p-10">
           <div className="flex justify-between items-center mb-8">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] flex items-center gap-3">
               <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full animate-pulse"></span>
@@ -282,10 +293,11 @@ export default function ProfileView({
               <button
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
-                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
-                  ? "bg-green-500 text-white scale-95"
-                  : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
-                  }`}
+                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${
+                  isSaving
+                    ? "bg-green-500 text-white scale-95"
+                    : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
+                }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
               </button>
@@ -319,7 +331,7 @@ export default function ProfileView({
 
       {/* 4.1. Tarifa por hora (Extra Card) */}
       <div className="w-full bg-gradient-to-r from-white/40 to-[#e9d26a]/10 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl overflow-hidden transition-all mt-8 group hover:shadow-2xl">
-        <div className="p-10 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-6">
             <div className="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(233,210,106,0.2)] group-hover:scale-110 transition-transform">
               <span className="text-[#e9d26a] text-2xl font-black">$</span>
@@ -356,7 +368,7 @@ export default function ProfileView({
 
       {/* 4.2. Disponibilidad (Extra Card) */}
       <div className="w-full bg-gradient-to-r from-white/40 to-blue-500/10 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl overflow-hidden transition-all mt-8 group hover:shadow-2xl">
-        <div className="p-10 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-start gap-6 w-full">
             <div className="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(59,130,246,0.2)] group-hover:scale-110 transition-transform">
               <span className="text-blue-400 text-2xl font-black">📅</span>
@@ -441,7 +453,7 @@ export default function ProfileView({
 
       {/* 4.5 Datos adicionales + Redes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-        <div className="bg-white/40 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 shadow-sm">
+        <div className="bg-white/40 backdrop-blur-md p-6 md:p-10 rounded-[3rem] border border-white/50 shadow-sm">
           <div className="flex justify-between items-start mb-8">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
               Datos adicionales
@@ -493,7 +505,7 @@ export default function ProfileView({
           </div>
         </div>
 
-        <div className="bg-white/40 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 shadow-sm">
+        <div className="bg-white/40 backdrop-blur-md p-6 md:p-10 rounded-[3rem] border border-white/50 shadow-sm">
           <div className="flex justify-between items-start mb-8">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-8">
               Redes sociales
@@ -574,7 +586,7 @@ export default function ProfileView({
           )}
         </div>
         {!profile.projects || profile.projects.length === 0 ? (
-          <div className="bg-white/30 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 text-center">
+          <div className="bg-white/30 backdrop-blur-md p-6 md:p-10 rounded-[3rem] border border-white/50 text-center">
             <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
               No estás asignado a ningún proyecto activo.
             </p>
@@ -597,18 +609,21 @@ export default function ProfileView({
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <span
-                      className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${proj.project.status === "en curso"
-                        ? "bg-green-100 text-green-700"
-                        : proj.project.status === "completado"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-600"
-                        }`}
+                      className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${
+                        proj.project.status === "en curso"
+                          ? "bg-green-100 text-green-700"
+                          : proj.project.status === "completado"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-600"
+                      }`}
                     >
                       {proj.project.status || "Definido"}
                     </span>
                     {isAdminViewing && (
                       <button
-                        onClick={() => router.push(`/dashboard/projects/${proj.project.id}`)}
+                        onClick={() =>
+                          router.push(`/dashboard/projects/${proj.project.id}`)
+                        }
                         className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-[#252525] text-[#e9d26a] hover:bg-black transition-all shadow-md whitespace-nowrap cursor-pointer"
                       >
                         Ver Proyecto ↗
@@ -692,20 +707,31 @@ export default function ProfileView({
                         </p>
                       )}
 
-                      {proj.evaluation.details && proj.evaluation.details.length > 0 && (
-                        <div className="grid grid-cols-1 gap-2">
-                          {proj.evaluation.details.map((detail: any, idx: number) => (
-                            <div key={idx} className="flex justify-between items-center text-[10px] bg-white/40 p-2.5 rounded-xl border border-white/50 hover:bg-white/60 transition-colors">
-                              <span className="font-bold text-gray-600 truncate mr-2" title={detail.metricName}>
-                                {detail.metricName}
-                              </span>
-                              <div className="flex flex-col items-end shrink-0">
-                                <span className="font-black text-[#252525]">{Number(detail.value).toFixed(1)}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {proj.evaluation.details &&
+                        proj.evaluation.details.length > 0 && (
+                          <div className="grid grid-cols-1 gap-2">
+                            {proj.evaluation.details.map(
+                              (detail: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="flex justify-between items-center text-[10px] bg-white/40 p-2.5 rounded-xl border border-white/50 hover:bg-white/60 transition-colors"
+                                >
+                                  <span
+                                    className="font-bold text-gray-600 truncate mr-2"
+                                    title={detail.metricName}
+                                  >
+                                    {detail.metricName}
+                                  </span>
+                                  <div className="flex flex-col items-end shrink-0">
+                                    <span className="font-black text-[#252525]">
+                                      {Number(detail.value).toFixed(1)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        )}
                     </div>
                   )}
                 </div>
@@ -717,7 +743,7 @@ export default function ProfileView({
 
       {/* 4.6 Documentación */}
       <div className="w-full bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white/60 shadow-xl overflow-hidden transition-all mt-8">
-        <div className="p-10">
+        <div className="p-6 md:p-10">
           <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] flex items-center gap-3 mb-8">
             <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full"></span>
             Documentación
@@ -945,10 +971,11 @@ export default function ProfileView({
                             : ""}
                         </div>
                         <div
-                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                            }`}
+                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
+                            vigente
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
                         </div>
@@ -993,7 +1020,8 @@ export default function ProfileView({
               Opciones de Cuenta
             </h4>
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest max-w-sm mx-auto">
-              Gestiona tus credenciales de acceso o elimina tu cuenta de manera permanente.
+              Gestiona tus credenciales de acceso o elimina tu cuenta de manera
+              permanente.
             </p>
           </div>
 
@@ -1089,6 +1117,6 @@ export default function ProfileView({
         availableProjects={availableProjects}
         assignAction={assignVendorFromProfileAction}
       />
-    </div >
+    </div>
   );
 }

@@ -236,7 +236,7 @@ export default function Navbar({ username, role }: NavbarProps) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-[72px] left-0 w-full bg-[#1a1a1a] border-t border-[#333] shadow-2xl flex flex-col p-6 gap-4 md:hidden"
+            className="absolute top-[72px] left-0 w-full bg-[#333] border-t border-[#444] shadow-2xl flex flex-col p-6 gap-4 md:hidden"
           >
             {isProveedor && (
               <Link

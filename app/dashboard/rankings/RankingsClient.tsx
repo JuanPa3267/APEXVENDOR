@@ -37,7 +37,7 @@ export default function RankingsClient({
   }, [podium]);
 
   return (
-    <div className="p-8 lg:p-12 max-w-7xl mx-auto animate-in fade-in duration-700">
+    <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto animate-in fade-in duration-700">
       <div className="mb-12">
         <h2 className="text-[#252525] font-black text-4xl uppercase tracking-tighter m-0 leading-none">
           TOP <span className="text-[#bba955]">10 VENDORS</span>
@@ -61,7 +61,7 @@ export default function RankingsClient({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className={`relative flex flex-col items-center w-full md:w-64 p-6 rounded-[2.5rem] border shadow-2xl transition-all
-                ${isFirst ? "bg-[#252525] border-[#e9d26a] h-[380px] z-10 scale-105" : "bg-white border-white/60 h-[320px]"}
+                ${isFirst ? "bg-[#252525] border-[#e9d26a] h-[380px] z-10 md:scale-105" : "bg-white border-white/60 h-[320px]"}
               `}
             >
               {/* Position Badge */}
@@ -81,7 +81,7 @@ export default function RankingsClient({
               >
                 {vendor.usuario.pfps?.image_base64 ? (
                   <img
-                    src={vendor.usuario.pfps.image_base64}
+                    src={`data:image/png;base64,${vendor.usuario.pfps.image_base64}`}
                     alt={vendor.usuario.username || ""}
                     className="w-full h-full object-cover"
                   />
@@ -184,7 +184,7 @@ export default function RankingsClient({
                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm group-hover:scale-110 transition-transform">
                         {vendor.usuario.pfps?.image_base64 ? (
                           <img
-                            src={vendor.usuario.pfps.image_base64}
+                            src={`data:image/png;base64,${vendor.usuario.pfps.image_base64}`}
                             className="w-full h-full object-cover"
                           />
                         ) : (
