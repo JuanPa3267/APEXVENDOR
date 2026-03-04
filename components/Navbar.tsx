@@ -151,12 +151,14 @@ export default function Navbar({ username, role }: NavbarProps) {
               Sesión Activa
             </p>
             <div className="flex items-center gap-2 justify-end">
-              <button
-                onClick={() => setIsPasswordModalOpen(true)}
-                className="text-[10px] font-bold text-gray-400 hover:text-[#e9d26a] uppercase transition-colors tracking-widest mr-2 cursor-pointer"
-              >
-                Actualizar Contraseña
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="text-[10px] font-bold text-gray-400 hover:text-[#e9d26a] uppercase transition-colors tracking-widest mr-2 cursor-pointer"
+                >
+                  Actualizar Contraseña
+                </button>
+              )}
               {isAdmin && (
                 <span className="bg-[#e9d26a] text-black text-[9px] font-black px-2 py-0.5 rounded-sm shadow-sm">
                   ADMIN
@@ -297,12 +299,14 @@ export default function Navbar({ username, role }: NavbarProps) {
               </div>
 
               <div className="flex flex-col items-end gap-2">
-                <button
-                  onClick={() => setIsPasswordModalOpen(true)}
-                  className="text-[#e9d26a] font-bold uppercase text-xs hover:text-white transition-colors cursor-pointer"
-                >
-                  Actualizar Contraseña
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => setIsPasswordModalOpen(true)}
+                    className="text-[#e9d26a] font-bold uppercase text-xs hover:text-white transition-colors cursor-pointer"
+                  >
+                    Actualizar Contraseña
+                  </button>
+                )}
                 <form action={logoutAction}>
                   <button
                     type="submit"

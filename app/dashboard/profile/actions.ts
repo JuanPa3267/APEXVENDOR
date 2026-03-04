@@ -343,67 +343,7 @@ export async function deleteCertAction(id_cert: string) {
   }
 }
 
-export async function deleteMyAccountAction() {
-  const username = await getSessionUsername();
-  if (!username) return { error: "No autorizado" };
 
-  try {
-    const user = await db.usuario.findUnique({
-      where: { username },
-      include: {
-        perfilProveedor: {
-          include: {
-            certificaciones: true,
-            hoja_vida_proveedor: true,
-          },
-        },
-      },
-    });
-
-    if (!user) return { error: "Usuario no encontrado" };
-
-    // 1. Eliminar blobs
-    const deletionPromises: Promise<any>[] = [];
-
-    if (user.perfilProveedor?.hoja_vida_proveedor) {
-      for (const cv of user.perfilProveedor.hoja_vida_proveedor) {
-        if (cv.url_pdf) deletionPromises.push(deleteBlobByUrl(cv.url_pdf));
-      }
-    }
-
-    if (user.perfilProveedor?.certificaciones) {
-      for (const cert of user.perfilProveedor.certificaciones) {
-        if (cert.url_archivo)
-          deletionPromises.push(deleteBlobByUrl(cert.url_archivo));
-      }
-    }
-
-    if (deletionPromises.length > 0) {
-      const results = await Promise.allSettled(deletionPromises);
-      results.forEach((res, i) => {
-        if (res.status === "rejected") {
-          console.error(`Failed to delete blob #${i}:`, res.reason);
-        }
-      });
-    }
-
-    // 2. Eliminar usuario de BD
-    await db.usuario.delete({
-      where: { id_usuario: user.id_usuario },
-    });
-
-    // 3. Limpiar cookies de sesión
-    const cookieStore = await cookies();
-    cookieStore.delete("session_id");
-    cookieStore.delete("username");
-    cookieStore.delete("user_role");
-
-    return { success: true };
-  } catch (e: any) {
-    console.error("Error deleting account:", e);
-    return { error: "No se pudo eliminar tu cuenta. Intenta de nuevo." };
-  }
-}
 
 import bcrypt from "bcryptjs";
 

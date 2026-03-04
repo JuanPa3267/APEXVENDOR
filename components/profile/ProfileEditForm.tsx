@@ -193,6 +193,7 @@ export default function ProfileEditForm({
           const newEmail = formData.get("correo") as string;
           const currentPassword = formData.get("currentPassword") as string;
           const newPassword = formData.get("newPassword") as string;
+          const confirmPassword = formData.get("confirmPassword") as string;
 
           if (newEmail && newEmail !== profile.user.email) {
             const emailRes = await updateEmailAction(newEmail);
@@ -204,6 +205,12 @@ export default function ProfileEditForm({
           }
 
           if (currentPassword && newPassword) {
+            if (newPassword !== confirmPassword) {
+              alert("Las contraseñas no coinciden.");
+              setIsSavingData(false);
+              return;
+            }
+
             const passRes = await updatePasswordAction(
               currentPassword,
               newPassword
@@ -409,9 +416,37 @@ export default function ProfileEditForm({
                 placeholder="Nueva Contraseña"
                 className="styled-input"
               />
+              <input
+                name="confirmPassword"
+                type="password"
+                placeholder="Confirmar Contraseña"
+                className="styled-input"
+              />
               <span className="text-[9px] text-gray-500 font-bold px-2 -mt-1">
                 Déjalo en blanco si no deseas cambiar la contraseña. Mínimo 8 caracteres.
               </span>
+            </div>
+          </div>
+
+          <div className="bg-[#252525] p-6 rounded-3xl shadow-sm border border-gray-800">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-4 flex items-center gap-2">
+              <span className="text-[#e9d26a]">⚠️</span> Desactivar Cuenta
+            </h4>
+            <div className="text-gray-300 text-sm font-medium">
+              <p className="mb-2">
+                Si deseas desactivar o eliminar tu cuenta de ApexVendor de forma permanente, por favor contacta a nuestro equipo de soporte.
+              </p>
+              <div className="bg-black/50 p-3 rounded-xl border border-gray-700/50 flex flex-col gap-1 mt-4">
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                  Correo de soporte
+                </span>
+                <a
+                  href="mailto:support@apexvendor.com"
+                  className="text-[#e9d26a] font-bold hover:underline"
+                >
+                  support@apexvendor.com
+                </a>
+              </div>
             </div>
           </div>
         </div>

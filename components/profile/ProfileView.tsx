@@ -4,7 +4,6 @@ import PfpEditor from "@/app/dashboard/profile/PfpEditor";
 import {
   deleteCertAction,
   deleteCvAction,
-  deleteMyAccountAction,
   getSasUrlAction,
   updatePortfolioAction,
   uploadCertAction,
@@ -70,7 +69,6 @@ export default function ProfileView({
   const [editMode, setEditMode] = useState<
     "contact" | "social" | "settings" | null
   >(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const openWithSas = async (blobUrl: string) => {
     const res = await getSasUrlAction(blobUrl);
@@ -178,10 +176,21 @@ export default function ProfileView({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         {/* Card 1: Datos */}
         <div className="bg-white/40 backdrop-blur-md p-6 md:p-10 rounded-[3rem] border border-white/50 shadow-sm hover:shadow-md transition-all">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
-            <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full"></span>
-            Credenciales de Proveedor
-          </h4>
+          <div className="flex justify-between items-center mb-8">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] flex items-center gap-3">
+              <span className="w-1.5 h-1.5 bg-[#e9d26a] rounded-full"></span>
+              Credenciales de Proveedor
+            </h4>
+            {!isAdminViewing && (
+              <button
+                onClick={() => setEditMode("settings")}
+                className="text-gray-400 hover:text-[#e9d26a] transition-colors p-2 cursor-pointer"
+                title="Opciones de cuenta"
+              >
+                <span className="text-xl">⚙️</span>
+              </button>
+            )}
+          </div>
           <div className="space-y-6">
             <div className="flex flex-col">
               <span className="text-[9px] font-black text-[#bba955] uppercase tracking-widest mb-1">
@@ -201,22 +210,14 @@ export default function ProfileView({
             </div>
             <div className="flex flex-col">
               <span className="text-[9px] font-black text-[#bba955] uppercase tracking-widest mb-1">
-                Ubicación Actual
-              </span>
-              <span className="text-[#252525] font-bold text-lg">
-                {profile.details?.city || "No definida"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] font-black text-[#bba955] uppercase tracking-widest mb-1">
                 Último acceso
               </span>
               <span className="text-[#252525] font-bold text-lg">
                 {hasMounted && profile.user.lastLogin
                   ? new Date(profile.user.lastLogin).toLocaleString("es-CO", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
                   : profile.user.lastLogin
                     ? "..."
                     : "Nunca"}
@@ -229,9 +230,9 @@ export default function ProfileView({
               <span className="text-[#252525] font-bold text-lg">
                 {hasMounted && profile.user.lastUpdated
                   ? new Date(profile.user.lastUpdated).toLocaleString("es-CO", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
                   : profile.user.lastUpdated
                     ? "..."
                     : "Desconocida"}
@@ -293,11 +294,10 @@ export default function ProfileView({
               <button
                 onClick={handleSavePortfolio}
                 disabled={isSaving}
-                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${
-                  isSaving
-                    ? "bg-green-500 text-white scale-95"
-                    : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
-                }`}
+                className={`text-[9px] font-black uppercase tracking-widest px-6 py-2.5 rounded-full transition-all duration-300 shadow-lg ${isSaving
+                  ? "bg-green-500 text-white scale-95"
+                  : "bg-[#252525] text-[#e9d26a] hover:bg-black active:scale-95"
+                  }`}
               >
                 {isSaving ? "✓ Guardado" : "💾 Actualizar"}
               </button>
@@ -502,6 +502,15 @@ export default function ProfileView({
                 {profile.details?.direccion || "No definida"}
               </div>
             </div>
+
+            <div>
+              <div className="text-[9px] font-black text-[#bba955] uppercase tracking-widest mb-1">
+                Ubicación Actual
+              </div>
+              <div className="font-bold">
+                {profile.details?.city || "No definida"}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -609,13 +618,12 @@ export default function ProfileView({
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <span
-                      className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${
-                        proj.project.status === "en curso"
-                          ? "bg-green-100 text-green-700"
-                          : proj.project.status === "completado"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-[9px] flex-none font-black uppercase tracking-widest ${proj.project.status === "en curso"
+                        ? "bg-green-100 text-green-700"
+                        : proj.project.status === "completado"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-600"
+                        }`}
                     >
                       {proj.project.status || "Definido"}
                     </span>
@@ -971,11 +979,10 @@ export default function ProfileView({
                             : ""}
                         </div>
                         <div
-                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${
-                            vigente
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                          className={`text-[10px] font-black uppercase tracking-widest mt-2 inline-block px-3 py-1 rounded-full ${vigente
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                            }`}
                         >
                           {vigente ? "Vigente" : "Expirada"}
                         </div>
@@ -1012,37 +1019,6 @@ export default function ProfileView({
         </div>
       </div>
 
-      {/* 5. Zona de Peligro & Configuración (NUEVO) */}
-      {!isAdminViewing && (
-        <div className="mt-16 pt-8 border-t border-gray-200/50 flex flex-col items-center justify-center gap-6">
-          <div className="text-center space-y-2 mb-2">
-            <h4 className="text-[10px] font-black text-gray-800 uppercase tracking-[0.4em]">
-              Opciones de Cuenta
-            </h4>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest max-w-sm mx-auto">
-              Gestiona tus credenciales de acceso o elimina tu cuenta de manera
-              permanente.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <button
-              onClick={() => setEditMode("settings")}
-              className="text-[9px] font-black uppercase tracking-widest px-6 py-3 rounded-full bg-[#f0f0f0] border border-gray-300 text-gray-700 hover:bg-gray-200 transition-all cursor-pointer shadow-sm active:scale-95"
-            >
-              ⚙️ Cambiar Correo/Contraseña
-            </button>
-
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="text-[9px] font-black uppercase tracking-widest px-6 py-3 rounded-full border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
-            >
-              Eliminar mi cuenta
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* 5. Sello Inferior */}
       <div className="mt-8 flex justify-center opacity-20">
         <div className="flex items-center gap-2 border border-[#252525] px-4 py-2 rounded-full">
@@ -1051,60 +1027,6 @@ export default function ProfileView({
           </span>
         </div>
       </div>
-
-      {/* Modal de confirmación de eliminación */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="¿Estás completamente seguro?"
-      >
-        <div className="space-y-6">
-          <div className="bg-red-50 border-l-4 border-red-500 p-4">
-            <p className="text-red-700 font-bold text-sm">
-              Esta acción es irreversible. Se eliminarán permanentemente:
-            </p>
-            <ul className="list-disc list-inside text-red-600 text-xs mt-2 space-y-1">
-              <li>Tu perfil de proveedor y todos tus datos.</li>
-              <li>Tu hoja de vida (CV) y certificaciones subidas.</li>
-              <li>Tu historial de acceso y configuración.</li>
-            </ul>
-          </div>
-
-          <p className="text-gray-600 text-sm">
-            Si procedes, tu sesión se cerrará y serás redirigido a la página de
-            inicio.
-          </p>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              onClick={() => setShowDeleteModal(false)}
-              className="px-4 py-2 rounded-xl text-gray-500 hover:bg-gray-100 text-xs font-bold uppercase tracking-widest transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={async () => {
-                if (
-                  !confirm(
-                    "Última advertencia: ¿Deseas eliminar tu cuenta permanentemente?",
-                  )
-                )
-                  return;
-
-                const res = await deleteMyAccountAction();
-                if (res?.error) {
-                  alert(res.error);
-                } else {
-                  router.push("/");
-                }
-              }}
-              className="px-4 py-2 rounded-xl bg-[#EB2328] text-white hover:bg-[#FF3C39] text-xs font-bold uppercase tracking-widest shadow-lg active:scale-95 transition-all"
-            >
-              Sí, eliminar mi cuenta
-            </button>
-          </div>
-        </div>
-      </Modal>
 
       <AssignToProjectModal
         open={showAssignModal}
@@ -1117,6 +1039,6 @@ export default function ProfileView({
         availableProjects={availableProjects}
         assignAction={assignVendorFromProfileAction}
       />
-    </div>
+    </div >
   );
 }
