@@ -416,10 +416,8 @@ export default function LogsPage() {
         h = "";
       if (log.fecha !== "Nunca") {
         const d = new Date(log.fecha);
-        const s = d.toLocaleString("es-CO").replace(",", "");
-        const parts = s.split(" ");
-        f = parts[0];
-        h = parts[parts.length - 1];
+        f = d.toLocaleDateString("es-CO");
+        h = d.toLocaleTimeString("es-CO");
       }
       return [
         f,

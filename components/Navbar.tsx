@@ -1,6 +1,6 @@
 "use client";
 
-import { logoutAction } from "@/app/logout/action";
+import { logoutAction } from "@/app/logout/actions";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
