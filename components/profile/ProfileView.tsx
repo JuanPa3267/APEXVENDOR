@@ -857,14 +857,22 @@ export default function ProfileView({
                       setCertForm((p) => ({ ...p, emisor: e.target.value }))
                     }
                   />
-                  <input
-                    className="styled-input"
-                    placeholder="Nivel/Categoría (opcional)"
+                  <select
+                    className="styled-input text-gray-700 bg-white"
                     value={certForm.nivel}
                     onChange={(e) =>
                       setCertForm((p) => ({ ...p, nivel: e.target.value }))
                     }
-                  />
+                  >
+                    <option value="">Nivel / categoría (opcional)</option>
+                    <option value="Curso">Curso</option>
+                    <option value="Diplomado">Diplomado</option>
+                    <option value="Pregrado">Pregrado</option>
+                    <option value="Postgrado">Postgrado</option>
+                    <option value="Maestría">Maestría</option>
+                    <option value="Doctorado">Doctorado</option>
+                    <option value="Otro">Otro</option>
+                  </select>
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       className="styled-input"
@@ -966,10 +974,15 @@ export default function ProfileView({
                       className="flex items-center justify-between p-4 rounded-2xl bg-white/30 border border-white/50"
                     >
                       <div className="pr-3">
-                        <div className="font-bold text-[#252525]">
+                        <div className="font-bold text-[#252525] flex items-center gap-2">
                           {c.nombre_certificacion}
+                          {c.nivel_categoria && (
+                            <span className="bg-[#e9d26a]/20 text-[#bba955] text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-[#e9d26a]/30">
+                              {c.nivel_categoria}
+                            </span>
+                          )}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 mt-1">
                           {c.emisor} • Emitida:{" "}
                           {new Date(c.fecha_emision).toLocaleDateString(
                             "en-US",

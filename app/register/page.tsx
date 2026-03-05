@@ -2,7 +2,7 @@
 
 import TermsModal from "@/components/TermsModal";
 import { useActionState, useState } from "react";
-import { registerAction } from "./actions";
+import { registerAction, checkEmailExistsAction } from "./actions";
 
 type CertUI = {
   nombre: string;
@@ -24,6 +24,8 @@ export default function RegisterPage() {
   const [confirm, setConfirm] = useState("");
   const [acceptedTyC, setAcceptedTyC] = useState(false);
   const [showTyC, setShowTyC] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   // Paso 2
   const [tipoProveedor, setTipoProveedor] = useState<"Persona" | "Empresa">(
@@ -62,7 +64,7 @@ export default function RegisterPage() {
   const isPasswordShort = password.length > 0 && password.length < 8;
   const isPhoneShort = telefono.length > 0 && telefono.length < 10;
 
-  const next = () => {
+  const next = async () => {
     if (step === 1) {
       if (
         !correo ||
@@ -73,6 +75,20 @@ export default function RegisterPage() {
         isPasswordShort
       )
         return;
+
+      setCheckingEmail(true);
+      setEmailError("");
+      try {
+        const exists = await checkEmailExistsAction(correo);
+        if (exists) {
+          setEmailError("Este correo ya está registrado.");
+          setCheckingEmail(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Error al verificar correo:", err);
+      }
+      setCheckingEmail(false);
     }
     if (step === 2) {
       if (!tipoProveedor) return;
@@ -148,20 +164,30 @@ export default function RegisterPage() {
           {/* STEP 1 */}
           {step === 1 && (
             <>
-              <input
-                type="email"
-                placeholder="Correo electrónico"
-                className="styled-input"
-                value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
-                required
-              />
+              <div className="flex flex-col gap-1">
+                <input
+                  type="email"
+                  placeholder="Correo electrónico"
+                  className={`styled-input ${emailError ? "border-red-400" : ""}`}
+                  value={correo}
+                  onChange={(e) => {
+                    setCorreo(e.target.value);
+                    setEmailError("");
+                  }}
+                  required
+                />
+                {emailError && (
+                  <span className="text-xs text-red-500">
+                    {emailError}
+                  </span>
+                )}
+              </div>
+
               <input
                 type="password"
                 placeholder="Contraseña"
-                className={`styled-input ${
-                  isPasswordShort ? "border-red-400" : ""
-                }`}
+                className={`styled-input ${isPasswordShort ? "border-red-400" : ""
+                  }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -176,9 +202,8 @@ export default function RegisterPage() {
                 <input
                   type="password"
                   placeholder="Confirmar contraseña"
-                  className={`styled-input ${
-                    passMismatch ? "border-red-400" : ""
-                  }`}
+                  className={`styled-input ${passMismatch ? "border-red-400" : ""
+                    }`}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
@@ -212,7 +237,7 @@ export default function RegisterPage() {
 
               <button
                 type="button"
-                className="btn-gold mt-2 py-3"
+                className={`btn-gold mt-2 py-3 ${checkingEmail ? "opacity-50 cursor-not-allowed" : ""}`}
                 onClick={next}
                 disabled={
                   !correo ||
@@ -220,10 +245,11 @@ export default function RegisterPage() {
                   !confirm ||
                   passMismatch ||
                   !acceptedTyC ||
-                  isPasswordShort
+                  isPasswordShort ||
+                  checkingEmail
                 }
               >
-                Siguiente
+                {checkingEmail ? "Verificando..." : "Siguiente"}
               </button>
             </>
           )}
@@ -318,9 +344,8 @@ export default function RegisterPage() {
                 <div className="flex flex-col gap-1">
                   <input
                     placeholder="Teléfono (opcional)"
-                    className={`styled-input ${
-                      isPhoneShort ? "border-red-400" : ""
-                    }`}
+                    className={`styled-input ${isPhoneShort ? "border-red-400" : ""
+                      }`}
                     type="number"
                     value={telefono}
                     onChange={(e) => setTelefono(e.target.value)}
@@ -463,15 +488,23 @@ export default function RegisterPage() {
                         updateCert(idx, { emisor: e.target.value })
                       }
                     />
-                    <input
+                    <select
                       name="cert_nivel[]"
-                      placeholder="Nivel / categoría (opcional)"
-                      className="styled-input mt-2"
+                      className="styled-input mt-2 text-sm text-gray-700 bg-white"
                       value={c.nivel}
                       onChange={(e) =>
                         updateCert(idx, { nivel: e.target.value })
                       }
-                    />
+                    >
+                      <option value="">Nivel / categoría (opcional)</option>
+                      <option value="Curso">Curso</option>
+                      <option value="Diplomado">Diplomado</option>
+                      <option value="Pregrado">Pregrado</option>
+                      <option value="Postgrado">Postgrado</option>
+                      <option value="Maestría">Maestría</option>
+                      <option value="Doctorado">Doctorado</option>
+                      <option value="Otro">Otro</option>
+                    </select>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                       <input
@@ -521,9 +554,8 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={pending}
-                  className={`btn-gold flex-1 py-3 ${
-                    pending ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                  className={`btn-gold flex-1 py-3 ${pending ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                 >
                   {pending ? "Creando cuenta..." : "Crear cuenta"}
                 </button>
