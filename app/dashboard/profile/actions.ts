@@ -33,6 +33,8 @@ async function getSessionUser() {
   return await db.usuario.findUnique({ where: { username } });
 }
 
+import { sendProfileUpdatedEmail } from "@/lib/mail";
+
 export async function updatePersonalDataAction(formData: FormData) {
   const username = await getSessionUsername();
   if (!username) return { error: "No autorizado" };
@@ -81,10 +83,14 @@ export async function updatePersonalDataAction(formData: FormData) {
     if (formData.has("instagram"))
       updateData.instagram = (formData.get("instagram") as string) || null;
 
-    await db.perfilProveedor.update({
+    const updatedProfile = await db.perfilProveedor.update({
       where: { id_proveedor: user.id_usuario },
       data: updateData,
     });
+
+    // Enviar correo de notificación de seguridad de manera asíncrona sin bloquear la respuesta
+    const nombreUsuario = updatedProfile.nombres_apellidos || updatedProfile.nombre_legal || user.username || "Usuario";
+    sendProfileUpdatedEmail(user.correo, nombreUsuario).catch(console.error);
 
     revalidatePath("/dashboard/profile");
     return { success: true };
@@ -368,6 +374,28 @@ export async function updateEmailAction(newEmail: string) {
       data: { correo: email },
     });
 
+    const userProfile = await db.perfilProveedor.findUnique({
+      where: { id_proveedor: existingUser?.id_usuario || username } // Fallback to username if existing user wasn't fetched completely
+    });
+
+    // We fetch user again to get the id if we didn't have it, or directly by username since id_proveedor is id_usuario
+    const realUser = await db.usuario.findUnique({
+      where: { username },
+      include: { perfilProveedor: true }
+    })
+
+    if (realUser) {
+      const nombreUsuario = realUser.perfilProveedor?.nombres_apellidos || realUser.perfilProveedor?.nombre_legal || realUser.username || "Usuario";
+      // Enviar notificación al correo nuevo
+      sendProfileUpdatedEmail(email, nombreUsuario).catch(console.error);
+
+      // Enviar notificación al correo viejo (opcional pero recomendado por seguridad)
+      if (realUser.correo !== email) {
+        sendProfileUpdatedEmail(realUser.correo, nombreUsuario).catch(console.error);
+      }
+    }
+
+
     revalidatePath("/dashboard/profile");
     return { success: true };
   } catch (e) {
@@ -407,6 +435,16 @@ export async function updatePasswordAction(
       where: { username },
       data: { passwordHash: newHashedPassword },
     });
+
+    const realUser = await db.usuario.findUnique({
+      where: { username },
+      include: { perfilProveedor: true }
+    });
+
+    if (realUser) {
+      const nombreUsuario = realUser.perfilProveedor?.nombres_apellidos || realUser.perfilProveedor?.nombre_legal || realUser.username || "Usuario";
+      sendProfileUpdatedEmail(realUser.correo, nombreUsuario).catch(console.error);
+    }
 
     return { success: true };
   } catch (e) {

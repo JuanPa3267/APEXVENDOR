@@ -190,3 +190,88 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
     console.error("Error enviando correo de reset de contraseña:", error);
   }
 };
+
+export const sendProfileUpdatedEmail = async (email: string, name: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const resetUrl = `${baseUrl}/forgot-password`;
+
+  const mailOptions = {
+    from: `"ApexVendor Seguridad" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Aviso de Seguridad: Se han actualizado los datos de tu perfil",
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          .button:hover { background-color: #d4be5d !important; }
+        </style>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f6f9fc; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#f6f9fc">
+          <tr>
+            <td align="center" style="padding: 40px 0;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 600px; width: 100%;">
+                
+                <!-- Spacer -->
+                <tr>
+                   <td style="height: 6px; background-color: #e9d26a;"></td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 0 40px 40px 40px; text-align: center;">
+                    <h1 style="color: #32325d; margin: 0 0 20px 0; font-size: 26px; font-weight: 700;">Actualización de Perfil</h1>
+                    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #525f7f;">
+                      Hola ${name}, te informamos que la información personal o de contacto de tu cuenta en ApexVendor ha sido actualizada recientemente.
+                    </p>
+
+                    <div style="background-color: #fff9e6; border-left: 4px solid #e9d26a; padding: 15px; margin: 30px 0; text-align: left;">
+                      <p style="margin: 0; font-size: 14px; color: #525f7f;">
+                        <strong>¿Fuiste tú?</strong><br>
+                        Si realizaste estos cambios desde tu panel de control, puedes ignorar este mensaje de forma segura.
+                      </p>
+                    </div>
+
+                    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #525f7f;">
+                      <strong>¿No reconoces esta actividad?</strong><br>
+                      Si no autorizaste o no realizaste esta actualización, te recomendamos restablecer tu contraseña inmediatamente para asegurar tu cuenta.
+                    </p>
+                    
+                    <div>
+                      <a href="${resetUrl}" class="button" style="background-color: #252525; color: #e9d26a; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; transition: background-color 0.3s; text-transform: uppercase;">
+                        Restablecer Contraseña
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Divider -->
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <hr style="border: 0; border-top: 1px solid #f0f0f0; margin: 0;">
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="padding: 30px; text-align: center; background-color: #ffffff;">
+                    <p style="margin: 0 0 10px 0; font-size: 12px; color: #9aa8b5;">ApexVendor Security - 2026</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error enviando correo de actualización de perfil:", error);
+  }
+};
