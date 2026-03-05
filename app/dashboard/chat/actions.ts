@@ -30,6 +30,20 @@ export async function createMetricAction(formData: FormData) {
 
 export async function deleteMetricAction(id: string) {
   try {
+    // Check if the metric has been used in any evaluation details
+    const usageCount = await db.evaluacion_detalle.count({
+      where: {
+        id_metrica: id,
+      },
+    });
+
+    if (usageCount > 0) {
+      return {
+        error: "Esta métrica ya ha sido usada para evaluar a un proveedor y no puede ser eliminada.",
+      };
+    }
+
+    // If not used, we can safely delete it
     await db.metrica.delete({
       where: {
         id_metrica: id,

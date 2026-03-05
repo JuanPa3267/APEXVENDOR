@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import VendorsTable from "./VendorsTable";
 import CreateAdminButton from "./CreateAdminButton";
+import AdminListModal from "./AdminListModal";
 
 export default async function VendorsPage() {
   const cookieStore = await cookies();
@@ -22,6 +23,13 @@ export default async function VendorsPage() {
       usuario: true, // Esto trae username, correo y estado_cuenta
     },
   });
+
+  const admins = await db.usuario.findMany({
+    where: { roles: { some: { rol: { nombre: "Admin" } } } },
+    select: { id_usuario: true, username: true, correo: true, creado_en: true },
+    orderBy: { creado_en: "asc" },
+  });
+
   return (
     <div className="p-8 lg:p-12 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-700">
       <div className="mb-10 flex justify-between items-end">
@@ -34,6 +42,7 @@ export default async function VendorsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <AdminListModal admins={admins} />
           <CreateAdminButton />
 
           <div className="bg-[#252525] text-[#e9d26a] text-[10px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-xl border border-[#e9d26a]/20">
