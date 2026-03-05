@@ -126,6 +126,7 @@ export default function VendorsTable({
           <Slider
             key="warning"
             label="Score Mínimo"
+            size="md"
             className="max-w-md"
             color="warning"
             defaultValue={0}
@@ -135,9 +136,10 @@ export default function VendorsTable({
             value={minScore}
             onChange={(val: SliderValue) => setMinScore(val as number)}
             classNames={{
-              filler: "bg-[#e9d26a]",
-              thumb: "bg-[#e9d26a] after:bg-[#FFFFFF]",
-              track: "bg-[#F3F4F6]",
+              base: "max-w-md px-1",
+              filler: "bg-[#e9d26a] rounded-l-full",
+              thumb: "bg-[#e9d26a] after:bg-white shadow-xl",
+              track: "bg-[#F3F4F6] border-none",
             }}
           />
         </div>
