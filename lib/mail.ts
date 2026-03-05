@@ -137,7 +137,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
                       Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en ApexVendor.
                     </p>
                     <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #525f7f;">
-                      Haz clic en el siguiente botón para crear una nueva contraseña. Este enlace expira en una hora.
+                      Haz clic en el siguiente botón para crear una nueva contraseña. Este enlace expira en 10 minutos.
                     </p>
                     
                     <div>

@@ -259,8 +259,61 @@ export const projectService = {
   },
 
   async removeVendorFromProject(id_participacion: string) {
-    return await db.participacion_proveedor.delete({
+    const participacion = await db.participacion_proveedor.findUnique({
       where: { id_participacion },
+      include: {
+        evaluacion: {
+          select: { calificacion_global: true },
+        },
+      },
+    });
+
+    if (!participacion) throw new Error("Participación no encontrada");
+
+    const tieneEvaluacionValida =
+      participacion.evaluacion.length > 0 &&
+      participacion.evaluacion[0].calificacion_global !== null;
+
+    if (!tieneEvaluacionValida) {
+      // Si no hay evaluación que afecte el score, solo borramos la participación de forma sencilla
+      return await db.participacion_proveedor.delete({
+        where: { id_participacion },
+      });
+    }
+
+    // Si había evaluación, borramos en transacción y recalculamos el score
+    return await db.$transaction(async (tx) => {
+      // 1. Borrar la participación (Borra la evaluación asociada por Cascada)
+      const deletedRecord = await tx.participacion_proveedor.delete({
+        where: { id_participacion },
+      });
+
+      // 2. Traer el resto de evaluaciones que todavía tiene el proveedor
+      const providerEvaluations = await tx.evaluacion.findMany({
+        where: {
+          participacion_proveedor: {
+            id_proveedor: participacion.id_proveedor,
+          },
+          calificacion_global: { not: null },
+        },
+        select: { calificacion_global: true },
+      });
+
+      // 3. Recalcular promedio exacto
+      const total = providerEvaluations.reduce(
+        (sum, e) => sum + (Number(e.calificacion_global) || 0),
+        0
+      );
+      const count = providerEvaluations.length;
+      const newScore = count > 0 ? total / count : 0;
+
+      // 4. Actualizar score en el perfil del proveedor
+      await tx.perfilProveedor.update({
+        where: { id_proveedor: participacion.id_proveedor },
+        data: { score: newScore },
+      });
+
+      return deletedRecord;
     });
   },
 

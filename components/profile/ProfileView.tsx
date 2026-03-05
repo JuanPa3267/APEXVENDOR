@@ -702,9 +702,16 @@ export default function ProfileView({
                             ⭐ {proj.evaluation.globalRating.toFixed(1)} / 5.0
                           </span>
                           {proj.evaluation.evaluatorUsername && (
-                            <span className="text-[8px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">
-                              Por: @{proj.evaluation.evaluatorUsername}
-                            </span>
+                            <div className="text-right">
+                              <span className="text-[8px] font-bold text-gray-400 uppercase tracking-[0.2em] block mt-1">
+                                Por: @{proj.evaluation.evaluatorUsername}
+                              </span>
+                              <span className="text-[9px] font-bold text-gray-400/80 uppercase tracking-widest block mt-0.5">
+                                {new Date(proj.evaluation.date).toLocaleDateString("es-CO", {
+                                  dateStyle: "short",
+                                })}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
