@@ -21,6 +21,13 @@ function assertPdf(file: File) {
   }
 }
 
+export async function checkEmailExistsAction(email: string) {
+  const existingUser = await db.usuario.findUnique({
+    where: { correo: email.trim().toLowerCase() },
+  });
+  return !!existingUser;
+}
+
 export async function registerAction(prevState: any, formData: FormData) {
   const rawEmail = (formData.get("correo") as string) || "";
   const email = rawEmail.trim().toLowerCase();

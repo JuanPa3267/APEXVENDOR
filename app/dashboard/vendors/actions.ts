@@ -54,6 +54,15 @@ export async function createAdminAction(formData: FormData) {
     return { error: "Este username ya está en uso, elige otro." };
   }
 
+  // Verificar si el correo ya está en uso
+  const existingEmail = await db.usuario.findUnique({
+    where: { correo },
+  });
+
+  if (existingEmail) {
+    return { error: "Este correo ya está registrado." };
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {

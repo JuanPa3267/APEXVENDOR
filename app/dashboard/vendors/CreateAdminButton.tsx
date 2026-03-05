@@ -2,10 +2,29 @@
 
 import { useState } from "react";
 import { createAdminAction } from "./actions";
+import { checkEmailExistsAction } from "@/app/register/actions";
 
 export default function CreateAdminButton() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [correo, setCorreo] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [checkingEmail, setCheckingEmail] = useState(false);
+
+  const handleEmailBlur = async () => {
+    if (!correo) return;
+    setCheckingEmail(true);
+    setEmailError("");
+    try {
+      const exists = await checkEmailExistsAction(correo);
+      if (exists) {
+        setEmailError("Este correo ya está registrado.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setCheckingEmail(false);
+  };
 
   return (
     <>
@@ -47,6 +66,7 @@ export default function CreateAdminButton() {
 
             <form
               action={async (formData) => {
+                if (emailError) return;
                 setLoading(true);
                 const res = await createAdminAction(formData);
                 setLoading(false);
@@ -78,16 +98,26 @@ export default function CreateAdminButton() {
                 </span>
               </div>
 
-              <input
-                name="correo"
-                type="email"
-                className="styled-input lowercase"
-                placeholder="Correo"
-                onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  e.target.value = e.target.value.toLowerCase().replace(/\s/g, '');
-                }}
-                required
-              />
+              <div className="flex flex-col gap-1">
+                <input
+                  name="correo"
+                  type="email"
+                  className={`styled-input lowercase ${emailError ? "border-red-400" : ""}`}
+                  placeholder="Correo"
+                  value={correo}
+                  onBlur={handleEmailBlur}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setCorreo(e.target.value.toLowerCase().replace(/\s/g, ''));
+                    setEmailError("");
+                  }}
+                  required
+                />
+                {emailError && (
+                  <span className="text-xs text-red-500 font-bold px-2">
+                    {emailError}
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   name="password"
@@ -117,11 +147,11 @@ export default function CreateAdminButton() {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className={`bg-[#252525] text-[#e9d26a] text-[10px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-xl hover:bg-black transition cursor-pointer ${loading ? "opacity-60 cursor-not-allowed" : ""
+                  disabled={loading || checkingEmail || !!emailError}
+                  className={`bg-[#252525] text-[#e9d26a] text-[10px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-xl hover:bg-black transition cursor-pointer ${loading || checkingEmail || !!emailError ? "opacity-60 cursor-not-allowed" : ""
                     }`}
                 >
-                  {loading ? "Creando..." : "Crear"}
+                  {loading ? "Creando..." : checkingEmail ? "Verificando..." : "Crear"}
                 </button>
               </div>
             </form>
