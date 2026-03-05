@@ -48,8 +48,9 @@ export default function Navbar({ username, role }: NavbarProps) {
           {isProveedor && (
             <Link
               href="/dashboard/profile"
-              className={`nav-link flex items-center ${pathname === "/dashboard/profile" ? "active-gold" : ""
-                }`}
+              className={`nav-link flex items-center ${
+                pathname === "/dashboard/profile" ? "active-gold" : ""
+              }`}
             >
               {pathname === "/dashboard/profile" && <ActiveIndicator />}
               Mi Perfil
@@ -68,8 +69,9 @@ export default function Navbar({ username, role }: NavbarProps) {
             <>
               <Link
                 href="/dashboard/chat"
-                className={`nav-link flex items-center ${pathname === "/dashboard/chat" ? "active-gold" : ""
-                  }`}
+                className={`nav-link flex items-center ${
+                  pathname === "/dashboard/chat" ? "active-gold" : ""
+                }`}
               >
                 {pathname === "/dashboard/chat" && <ActiveIndicator />}
                 Intelligence Chat
@@ -84,10 +86,11 @@ export default function Navbar({ username, role }: NavbarProps) {
 
               <Link
                 href="/dashboard/projects"
-                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/projects")
-                  ? "active-gold"
-                  : ""
-                  }`}
+                className={`nav-link flex items-center ${
+                  pathname.startsWith("/dashboard/projects")
+                    ? "active-gold"
+                    : ""
+                }`}
               >
                 {pathname.startsWith("/dashboard/projects") && (
                   <ActiveIndicator />
@@ -104,8 +107,9 @@ export default function Navbar({ username, role }: NavbarProps) {
 
               <Link
                 href="/dashboard/vendors"
-                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/vendors") ? "active-gold" : ""
-                  }`}
+                className={`nav-link flex items-center ${
+                  pathname.startsWith("/dashboard/vendors") ? "active-gold" : ""
+                }`}
               >
                 {pathname.startsWith("/dashboard/vendors") && (
                   <ActiveIndicator />
@@ -121,16 +125,33 @@ export default function Navbar({ username, role }: NavbarProps) {
               </Link>
               <Link
                 href="/dashboard/rankings"
-                className={`nav-link flex items-center ${pathname.startsWith("/dashboard/rankings")
-                  ? "active-gold"
-                  : ""
-                  }`}
+                className={`nav-link flex items-center ${
+                  pathname.startsWith("/dashboard/rankings")
+                    ? "active-gold"
+                    : ""
+                }`}
               >
                 {pathname.startsWith("/dashboard/rankings") && (
                   <ActiveIndicator />
                 )}
                 Rankings
                 {pathname.startsWith("/dashboard/rankings") && (
+                  <motion.div
+                    layoutId="active-underline"
+                    className="absolute bottom-[-16px] left-0 right-0 h-[2.5px] bg-[#e9d26a] shadow-[0_0_15px_rgba(233,210,106,0.8)]"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </Link>
+              <Link
+                href="/dashboard/logs"
+                className={`nav-link flex items-center ${
+                  pathname.startsWith("/dashboard/logs") ? "active-gold" : ""
+                }`}
+              >
+                {pathname.startsWith("/dashboard/logs") && <ActiveIndicator />}
+                Dashboards
+                {pathname.startsWith("/dashboard/logs") && (
                   <motion.div
                     layoutId="active-underline"
                     className="absolute bottom-[-16px] left-0 right-0 h-[2.5px] bg-[#e9d26a] shadow-[0_0_15px_rgba(233,210,106,0.8)]"
