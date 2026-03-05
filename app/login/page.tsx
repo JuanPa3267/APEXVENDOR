@@ -46,12 +46,20 @@ export default function LoginPage() {
             required
           />
 
+          <div className="flex justify-end">
+            <a
+              href="/forgot-password"
+              className="text-xs text-gray-500 font-bold hover:text-[#bba955] hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+
           <button
             type="submit"
             disabled={pending}
-            className={`btn-gold mt-2 ${
-              pending ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`btn-gold mt-2 ${pending ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             {pending ? "Cargando..." : "Log In"}
           </button>

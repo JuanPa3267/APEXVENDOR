@@ -100,3 +100,93 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
     console.error("Error enviando SMTP:", error);
   }
 };
+
+export const sendPasswordResetEmail = async (email: string, token: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+  const mailOptions = {
+    from: `"ApexVendor Soporte" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Restablecer tu contraseña en ApexVendor",
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          .button:hover { background-color: #d4be5d !important; }
+        </style>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f6f9fc; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#f6f9fc">
+          <tr>
+            <td align="center" style="padding: 40px 0;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 600px; width: 100%;">
+                
+                <!-- Spacer -->
+                <tr>
+                   <td style="height: 6px; background-color: #e9d26a;"></td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 0 40px 40px 40px; text-align: center;">
+                    <h1 style="color: #32325d; margin: 0 0 20px 0; font-size: 26px; font-weight: 700;">Restablecer Contraseña</h1>
+                    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #525f7f;">
+                      Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en ApexVendor.
+                    </p>
+                    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #525f7f;">
+                      Haz clic en el siguiente botón para crear una nueva contraseña. Este enlace expira en una hora.
+                    </p>
+                    
+                    <div>
+                      <a href="${resetUrl}" class="button" style="background-color: #e9d26a; color: #1f1f1f; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; transition: background-color 0.3s;">
+                        Cambiar Contraseña
+                      </a>
+                    </div>
+
+                    <p style="margin: 32px 0 0 0; font-size: 12px; line-height: 1.6; color: #aab7c4;">
+                      Si no solicitaste este cambio, puedes ignorar este correo de forma segura. Tu contraseña no cambiará hasta que accedas al enlace y crees una nueva.
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Divider -->
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <hr style="border: 0; border-top: 1px solid #f0f0f0; margin: 0;">
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="padding: 30px; text-align: center; background-color: #ffffff;">
+                    <p style="margin: 0 0 10px 0; font-size: 12px; color: #9aa8b5;">ApexVendor Team - 2026</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Legal/Unsubscribe Text -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+                <tr>
+                   <td align="center" style="padding: 20px; font-size: 12px; color: #aab7c4;">
+                     &copy; 2026 ApexVendor. Todos los derechos reservados.
+                   </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error enviando correo de reset de contraseña:", error);
+  }
+};
